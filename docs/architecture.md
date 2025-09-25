@@ -78,9 +78,6 @@ graph TD
 | Dev Runner | tsx | 4.7.0 | TS 原生執行 | 零設定支援 TS/ESM |
 | Bundler | tsup | 8.0.1 | 產出 CLI/MCP 套件 | esbuild 核心、設定輕量 |
 | Config | node-config / dotenv-flow | 3.3 / 3.3 | 多環境設定 | 支援檔案階層與密碼管理 |
-| Container Base | node | 20.11-slim | Docker 映像 | 體積與除錯平衡 |
-| CI/CD | GitHub Actions | — | 測試與發布 | 與 Repo 生態整合 |
-| Artifact Registry | GitHub Container Registry | — | 儲存 Docker Image | 與 Actions 整合 |
 | Storage | File System | — | `specs/`, `flows/`, `reports/` | 滿足現階段需求 |
 
 ## 資料模型
@@ -260,15 +257,11 @@ specpilot/
 ```
 
 ## 基礎設施與部署
-- **Infrastructure as Code：** Terraform 1.8（`infrastructure/terraform/`），目前為占位專案，待確認雲端策略後補完。短期可維持 Docker Compose。
-- **Deployment Strategy：** Containerized Release，CI/CD 使用 GitHub Actions；透過 tag 觸發 release，發布 npm 套件或 Docker Image。
+- **Infrastructure as Code：** MVP 階段暫不採用複雜的基礎設施管理，專注於核心功能實現。
+- **Deployment Strategy：** 簡化部署策略，專注於本地開發和基本測試。
 - **Environments：**
-  - Local：開發者本機，透過 `pnpm dev/test` 與 `docker compose`。
-  - CI：GitHub Actions Runner，自動執行 lint/test、產報告。
-  - Staging（選用）：部署於雲端 VM 或容器平台供整合測試。
-  - Production（選用）：備妥部署指南後再啟用。
-- **Promotion Flow：** Local → Pull Request → CI →（選用）Staging → Tagged Release → Production/npm/Docker Registry。
-- **Rollback Strategy：** 透過先前版本的 tag/npm 版本/Docker image 快速回滾，目標 RTO < 30 分鐘。
+  - Local：開發者本機，透過 `pnpm dev/test` 執行基本測試。
+  - 其他環境：留待 MVP 完成後規劃。
 
 ## 錯誤處理策略
 
@@ -310,15 +303,15 @@ specpilot/
 - **Test Pyramid：** 單元 60% / 整合 30% / 端對端 10%。
 - **單元測試：** Vitest，`__tests__` 或 `tests/unit`，mock 外部 I/O，遵守 AAA 模式。
 - **整合測試：** `tests/integration`，使用 nock/msw 建 mock server，透過 execa 驗證 CLI/MCP。
-- **端到端測試：** Cucumber.js（或延後導入），在 Docker Compose 中執行典型流程。
+- **端到端測試：** 使用本地測試環境執行典型流程，無需複雜容器化設定。
 - **測試資料管理：** `packages/testing/fixtures` 儲存樣本，提供 factory 函式；使用暫時資料夾並於測試後清理。
-- **持續測試：** GitHub Actions 執行 `pnpm lint`, `pnpm test`, `pnpm test:integration`，必要時產生 coverage；性能、安全測試保留擴充空間。
+- **持續測試：** 本地執行 `pnpm lint`, `pnpm test`, `pnpm test:integration`，確保代碼品質；CI/CD 整合留待後續版本。
 
 ## 安全性策略
 ### Secrets / Token 管理流程
 1. **本地開發**：使用 `.env.local` 或 `secrets.local.json` 由開發者自行管理；檔案應列入 `.gitignore`。建議提供 `pnpm run secrets:edit`（或相等腳本）集中寫入，避免手動遺漏欄位。
-2. **CI / 測試環境**：在 pipeline 設定中使用專案 Secrets（如 GitHub Actions Secrets）注入 `SPEC_PILOT_BASE_URL`、`SPEC_PILOT_TOKEN` 等環境變數，並於流程開始時透過 Config Service 讀取。
-3. **Staging / Production**：統一由雲端 Secrets Manager（AWS Secrets Manager、GCP Secret Manager、HashiCorp Vault 等）管理，部署時以容器環境變數或掛載檔案注入；禁止將 Token 寫入映像檔或儲存庫。
+2. **測試環境**：MVP 階段使用本地測試配置，複雜 CI 環境留待後續版本規劃。
+3. **Production 環境**：留待 MVP 完成後規劃雲端 Secrets 管理策略。
 4. **程式取用流程**：Config Service 於啟動時載入環境變數，提供 `getBaseUrl()`、`getPort()`、`getToken()` 等方法；Run Context 僅儲存執行期 Token，並在流程結束後清空。
 5. **輪替與失效控管**：Token 需設定有效期限並建立輪替排程；流程中若偵測到 401/403，記錄 `AUTH_TOKEN_EXPIRED` 事件並建議重新取得或更新 Secrets。
 6. **稽核與遮罩**：Structured Logger 與 Reporter 必須以 `***` 遮蔽敏感欄位，並將輪替操作紀錄於審計 log；禁止在除錯訊息中輸出 Token 內容。

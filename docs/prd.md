@@ -108,10 +108,10 @@
 9. FR9：`runFlow` 執行過程中若出現錯誤，系統需回傳符合 JSON-RPC 規範的錯誤物件，避免 MCP 崩潰。
 10. FR10：系統需支援登入與 Token 管理，可透過流程中的登入步驟取得 JWT Token，或在專案設定／文件中指定 Token；系統需自動依標準格式（如 `Authorization: Bearer <JWT>`）加入後續請求 Header。
 11. FR11：系統需支援設定 API 測試環境的 `baseUrl` 與 `port`，可透過 `flow.yaml`、共用設定檔或 `runFlow` 參數傳入（含 AI 即時傳入模式），執行時自動組合完整請求 URL；未提供埠號時需採用預設值（HTTP: 80、HTTPS: 443）。
-12. FR12：系統需在執行每個測試步驟時記錄結構化 LOG（步驟名稱、請求細節、回應摘要、錯誤訊息、執行時間），並支援輸出至檔案與程式介面查閱。
+12. FR12：系統需在執行每個測試步驟時記錄結構化 LOG（步驟名稱、請求細節、回應摘要、錯誤訊息、執行時間），使用 pino 套件輸出 JSON Lines 格式，強制包含 executionId、component 等識別欄位，並支援輸出至檔案與程式介面查閱。
 
 ### Non-Functional Requirements
-1. NFR1：系統需在 Node.js 18 以上環境執行，且不得依賴 .NET Runtime。
+1. NFR1：系統需在 Node.js 20.11.1 LTS 環境執行，且不得依賴 .NET Runtime。
 2. NFR2：單一測試流程 (`flow.yaml`) 的執行時間應在 1 分鐘以內，並以標準開發環境（4 核心 CPU、8 GB RAM、本地或等效 Docker）為測試基準。
 3. NFR3：系統需能處理大型 OpenAPI 規格（如 ≥500 endpoints），若因資源限制導致錯誤或效能瓶頸，需顯示明確警示或錯誤訊息，避免靜默失敗。
 4. NFR4：支援基本跨步驟變數傳遞功能，確保資料在流程中正確傳遞。
@@ -313,7 +313,7 @@ flowchart TD
 - **區分環境檔案**：本地開發使用 `.env.local`，CI 使用 `.env.ci`，所有檔案均應列入 `.gitignore`。
 - **設定載入流程**：Config Service 負責讀取環境變數並提供統一介面，CLI 與 MCP 皆透過該服務取得 Token/baseUrl/port。
 - **敏感資訊來源**：
-  - 本地：開發者可在 `.env.local` 中設定 `SPEC_PILOT_TOKEN` 或登入用的使用者密碼，必要時提供 `specpilot secrets set` 指令包裝。
+  - 本地：開發者可在 `.env.local` 中設定 `SPEC_PILOT_TOKEN` 或登入用的使用者密碼；必要時可補充 `specpilot secrets set` 等腳本輔助輸入。
   - Staging/Production：建議透過雲端 Secrets Manager（AWS Secrets Manager、GCP Secret Manager 等）動態注入環境變數，禁止寫入映像檔或程式碼庫。
 - **Token 取得流程**：Flow 可包含登入步驟，將取得的 Token 儲存在 Run Context；若專案提供長期 Token，需透過設定檔宣告並在流程執行前注入。
 - **輪替與失效機制**：Token 必須設定到期日並於輪替時更新 Secrets Manager；系統在檢測到 HTTP 401/403 時需記錄告警並提示重新登入或更新 Token。
@@ -333,8 +333,9 @@ flowchart TD
 - Additional Technical Assumptions and Requests：
   - 全面使用 TypeScript，搭配 `pnpm` 或 `npm` 管理依賴與鎖定檔。
   - HTTP 呼叫使用 `axios`，YAML 解析使用 `yaml`，Schema 驗證使用 `ajv`，OpenAPI 驗證使用 `swagger-parser`，CLI 框架使用 `commander`。
+  - 透過輕量依賴注入（tsyringe 或等效方案）注入 Config、Logger、HTTP 客戶端，確保 CLI 與 MCP 共享模組。
   - 集中化設定檔或環境變數處理 baseUrl、port、token 等資訊；MCP `runFlow` 與 CLI 參數可覆寫。
-  - 日誌採簡化結構化輸出（基本 JSON 格式），並提供基本 Logger 功能。
+  - 日誌採用 pino 套件，輸出 JSON Lines 格式，強制包含 executionId、component、timestamp 等必要欄位。
   - MCP 伺服器提供基本啟動腳本與簡易文件，說明核心 JSON-RPC 方法。
   - 所選套件均為主流且持續維護中，焦點於核心功能實現。
 
