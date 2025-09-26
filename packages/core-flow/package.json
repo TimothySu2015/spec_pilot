@@ -1,0 +1,26 @@
+{
+  "name": "@specpilot/core-flow",
+  "version": "0.1.0",
+  "description": "Core flow orchestration engine for SpecPilot",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@specpilot/shared": "workspace:*"
+  }
+}

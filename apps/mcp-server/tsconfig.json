@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*", "__tests__/**/*"],
+  "exclude": ["dist", "node_modules"],
+  "references": [
+    { "path": "../../packages/config" },
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/core-flow" },
+    { "path": "../../packages/spec-loader" },
+    { "path": "../../packages/flow-parser" },
+    { "path": "../../packages/reporting" }
+  ]
+}

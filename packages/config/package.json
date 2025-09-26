@@ -1,0 +1,28 @@
+{
+  "name": "@specpilot/config",
+  "version": "0.1.0",
+  "description": "Configuration management for SpecPilot",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "config": "3.3.9",
+    "dotenv-flow": "3.3.0",
+    "zod": "3.23.8"
+  }
+}
