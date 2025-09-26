@@ -15,7 +15,11 @@
       "Bash(pnpm exec vitest:*)",
       "Bash(pnpm test:*)",
       "Bash(pnpm exec eslint:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm -w run test)",
+      "Bash(pnpm exec:*)",
+      "Bash(node:*)",
+      "Bash(echo \"Exit code: $?\")"
     ],
     "deny": [],
     "ask": []

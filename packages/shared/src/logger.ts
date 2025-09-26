@@ -1,5 +1,5 @@
 import pino from 'pino';
-import { multistream } from 'pino-multi-stream';
+import pinoMultistream from 'pino-multi-stream';
 import { randomUUID } from 'crypto';
 import path from 'path';
 
@@ -89,7 +89,7 @@ export function createStructuredLogger(component: string): IStructuredLogger {
     {
       stream: process.env.NODE_ENV === 'development' 
         ? pino.destination({ 
-            sync: false,
+            sync: true, // Use sync mode to avoid sonic boom issues
             dest: 1, // stdout
           })
         : process.stdout
@@ -98,7 +98,7 @@ export function createStructuredLogger(component: string): IStructuredLogger {
     {
       stream: pino.destination({
         dest: path.join(logDir, 'specpilot.log'),
-        sync: false,
+        sync: true, // Use sync mode to avoid sonic boom issues  
         mkdir: true,
       })
     }
@@ -118,7 +118,7 @@ export function createStructuredLogger(component: string): IStructuredLogger {
         hostname: undefined, // 移除 hostname 以減少 log 大小
       },
     },
-    multistream(streams)
+    pinoMultistream.multistream(streams)
   );
 
   return {
