@@ -14,7 +14,8 @@
       "Bash(mkdir:*)",
       "Bash(pnpm exec vitest:*)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm exec eslint:*)"
+      "Bash(pnpm exec eslint:*)",
+      "Bash(pnpm lint:*)"
     ],
     "deny": [],
     "ask": []

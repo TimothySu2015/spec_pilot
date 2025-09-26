@@ -22,7 +22,11 @@
   },
   "dependencies": {
     "@specpilot/shared": "workspace:*",
-    "@specpilot/core-flow": "workspace:*",
     "yaml": "^2.4.3"
+  },
+  "devDependencies": {
+    "zod": "^3.23.8",
+    "@vitest/coverage-v8": "^1.6.0",
+    "vitest": "^1.6.0"
   }
 }
