@@ -1,4 +1,5 @@
 export * from './logger.js';
+export * from './errors/base-error.js';
 
 /**
  * 共用類型定義

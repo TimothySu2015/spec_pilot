@@ -12,7 +12,9 @@
       "Bash(pnpm run lint:*)",
       "Bash(pnpm run:*)",
       "Bash(mkdir:*)",
-      "Bash(pnpm exec vitest:*)"
+      "Bash(pnpm exec vitest:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm exec eslint:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,8 @@
+schema: 1
+story: '1.2'
+gate: PASS
+status_reason: '所有驗收條件皆已滿足，測試覆蓋率達 88.11% 且實作完整。'
+reviewer: 'Quinn'
+updated: '2025-09-26T02:07:30Z'
+top_issues: []
+waiver: { active: false }
