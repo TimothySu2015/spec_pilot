@@ -7,6 +7,9 @@
   "include": ["src/**/*", "__tests__/**/*"],
   "exclude": ["dist", "node_modules"],
   "references": [
-    { "path": "../shared" }
+    { "path": "../shared" },
+    { "path": "../config" },
+    { "path": "../http-runner" },
+    { "path": "../flow-parser" }
   ]
 }

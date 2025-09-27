@@ -163,6 +163,7 @@ async function main(): Promise<void> {
 // 執行主程式
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
+    // eslint-disable-next-line no-console
     console.error('未處理的錯誤:', error);
     process.exit(1);
   });
