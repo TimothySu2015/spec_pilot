@@ -1,0 +1,20 @@
+schema: 1
+story: '3.1'
+gate: CONCERNS
+status_reason: 'MCP 服務框架已實作且測試通過，但處理器為空實作，實際功能待後續開發。'
+reviewer: 'Quinn'
+updated: '2025-09-28T05:02:00Z'
+top_issues:
+  - id: 'IMPL-001'
+    severity: medium
+    finding: '所有 MCP 方法處理器（listSpecs、listFlows、runFlow、getReport）僅返回佔位符回應'
+    suggested_action: '在後續 Story 中實作具體業務邏輯'
+  - id: 'TEST-001'
+    severity: low
+    finding: 'index.ts 檔案無測試覆蓋'
+    suggested_action: '補充主程式入口點的測試案例'
+  - id: 'DOC-001'
+    severity: low
+    finding: '缺少 MCP 協議使用範例與 API 文件'
+    suggested_action: '新增使用範例與方法說明文件'
+waiver: { active: false }

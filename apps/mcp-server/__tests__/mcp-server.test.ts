@@ -1,57 +1,89 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { McpServer } from '../src/bootstrap.js';
+import { createStructuredLogger } from '@specpilot/shared';
+import { randomUUID } from '@specpilot/shared';
 
-describe('MCP Server', () => {
+// 模擬 logger
+vi.mock('@specpilot/shared', async () => {
+  const actual = await vi.importActual('@specpilot/shared');
+  return {
+    ...actual,
+    createStructuredLogger: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    })),
+  };
+});
 
-  describe('JSON-RPC 2.0 協議', () => {
+describe('MCP Server 整合測試', () => {
+  let server: McpServer;
+  let executionId: string;
+
+  beforeEach(() => {
+    executionId = randomUUID();
+    server = new McpServer(executionId);
+  });
+
+  afterEach(() => {
+    if (server) {
+      server.shutdown('測試結束');
+    }
+  });
+
+  describe('服務啟動與關閉', () => {
+    it('應該能夠啟動 MCP 服務', () => {
+      expect(() => server.start()).not.toThrow();
+    });
+
+    it('應該能夠優雅關閉服務', () => {
+      server.start();
+      expect(() => server.shutdown('測試關閉')).not.toThrow();
+    });
+  });
+
+  describe('JSON-RPC 2.0 請求處理', () => {
+    beforeEach(() => {
+      server.start();
+    });
+
     it('應該處理 listSpecs 請求', async () => {
-      const request = {
+      const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'listSpecs',
         id: 1,
-      };
+      });
 
-      // 模擬處理邏輯
-      const response = {
-        jsonrpc: '2.0',
-        result: {
-          specs: [
-            { name: 'demo.yaml', path: 'specs/demo.yaml' },
-            { name: 'api.json', path: 'specs/api.json' },
-          ],
-        },
-        id: 1,
-      };
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
 
       expect(response.jsonrpc).toBe('2.0');
-      expect(response.result.specs).toHaveLength(2);
-      expect(response.id).toBe(request.id);
+      expect(response.id).toBe(1);
+      expect(response.result).toBeDefined();
+      expect(response.result.specs).toBeDefined();
+      expect(response.error).toBeUndefined();
     });
 
     it('應該處理 listFlows 請求', async () => {
-      const request = {
+      const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'listFlows',
         id: 2,
-      };
+      });
 
-      const response = {
-        jsonrpc: '2.0',
-        result: {
-          flows: [
-            { name: 'user-crud.yaml', path: 'flows/user-crud.yaml' },
-            { name: 'auth-test.yaml', path: 'flows/auth-test.yaml' },
-          ],
-        },
-        id: 2,
-      };
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
 
       expect(response.jsonrpc).toBe('2.0');
-      expect(response.result.flows).toHaveLength(2);
-      expect(response.id).toBe(request.id);
+      expect(response.id).toBe(2);
+      expect(response.result).toBeDefined();
+      expect(response.result.flows).toBeDefined();
+      expect(response.error).toBeUndefined();
     });
 
     it('應該處理 runFlow 請求', async () => {
-      const request = {
+      const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'runFlow',
         params: {
@@ -60,218 +92,199 @@ describe('MCP Server', () => {
           baseUrl: 'http://localhost:3000',
         },
         id: 3,
-      };
+      });
 
-      const response = {
-        jsonrpc: '2.0',
-        result: {
-          executionId: 'exec-123',
-          status: 'completed',
-          summary: {
-            total: 3,
-            passed: 2,
-            failed: 1,
-            duration: 1500,
-          },
-        },
-        id: 3,
-      };
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
 
       expect(response.jsonrpc).toBe('2.0');
-      expect(response.result.executionId).toBeTruthy();
-      expect(response.result.status).toBe('completed');
-      expect(response.result.summary.total).toBe(3);
+      expect(response.id).toBe(3);
+      expect(response.result).toBeDefined();
+      expect(response.result.status).toBe('pending');
+      expect(response.error).toBeUndefined();
     });
 
     it('應該處理 getReport 請求', async () => {
-      const request = {
+      const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'getReport',
         params: {
           executionId: 'exec-123',
         },
         id: 4,
-      };
+      });
 
-      const response = {
-        jsonrpc: '2.0',
-        result: {
-          executionId: 'exec-123',
-          flowName: 'Test Flow',
-          startTime: '2025-09-26T09:00:00Z',
-          endTime: '2025-09-26T09:00:05Z',
-          summary: {
-            total: 3,
-            passed: 2,
-            failed: 1,
-            skipped: 0,
-            duration: 5000,
-          },
-          steps: [
-            {
-              name: 'Get User',
-              status: 'passed',
-              duration: 1500,
-            },
-          ],
-        },
-        id: 4,
-      };
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
 
       expect(response.jsonrpc).toBe('2.0');
-      expect(response.result.executionId).toBe('exec-123');
-      expect(response.result.summary).toBeDefined();
-      expect(response.result.steps).toHaveLength(1);
+      expect(response.id).toBe(4);
+      expect(response.result).toBeDefined();
+      expect(response.result.report).toBeNull();
+      expect(response.error).toBeUndefined();
     });
   });
 
   describe('錯誤處理', () => {
-    it('應該處理無效的 JSON-RPC 請求', () => {
-      const invalidRequest = {
-        method: 'listSpecs', // 缺少 jsonrpc 和 id
-      };
-
-      const errorResponse = {
-        jsonrpc: '2.0',
-        error: {
-          code: -32600,
-          message: 'Invalid Request',
-        },
-        id: null,
-      };
-
-      expect(errorResponse.jsonrpc).toBe('2.0');
-      expect(errorResponse.error.code).toBe(-32600);
-      expect(errorResponse.error.message).toBe('Invalid Request');
+    beforeEach(() => {
+      server.start();
     });
 
-    it('應該處理不支援的方法', () => {
-      const request = {
+    it('應該處理 JSON 解析錯誤', async () => {
+      const invalidJson = '{ invalid json }';
+
+      const responseData = await server.handleRequest(invalidJson);
+      const response = JSON.parse(responseData);
+
+      expect(response.jsonrpc).toBe('2.0');
+      expect(response.id).toBeNull();
+      expect(response.error).toBeDefined();
+      expect(response.error.code).toBe(-32700);
+      expect(response.error.message).toBe('Parse error');
+    });
+
+    it('應該處理無效的 JSON-RPC 請求', async () => {
+      const requestData = JSON.stringify({
+        method: 'listSpecs', // 缺少 jsonrpc
+        id: 5,
+      });
+
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
+
+      expect(response.jsonrpc).toBe('2.0');
+      expect(response.id).toBe(5);
+      expect(response.error).toBeDefined();
+      expect(response.error.code).toBe(-32603);
+      expect(response.error.message).toContain('無效的 JSON-RPC 版本');
+    });
+
+    it('應該處理不支援的方法', async () => {
+      const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'unsupportedMethod',
-        id: 5,
-      };
+        id: 6,
+      });
 
-      const errorResponse = {
-        jsonrpc: '2.0',
-        error: {
-          code: -32601,
-          message: 'Method not found',
-        },
-        id: 5,
-      };
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
 
-      expect(errorResponse.jsonrpc).toBe('2.0');
-      expect(errorResponse.error.code).toBe(-32601);
-      expect(errorResponse.error.message).toBe('Method not found');
+      expect(response.jsonrpc).toBe('2.0');
+      expect(response.id).toBe(6);
+      expect(response.error).toBeDefined();
+      expect(response.error.code).toBe(-32601);
+      expect(response.error.message).toBe('Method not found');
     });
 
-    it('應該處理執行錯誤', () => {
-      const request = {
-        jsonrpc: '2.0',
-        method: 'runFlow',
-        params: {
-          specPath: 'nonexistent.yaml',
-          flowPath: 'nonexistent.yaml',
-        },
-        id: 6,
-      };
+    it('應該拒絕已關閉服務的請求', async () => {
+      server.shutdown('測試關閉');
 
-      const errorResponse = {
+      const requestData = JSON.stringify({
         jsonrpc: '2.0',
-        error: {
-          code: -32603,
-          message: 'Internal error',
-          data: {
-            details: '檔案不存在或無法讀取',
-          },
-        },
-        id: 6,
-      };
+        method: 'listSpecs',
+        id: 7,
+      });
 
-      expect(errorResponse.jsonrpc).toBe('2.0');
-      expect(errorResponse.error.code).toBe(-32603);
-      expect(errorResponse.error.message).toBe('Internal error');
-      expect(errorResponse.error.data.details).toBeTruthy();
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
+
+      expect(response.jsonrpc).toBe('2.0');
+      expect(response.id).toBeNull();
+      expect(response.error).toBeDefined();
+      expect(response.error.code).toBe(-32603);
+      expect(response.error.message).toBe('服務已關閉');
     });
   });
 
-  describe('參數驗證', () => {
-    it('應該驗證 runFlow 參數', () => {
-      const requestWithoutParams = {
-        jsonrpc: '2.0',
-        method: 'runFlow',
-        id: 7,
-      };
+  describe('信號處理與優雅關閉', () => {
+    it('應該能處理多次關閉呼叫', () => {
+      server.start();
 
-      const errorResponse = {
-        jsonrpc: '2.0',
-        error: {
-          code: -32602,
-          message: 'Invalid params',
-          data: {
-            details: '缺少必要參數 specPath 或 flowPath',
-          },
-        },
-        id: 7,
-      };
-
-      expect(errorResponse.jsonrpc).toBe('2.0');
-      expect(errorResponse.error.code).toBe(-32602);
-      expect(errorResponse.error.message).toBe('Invalid params');
-    });
-
-    it('應該驗證 getReport 參數', () => {
-      const requestWithoutExecutionId = {
-        jsonrpc: '2.0',
-        method: 'getReport',
-        params: {},
-        id: 8,
-      };
-
-      const errorResponse = {
-        jsonrpc: '2.0',
-        error: {
-          code: -32602,
-          message: 'Invalid params',
-          data: {
-            details: '缺少必要參數 executionId',
-          },
-        },
-        id: 8,
-      };
-
-      expect(errorResponse.jsonrpc).toBe('2.0');
-      expect(errorResponse.error.code).toBe(-32602);
-      expect(errorResponse.error.message).toBe('Invalid params');
+      expect(() => {
+        server.shutdown('第一次關閉');
+        server.shutdown('第二次關閉');
+      }).not.toThrow();
     });
   });
 
-  describe('日誌記錄', () => {
-    it('應該記錄所有 JSON-RPC 請求與回應', () => {
-      const request = {
+  describe('日誌記錄驗證', () => {
+    let mockLogger: any;
+
+    beforeEach(() => {
+      mockLogger = {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+      };
+      vi.mocked(createStructuredLogger).mockReturnValue(mockLogger);
+      server = new McpServer(executionId);
+      server.start();
+    });
+
+    it('應該記錄請求接收日誌', async () => {
+      const requestData = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'listSpecs',
+        id: 8,
+      });
+
+      await server.handleRequest(requestData);
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'request_received',
+        expect.objectContaining({
+          executionId,
+          component: 'mcp-server',
+          method: 'listSpecs',
+          id: 8,
+        })
+      );
+    });
+
+    it('應該記錄成功回應日誌', async () => {
+      const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'listSpecs',
         id: 9,
-      };
+      });
 
-      // 模擬日誌記錄
-      const logEntry = {
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        component: 'mcp-server',
-        message: 'JSON-RPC 請求處理',
-        context: {
-          method: request.method,
-          id: request.id,
-          executionId: expect.any(String),
-        },
-      };
+      await server.handleRequest(requestData);
 
-      expect(logEntry.component).toBe('mcp-server');
-      expect(logEntry.message).toBe('JSON-RPC 請求處理');
-      expect(logEntry.context.method).toBe('listSpecs');
-      expect(logEntry.context.id).toBe(9);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'response_sent',
+        expect.objectContaining({
+          executionId,
+          component: 'mcp-server',
+          method: 'listSpecs',
+          id: 9,
+          success: true,
+        })
+      );
+    });
+
+    it('應該記錄錯誤回應日誌', async () => {
+      const requestData = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'invalidMethod',
+        id: 10,
+      });
+
+      await server.handleRequest(requestData);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'response_error',
+        expect.objectContaining({
+          executionId,
+          component: 'mcp-server',
+          error: {
+            code: -32601,
+            message: 'Method not found',
+          },
+          method: 'invalidMethod',
+          id: 10,
+        })
+      );
     });
   });
 });

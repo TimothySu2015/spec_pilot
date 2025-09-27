@@ -46,7 +46,9 @@
       "Bash(pnpm -w run test tests/e2e/test-suite-integration.e2e.spec.ts)",
       "Bash(pnpm -w run test tests/e2e/ci-integration.e2e.spec.ts)",
       "Bash(pnpm -w run test tests/e2e)",
-      "Bash(pnpm -w run test tests/e2e --reporter=verbose --run)"
+      "Bash(pnpm -w run test tests/e2e --reporter=verbose --run)",
+      "Bash(timeout:*)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/mcp-server.test.ts)"
     ],
     "deny": [],
     "ask": []
