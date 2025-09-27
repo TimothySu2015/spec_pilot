@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://specpilot.com/schemas/execution-report.json",
+  "title": "ExecutionReport",
+  "description": "完整的測試流程執行報表",
+  "type": "object",
+  "required": ["executionId", "flowId", "startTime", "endTime", "duration", "status", "summary", "steps", "config"],
+  "properties": {
+    "executionId": {
+      "type": "string",
+      "description": "執行的唯一識別碼",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "flowId": {
+      "type": "string",
+      "description": "流程識別碼",
+      "minLength": 1
+    },
+    "startTime": {
+      "type": "string",
+      "description": "開始時間 (ISO 8601 格式)",
+      "format": "date-time"
+    },
+    "endTime": {
+      "type": "string",
+      "description": "結束時間 (ISO 8601 格式)",
+      "format": "date-time"
+    },
+    "duration": {
+      "type": "number",
+      "description": "總執行時長（毫秒）",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "description": "整體執行狀態",
+      "enum": ["success", "failure", "partial"]
+    },
+    "summary": {
+      "type": "object",
+      "description": "執行摘要",
+      "required": ["totalSteps", "successfulSteps", "failedSteps", "skippedSteps"],
+      "properties": {
+        "totalSteps": {
+          "type": "number",
+          "description": "總步驟數",
+          "minimum": 0
+        },
+        "successfulSteps": {
+          "type": "number",
+          "description": "成功步驟數",
+          "minimum": 0
+        },
+        "failedSteps": {
+          "type": "number",
+          "description": "失敗步驟數",
+          "minimum": 0
+        },
+        "skippedSteps": {
+          "type": "number",
+          "description": "跳過步驟數",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "steps": {
+      "type": "array",
+      "description": "步驟執行結果列表",
+      "items": {
+        "$ref": "#/definitions/StepResult"
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "執行配置資訊",
+      "required": ["baseUrl", "fallbackUsed", "authNamespaces"],
+      "properties": {
+        "baseUrl": {
+          "type": "string",
+          "description": "基礎 URL",
+          "format": "uri"
+        },
+        "fallbackUsed": {
+          "type": "boolean",
+          "description": "是否使用備援"
+        },
+        "authNamespaces": {
+          "type": "array",
+          "description": "認證命名空間列表",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "StepResult": {
+      "type": "object",
+      "description": "單一步驟執行結果",
+      "required": ["name", "status", "startTime", "duration", "request", "response"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "步驟名稱",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "description": "步驟執行狀態",
+          "enum": ["success", "failure", "skipped"]
+        },
+        "startTime": {
+          "type": "string",
+          "description": "步驟開始時間 (ISO 8601 格式)",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "number",
+          "description": "步驟執行時長（毫秒）",
+          "minimum": 0
+        },
+        "request": {
+          "type": "object",
+          "description": "請求摘要",
+          "required": ["method", "url", "headerHash", "bodyHash"],
+          "properties": {
+            "method": {
+              "type": "string",
+              "description": "HTTP 方法",
+              "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+            },
+            "url": {
+              "type": "string",
+              "description": "完整請求 URL",
+              "format": "uri"
+            },
+            "headerHash": {
+              "type": "string",
+              "description": "請求 Header 的 SHA256 雜湊值",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "bodyHash": {
+              "type": "string",
+              "description": "請求 Body 的 SHA256 雜湊值",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "response": {
+          "type": "object",
+          "description": "回應摘要",
+          "required": ["statusCode", "success", "validationResults", "errorMessage"],
+          "properties": {
+            "statusCode": {
+              "type": "number",
+              "description": "HTTP 狀態碼",
+              "minimum": 100,
+              "maximum": 599
+            },
+            "success": {
+              "type": "boolean",
+              "description": "是否執行成功"
+            },
+            "validationResults": {
+              "type": "array",
+              "description": "驗證結果列表",
+              "items": {
+                "type": "string"
+              }
+            },
+            "errorMessage": {
+              "type": ["string", "null"],
+              "description": "錯誤訊息（如果有）"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

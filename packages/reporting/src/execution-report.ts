@@ -1,0 +1,100 @@
+/**
+ * 完整執行報表的類型定義
+ * 符合 Story 2.4 需求規格
+ */
+
+/**
+ * 步驟執行結果
+ */
+export interface StepResult {
+  /** 步驟名稱 */
+  name: string;
+  /** 執行狀態 */
+  status: 'success' | 'failure' | 'skipped';
+  /** 開始時間 */
+  startTime: string;
+  /** 執行時長（毫秒） */
+  duration: number;
+  /** 請求摘要 */
+  request: {
+    /** HTTP 方法 */
+    method: string;
+    /** 完整 URL */
+    url: string;
+    /** Header 雜湊值 */
+    headerHash: string;
+    /** Body 雜湊值 */
+    bodyHash: string;
+  };
+  /** 回應摘要 */
+  response: {
+    /** HTTP 狀態碼 */
+    statusCode: number;
+    /** 是否成功 */
+    success: boolean;
+    /** 驗證結果列表 */
+    validationResults: string[];
+    /** 錯誤訊息（如果有） */
+    errorMessage: string | null;
+  };
+}
+
+/**
+ * 執行配置資訊
+ */
+export interface ExecutionConfig {
+  /** 基礎 URL */
+  baseUrl: string;
+  /** 是否使用備援 */
+  fallbackUsed: boolean;
+  /** 認證命名空間 */
+  authNamespaces: string[];
+}
+
+/**
+ * 執行摘要
+ */
+export interface ExecutionSummary {
+  /** 總步驟數 */
+  totalSteps: number;
+  /** 成功步驟數 */
+  successfulSteps: number;
+  /** 失敗步驟數 */
+  failedSteps: number;
+  /** 跳過步驟數 */
+  skippedSteps: number;
+}
+
+/**
+ * 完整執行報表
+ */
+export interface ExecutionReport {
+  /** 執行 ID */
+  executionId: string;
+  /** 流程 ID */
+  flowId: string;
+  /** 開始時間 */
+  startTime: string;
+  /** 結束時間 */
+  endTime: string;
+  /** 總執行時長（毫秒） */
+  duration: number;
+  /** 整體狀態 */
+  status: 'success' | 'failure' | 'partial';
+  /** 執行摘要 */
+  summary: ExecutionSummary;
+  /** 步驟結果列表 */
+  steps: StepResult[];
+  /** 執行配置 */
+  config: ExecutionConfig;
+}
+
+/**
+ * 部分報表（用於錯誤恢復）
+ */
+export interface PartialExecutionReport extends Omit<ExecutionReport, 'endTime' | 'duration' | 'status'> {
+  /** 產生時間 */
+  generatedAt: string;
+  /** 失敗原因 */
+  failureReason: string;
+}

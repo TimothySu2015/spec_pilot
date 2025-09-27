@@ -21,7 +21,9 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
+    "@specpilot/core-flow": "workspace:*",
     "@specpilot/shared": "workspace:*",
-    "@specpilot/core-flow": "workspace:*"
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   }
 }

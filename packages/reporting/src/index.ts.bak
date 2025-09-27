@@ -2,11 +2,6 @@ import { createStructuredLogger, type TestStatus, getExecutionId } from '@specpi
 import { type ITestResult } from '@specpilot/core-flow';
 import { writeFileSync } from 'fs';
 
-// 匯出新的類型與功能
-export * from './execution-report.js';
-export { ReportGenerator as EnhancedReportGenerator } from './report-generator.js';
-export * from './report-validator.js';
-
 const logger = createStructuredLogger('reporting');
 
 /**
@@ -43,7 +38,7 @@ export interface ITestReport {
 }
 
 /**
- * 報表產生器（舊版，保持向後相容性）
+ * 報表產生器
  */
 export class ReportGenerator {
   /**

@@ -26,7 +26,9 @@
       "Bash(pnpm -w run test packages/config/__tests__/auth-config.test.ts)",
       "Bash(pnpm -w run test packages/shared/__tests__/auth-errors.test.ts)",
       "Bash(pnpm -w run test tests/integration/auth-flow.spec.ts)",
-      "Bash(pnpm -w run test tests/integration/auth-config.spec.ts)"
+      "Bash(pnpm -w run test tests/integration/auth-config.spec.ts)",
+      "Bash(cat:*)",
+      "Bash(wargs wc:*)"
     ],
     "deny": [],
     "ask": []

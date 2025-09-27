@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://specpilot.com/schemas/structured-log.json",
+  "title": "StructuredLogEntry",
+  "description": "結構化日誌項目",
+  "type": "object",
+  "required": ["timestamp", "level", "executionId", "component", "event", "message"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "description": "時間戳 (ISO 8601 格式)",
+      "format": "date-time"
+    },
+    "level": {
+      "type": "string",
+      "description": "日誌級別",
+      "enum": ["debug", "info", "warn", "error"]
+    },
+    "executionId": {
+      "type": "string",
+      "description": "執行的唯一識別碼",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "component": {
+      "type": "string",
+      "description": "元件名稱",
+      "minLength": 1
+    },
+    "event": {
+      "type": "string",
+      "description": "事件代碼",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "description": "訊息內容",
+      "minLength": 1
+    },
+    "stepName": {
+      "type": "string",
+      "description": "步驟名稱（可選）"
+    },
+    "duration": {
+      "type": "number",
+      "description": "執行時長（毫秒，可選）",
+      "minimum": 0
+    },
+    "requestSummary": {
+      "type": "object",
+      "description": "請求摘要（可選）",
+      "required": ["method", "url", "headerHash", "bodyHash"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "description": "HTTP 方法",
+          "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+        },
+        "url": {
+          "type": "string",
+          "description": "完整請求 URL",
+          "format": "uri"
+        },
+        "headerHash": {
+          "type": "string",
+          "description": "請求 Header 的 SHA256 雜湊值",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "bodyHash": {
+          "type": "string",
+          "description": "請求 Body 的 SHA256 雜湊值",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "responseSummary": {
+      "type": "object",
+      "description": "回應摘要（可選）",
+      "required": ["statusCode", "validationResults"],
+      "properties": {
+        "statusCode": {
+          "type": "number",
+          "description": "HTTP 狀態碼",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "validationResults": {
+          "type": "array",
+          "description": "驗證結果列表",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "錯誤詳情（如果有）"
+        }
+      },
+      "additionalProperties": false
+    },
+    "details": {
+      "type": "object",
+      "description": "其他詳細資訊",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
