@@ -1,0 +1,100 @@
+# OAuth 2.0 認證流程範例
+# 示範如何處理 OAuth 2.0 認證流程
+
+id: "oauth-auth-example"
+description: "OAuth 2.0 認證流程範例"
+
+steps:
+  # 步驟 1：取得 Access Token
+  - name: oauth_token_request
+    method: POST
+    path: /oauth/token
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+      Authorization: "Basic ${OAUTH_CLIENT_CREDENTIALS}"
+    body:
+      grant_type: "client_credentials"
+      scope: "read write"
+    auth:
+      type: login
+      tokenExtraction:
+        path: "access_token"
+        expiresIn: 7200  # 通常 OAuth Token 有效期較長
+        namespace: "oauth_client"
+    expect:
+      status: 200
+      custom:
+        - type: notNull
+          field: "access_token"
+          message: "應返回 access_token"
+        - type: contains
+          field: "token_type"
+          value: "Bearer"
+          message: "Token 類型應為 Bearer"
+
+  # 步驟 2：使用 Access Token 存取受保護資源
+  - name: get_protected_resource
+    method: GET
+    path: /api/v1/protected/users
+    headers:
+      Accept: application/json
+    auth:
+      type: static
+      namespace: "oauth_client"
+    expect:
+      status: 200
+
+  # 步驟 3：建立新資源
+  - name: create_protected_resource
+    method: POST
+    path: /api/v1/protected/users
+    headers:
+      Content-Type: application/json
+    auth:
+      type: static
+      namespace: "oauth_client"
+    body:
+      name: "OAuth Test User"
+      email: "oauth.test@example.com"
+      role: "user"
+    expect:
+      status: 201
+      custom:
+        - type: notNull
+          field: "data.id"
+          message: "應返回新建使用者 ID"
+
+  # 步驟 4：更新資源
+  - name: update_protected_resource
+    method: PUT
+    path: /api/v1/protected/users/{user_id}
+    headers:
+      Content-Type: application/json
+    auth:
+      type: static
+      namespace: "oauth_client"
+    body:
+      name: "Updated OAuth Test User"
+      email: "updated.oauth.test@example.com"
+    expect:
+      status: 200
+
+  # 步驟 5：刪除資源
+  - name: delete_protected_resource
+    method: DELETE
+    path: /api/v1/protected/users/{user_id}
+    auth:
+      type: static
+      namespace: "oauth_client"
+    expect:
+      status: 204  # No Content
+
+  # 步驟 6：驗證資源已刪除
+  - name: verify_resource_deleted
+    method: GET
+    path: /api/v1/protected/users/{user_id}
+    auth:
+      type: static
+      namespace: "oauth_client"
+    expect:
+      status: 404  # Not Found

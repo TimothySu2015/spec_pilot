@@ -1,0 +1,105 @@
+# 多服務認證流程範例
+# 示範如何在同一個流程中使用不同服務的認證
+
+id: "multi-service-auth-example"
+description: "多服務認證與 API 呼叫流程"
+
+# 全域靜態認證設定
+auth:
+  static:
+    # 外部服務 API Token（從環境變數載入）
+    - namespace: "external_api"
+      token: "${SPEC_PILOT_TOKEN_EXTERNAL}"
+      expiresInSeconds: 7200
+
+    # 支付服務 API Token
+    - namespace: "payment_service"
+      token: "${SPEC_PILOT_TOKEN_PAYMENT}"
+      expiresInSeconds: 3600
+
+steps:
+  # 步驟 1：登入內部系統取得 Token
+  - name: internal_system_login
+    method: POST
+    path: /internal/auth/login
+    headers:
+      Content-Type: application/json
+    body:
+      apiKey: "internal-api-key"
+      secret: "internal-secret"
+    auth:
+      type: login
+      tokenExtraction:
+        path: "result.token"
+        expiresIn: 1800  # 30 分鐘
+        namespace: "internal_system"
+    expect:
+      status: 200
+
+  # 步驟 2：呼叫內部系統 API
+  - name: get_internal_data
+    method: GET
+    path: /internal/data/users
+    auth:
+      type: static
+      namespace: "internal_system"
+    expect:
+      status: 200
+
+  # 步驟 3：呼叫外部服務 API
+  - name: get_external_data
+    method: GET
+    path: /external/api/v1/info
+    headers:
+      Accept: application/json
+    auth:
+      type: static
+      namespace: "external_api"
+    expect:
+      status: 200
+
+  # 步驟 4：建立支付訂單
+  - name: create_payment_order
+    method: POST
+    path: /payment/orders
+    headers:
+      Content-Type: application/json
+    auth:
+      type: static
+      namespace: "payment_service"
+    body:
+      amount: 1000
+      currency: "TWD"
+      description: "Test Order from SpecPilot"
+    expect:
+      status: 201
+      custom:
+        - type: notNull
+          field: "data.orderId"
+          message: "應返回訂單 ID"
+
+  # 步驟 5：查詢支付狀態
+  - name: check_payment_status
+    method: GET
+    path: /payment/orders/{orderId}/status
+    auth:
+      type: static
+      namespace: "payment_service"
+    expect:
+      status: 200
+
+  # 步驟 6：使用內部系統紀錄支付結果
+  - name: log_payment_result
+    method: POST
+    path: /internal/payments/log
+    headers:
+      Content-Type: application/json
+    auth:
+      type: static
+      namespace: "internal_system"
+    body:
+      orderId: "${payment_order_id}"
+      status: "completed"
+      timestamp: "${current_timestamp}"
+    expect:
+      status: 200

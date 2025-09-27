@@ -19,7 +19,14 @@
       "Bash(pnpm -w run test)",
       "Bash(pnpm exec:*)",
       "Bash(node:*)",
-      "Bash(echo \"Exit code: $?\")"
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(pnpm -w run test packages/flow-parser)",
+      "Bash(pnpm -w run test packages/flow-parser/__tests__/auth-parser.test.ts)",
+      "Bash(pnpm -w run test packages/core-flow/__tests__/auth-handler.test.ts)",
+      "Bash(pnpm -w run test packages/config/__tests__/auth-config.test.ts)",
+      "Bash(pnpm -w run test packages/shared/__tests__/auth-errors.test.ts)",
+      "Bash(pnpm -w run test tests/integration/auth-flow.spec.ts)",
+      "Bash(pnpm -w run test tests/integration/auth-config.spec.ts)"
     ],
     "deny": [],
     "ask": []

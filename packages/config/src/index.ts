@@ -1,5 +1,6 @@
 import { config } from 'dotenv-flow';
 import { z } from 'zod';
+import { AuthConfigManager, type IAuthConfig } from './auth-config.js';
 
 // 初始化環境變數載入
 config({
@@ -16,9 +17,13 @@ const SpecPilotConfigSchema = z.object({
   port: z.number().int().positive().optional().default(443),
   token: z.string().optional(),
   environment: z.enum(['development', 'production', 'staging', 'test']).default('development'),
+  /** 認證設定 */
+  auth: z.any().optional(),
 });
 
-export type ISpecPilotConfig = z.infer<typeof SpecPilotConfigSchema>;
+export type ISpecPilotConfig = z.infer<typeof SpecPilotConfigSchema> & {
+  auth?: IAuthConfig;
+};
 
 /**
  * 從環境變數載入並驗證設定
@@ -35,6 +40,7 @@ function loadConfigFromEnv(): ISpecPilotConfig {
 }
 
 let cachedConfig: ISpecPilotConfig | null = null;
+let authConfigManager: AuthConfigManager | null = null;
 
 /**
  * 取得完整設定物件
@@ -42,6 +48,8 @@ let cachedConfig: ISpecPilotConfig | null = null;
 export function getConfig(): ISpecPilotConfig {
   if (!cachedConfig) {
     cachedConfig = loadConfigFromEnv();
+    // 載入認證設定
+    cachedConfig.auth = getAuthConfig();
   }
   return cachedConfig;
 }
@@ -72,6 +80,7 @@ export function getToken(): string | undefined {
  */
 export function resetConfigCache(): void {
   cachedConfig = null;
+  authConfigManager = null;
 }
 
 /**
@@ -84,3 +93,51 @@ export function overrideConfig(overrides: Partial<ISpecPilotConfig>): void {
     ...overrides,
   });
 }
+
+/**
+ * 取得認證設定管理器
+ */
+export function getAuthConfigManager(): AuthConfigManager {
+  if (!authConfigManager) {
+    authConfigManager = new AuthConfigManager();
+  }
+  return authConfigManager;
+}
+
+/**
+ * 取得認證設定
+ */
+export function getAuthConfig(): IAuthConfig {
+  return getAuthConfigManager().getConfig();
+}
+
+/**
+ * 取得所有靜態 Token 設定
+ */
+export function getStaticTokens() {
+  return getAuthConfigManager().getStaticTokens();
+}
+
+/**
+ * 取得指定命名空間的靜態 Token
+ */
+export function getStaticToken(namespace: string) {
+  return getAuthConfigManager().getStaticToken(namespace);
+}
+
+/**
+ * 取得命名空間設定
+ */
+export function getNamespaceConfig(namespace: string) {
+  return getAuthConfigManager().getNamespaceConfig(namespace);
+}
+
+/**
+ * 取得預設 Token 過期時間
+ */
+export function getDefaultExpirySeconds(): number {
+  return getAuthConfigManager().getDefaultExpirySeconds();
+}
+
+// 匯出認證設定相關類型和類別
+export { AuthConfigManager, type IAuthConfig, type IStaticToken, type INamespaceConfig } from './auth-config.js';

@@ -6,10 +6,11 @@ import { readFileSync } from 'fs';
 import { parse as parseYaml } from 'yaml';
 import { createStructuredLogger, IStructuredLogger } from '@specpilot/shared';
 import { FlowParseError, FlowValidationError } from './errors.js';
-import { 
-  IFlowDefinition, 
+import {
+  IFlowDefinition,
   HttpMethod
 } from './types.js';
+import { AuthParser, AuthConfigValidationError } from './auth-parser.js';
 import { resolve } from 'path';
 
 /**
@@ -138,6 +139,29 @@ export class FlowLoader {
       this.validateStep(step, index, executionId);
     });
 
+    // 驗證全域認證設定（可選）
+    if (flow.globals && typeof flow.globals === 'object') {
+      const globals = flow.globals as Record<string, unknown>;
+      if (globals.auth && typeof globals.auth === 'object') {
+        const authConfig = globals.auth as Record<string, unknown>;
+        if (authConfig.static) {
+          try {
+            AuthParser.parseGlobalStaticAuth(authConfig.static);
+          } catch (error) {
+            if (error instanceof AuthConfigValidationError) {
+              throw new FlowValidationError(
+                `全域認證設定錯誤：${error.message}`,
+                error.details,
+                '請檢查 globals.auth.static 設定格式是否正確',
+                { executionId, component: 'flow-parser' }
+              );
+            }
+            throw error;
+          }
+        }
+      }
+    }
+
     return flow;
   }
 
@@ -203,6 +227,23 @@ export class FlowLoader {
     // 驗證期望設定（可選但如果存在必須格式正確）
     if (stepData.expectations) {
       this.validateExpectations(stepData.expectations, stepData.name as string, executionId);
+    }
+
+    // 驗證認證設定（可選但如果存在必須格式正確）
+    if (stepData.auth) {
+      try {
+        AuthParser.parseStepAuth(stepData.auth, stepData.name as string);
+      } catch (error) {
+        if (error instanceof AuthConfigValidationError) {
+          throw new FlowValidationError(
+            error.message,
+            error.details,
+            '請檢查認證設定格式是否正確',
+            { executionId, component: 'flow-parser' }
+          );
+        }
+        throw error;
+      }
     }
   }
 

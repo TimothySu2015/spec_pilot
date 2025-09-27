@@ -79,6 +79,30 @@ export interface IFlowExpectations {
 }
 
 /**
+ * Token 提取設定介面
+ */
+export interface ITokenExtraction {
+  /** Token 提取路徑（如 "data.token"） */
+  path: string;
+  /** Token 有效期（秒） */
+  expiresIn?: number;
+  /** Token 命名空間 */
+  namespace?: string;
+}
+
+/**
+ * 認證設定介面
+ */
+export interface IFlowAuth {
+  /** 認證類型 */
+  type: 'login' | 'static';
+  /** Token 提取設定（登入類型使用） */
+  tokenExtraction?: ITokenExtraction;
+  /** 命名空間（靜態 Token 使用） */
+  namespace?: string;
+}
+
+/**
  * Flow 步驟介面
  */
 export interface IFlowStep {
@@ -90,6 +114,20 @@ export interface IFlowStep {
   expectations: IFlowExpectations;
   /** 重試政策 */
   retryPolicy?: IRetryPolicy;
+  /** 認證設定 */
+  auth?: IFlowAuth;
+}
+
+/**
+ * 靜態認證設定介面
+ */
+export interface IStaticAuth {
+  /** 命名空間 */
+  namespace: string;
+  /** Token 值 */
+  token: string;
+  /** Token 有效期（秒） */
+  expiresInSeconds?: number;
 }
 
 /**
@@ -100,12 +138,15 @@ export interface IFlowGlobals {
   baseUrl?: string;
   /** 全域標頭 */
   headers?: Record<string, string>;
-  /** 認證憑證 */
+  /** 認證憑證（舊版相容） */
   auth?: {
     /** 認證類型 */
     type: 'bearer' | 'basic';
     /** 憑證值 */
     token: string;
+  } | {
+    /** 靜態 Token 設定 */
+    static?: IStaticAuth[];
   };
   /** 全域重試政策 */
   retryPolicy?: IRetryPolicy;

@@ -10,6 +10,7 @@ import { IFlowDefinition, IFlowLoadOptions, IFlowLoadResult } from './types.js';
 export * from './types.js';
 export * from './errors.js';
 export { FlowLoader } from './loader.js';
+export { AuthParser, AuthConfigValidationError } from './auth-parser.js';
 
 // 預設的 logger 實例
 const defaultLogger = createStructuredLogger('flow-parser');

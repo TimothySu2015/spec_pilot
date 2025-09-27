@@ -31,8 +31,15 @@ describe('config', () => {
       const config = getConfig();
       
       expect(config).toEqual({
+        baseUrl: undefined,
         port: 443,
+        token: undefined,
         environment: 'test', // 測試環境下 NODE_ENV 會是 'test'
+        auth: {
+          static: [],
+          namespaces: {},
+          defaultExpirySeconds: 3600
+        }
       });
     });
 
@@ -49,6 +56,11 @@ describe('config', () => {
         port: 8080,
         token: 'test-token',
         environment: 'production',
+        auth: {
+          static: [],
+          namespaces: {},
+          defaultExpirySeconds: 3600
+        }
       });
     });
 

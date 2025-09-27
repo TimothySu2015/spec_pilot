@@ -1,0 +1,82 @@
+# 登入流程範例
+# 示範如何在 SpecPilot 中實作登入與後續 API 呼叫
+
+id: "user-login-example"
+description: "使用者登入與 API 呼叫完整流程"
+
+steps:
+  # 步驟 1：使用者登入並取得 Token
+  - name: user_login
+    method: POST
+    path: /auth/login
+    headers:
+      Content-Type: application/json
+    body:
+      username: "testuser"
+      password: "testpass123"
+    auth:
+      type: login
+      tokenExtraction:
+        path: "data.accessToken"  # 從回應的 data.accessToken 提取 Token
+        expiresIn: 3600          # Token 有效期 1 小時
+        namespace: "user_session" # 儲存到 user_session 命名空間
+    expect:
+      status: 200
+      custom:
+        - type: notNull
+          field: "data.accessToken"
+          message: "登入後應返回存取 Token"
+
+  # 步驟 2：取得使用者個人資料
+  - name: get_user_profile
+    method: GET
+    path: /user/profile
+    auth:
+      type: static
+      namespace: "user_session"  # 使用先前登入取得的 Token
+    expect:
+      status: 200
+      custom:
+        - type: notNull
+          field: "data.userId"
+          message: "應返回使用者 ID"
+        - type: notNull
+          field: "data.email"
+          message: "應返回使用者電子郵件"
+
+  # 步驟 3：更新使用者資料
+  - name: update_user_profile
+    method: PUT
+    path: /user/profile
+    headers:
+      Content-Type: application/json
+    auth:
+      type: static
+      namespace: "user_session"  # 繼續使用相同的 Token
+    body:
+      name: "Updated Test User"
+      bio: "Updated bio from SpecPilot test"
+    expect:
+      status: 200
+      custom:
+        - type: contains
+          field: "message"
+          value: "success"
+          message: "更新成功訊息"
+
+  # 步驟 4：取得使用者操作記錄
+  - name: get_user_activity
+    method: GET
+    path: /user/activity
+    query:
+      limit: "10"
+      offset: "0"
+    auth:
+      type: static
+      namespace: "user_session"
+    expect:
+      status: 200
+      custom:
+        - type: notNull
+          field: "data"
+          message: "應返回活動記錄"
