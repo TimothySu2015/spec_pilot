@@ -1,5 +1,6 @@
 # Project Agents
 
+使用繁體中文
 This file provides guidance and memory for Codex CLI.
 
 <!-- BEGIN: BMAD-AGENTS -->
