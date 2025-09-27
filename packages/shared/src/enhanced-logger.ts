@@ -265,6 +265,9 @@ export class EnhancedStructuredLogger implements IEnhancedStructuredLogger {
    * 計算資料雜湊值
    */
   private calculateHash(data: unknown): string {
+    if (data === undefined || data === null) {
+      return 'sha256:null';
+    }
     const jsonString = typeof data === 'string' ? data : JSON.stringify(data);
     const hash = createHash('sha256').update(jsonString).digest('hex');
     return `sha256:${hash}`;

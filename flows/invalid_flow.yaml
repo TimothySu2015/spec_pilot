@@ -1,0 +1,21 @@
+id: invalid-test
+name: "無效測試流程"
+
+steps:
+  - name: "缺少 method 的步驟"
+    request:
+      path: "/api/users"
+    expectations:
+      status: 200
+      
+  - name: "無效 HTTP 方法"
+    request:
+      method: "INVALID"
+      path: "/api/users"
+      
+  - name: "無效狀態碼"
+    request:
+      method: "GET"
+      path: "/api/users"
+    expectations:
+      status: 999

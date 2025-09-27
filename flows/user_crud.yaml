@@ -1,0 +1,75 @@
+id: user-crud-test
+name: "使用者 CRUD 操作測試"
+description: "完整的使用者建立、讀取、更新、刪除操作流程測試"
+
+globals:
+  baseUrl: "https://api.example.com"
+  headers:
+    Content-Type: "application/json"
+    User-Agent: "SpecPilot/1.0"
+  auth:
+    type: "bearer"
+    token: "test-jwt-token"
+  retryPolicy:
+    maxRetries: 3
+    delayMs: 1000
+    backoffMultiplier: 2
+
+steps:
+  - name: "建立新使用者"
+    request:
+      method: "POST"
+      path: "/api/users"
+      headers:
+        X-Request-ID: "create-user-001"
+      body:
+        name: "張三"
+        email: "zhang.san@example.com"
+        age: 30
+    expectations:
+      status: 201
+      schema: "User"
+      custom:
+        - type: "notNull"
+          field: "id"
+          message: "使用者 ID 不能為空"
+        - type: "regex"
+          field: "email"
+          value: "^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$"
+          message: "電子郵件格式不正確"
+
+  - name: "讀取使用者資訊"
+    request:
+      method: "GET"
+      path: "/api/users/{userId}"
+      query:
+        include: "profile"
+    expectations:
+      status: 200
+      schema: "UserDetail"
+      custom:
+        - type: "contains"
+          field: "name"
+          value: "張三"
+
+  - name: "更新使用者資訊"
+    request:
+      method: "PUT"
+      path: "/api/users/{userId}"
+      body:
+        name: "張三豐"
+        age: 31
+    expectations:
+      status: 200
+      custom:
+        - type: "notNull"
+          field: "updatedAt"
+
+  - name: "刪除使用者"
+    request:
+      method: "DELETE"
+      path: "/api/users/{userId}"
+    expectations:
+      status: 204
+    retryPolicy:
+      maxRetries: 1

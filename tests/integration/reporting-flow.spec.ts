@@ -2,9 +2,9 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
-import { ReportValidator, SchemaValidator } from '@specpilot/shared';
+import { ReportValidator, type ExecutionConfig } from '@specpilot/reporting';
+import { SchemaValidator } from '@specpilot/shared';
 import type { IFlowDefinition as FlowParserDefinition } from '@specpilot/flow-parser';
-import type { ExecutionConfig } from '@specpilot/reporting';
 
 describe('Reporting Flow Integration', () => {
   let orchestrator: EnhancedFlowOrchestrator;
@@ -131,6 +131,9 @@ describe('Reporting Flow Integration', () => {
               method: 'POST',
               url: '/invalid-endpoint',
               headers: {}
+            },
+            expectations: {
+              status: 200  // 期望 200，但會得到 404，因此失敗
             }
           }
         ]

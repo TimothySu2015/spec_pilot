@@ -1,0 +1,43 @@
+{
+  "executionId": "test-execution-123",
+  "flowId": "report-test-flow",
+  "startTime": "2025-09-27T19:55:56.827Z",
+  "endTime": "2025-09-27T19:55:56.828Z",
+  "duration": 1,
+  "status": "success",
+  "summary": {
+    "totalSteps": 1,
+    "successfulSteps": 1,
+    "failedSteps": 0,
+    "skippedSteps": 0
+  },
+  "steps": [
+    {
+      "name": "sample_step",
+      "status": "success",
+      "startTime": "2025-09-27T19:55:55.827Z",
+      "duration": 1000,
+      "request": {
+        "method": "GET",
+        "url": "https://api.example.com/sample",
+        "headerHash": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 200,
+        "success": true,
+        "validationResults": [
+          "success"
+        ],
+        "errorMessage": null
+      }
+    }
+  ],
+  "config": {
+    "baseUrl": "https://api.example.com",
+    "fallbackUsed": false,
+    "authNamespaces": [
+      "default"
+    ]
+  }
+}

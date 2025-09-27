@@ -2,7 +2,7 @@ import Ajv, { type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import { createStructuredLogger } from './logger.js';
 import type { StructuredLogEntry } from './structured-log-types.js';
-import structuredLogSchema from './schemas/structured-log.schema.json' assert { type: 'json' };
+import structuredLogSchema from './schemas/structured-log.schema.json' with { type: 'json' };
 
 const logger = createStructuredLogger('log-validator');
 

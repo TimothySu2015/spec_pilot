@@ -17,6 +17,8 @@
     "@specpilot/spec-loader": "workspace:*",
     "@specpilot/flow-parser": "workspace:*",
     "@specpilot/shared": "workspace:*",
+    "@specpilot/core-flow": "workspace:*",
+    "@specpilot/reporting": "workspace:*",
     "commander": "^11.1.0"
   }
 }

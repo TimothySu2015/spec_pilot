@@ -1,0 +1,10 @@
+id: minimal-test
+name: "最小化測試流程"
+
+steps:
+  - name: "基本 GET 請求"
+    request:
+      method: "GET"
+      path: "/api/health"
+    expectations:
+      status: 200

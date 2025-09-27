@@ -4,7 +4,7 @@ import {
   EVENT_CODES
 } from '@specpilot/shared';
 import {
-  ReportGenerator,
+  EnhancedReportGenerator,
   type StepInput,
   type ExecutionConfig
 } from '@specpilot/reporting';
@@ -16,13 +16,13 @@ import type { ITestResult, IRunContext } from './index.js';
  */
 export class ReportingIntegration {
   private logger: IEnhancedStructuredLogger;
-  private reportGenerator: ReportGenerator;
+  private reportGenerator: EnhancedReportGenerator;
   private stepInputs: StepInput[] = [];
   private flowStartTime: string = '';
 
   constructor(executionId: string, component: string = 'reporting-integration') {
     this.logger = createEnhancedStructuredLogger(component, executionId);
-    this.reportGenerator = new ReportGenerator();
+    this.reportGenerator = new EnhancedReportGenerator();
   }
 
   /**

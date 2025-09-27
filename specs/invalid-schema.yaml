@@ -1,0 +1,42 @@
+openapi: 3.0.3
+info:
+  title: Invalid Schema Test
+  version: 1.0.0
+  description: 包含無效 schema 的測試規格
+paths:
+  /test:
+    get:
+      summary: 測試端點
+      responses:
+        '200':
+          description: 成功回應
+          content:
+            application/json:
+              schema:
+                # 無效的 $ref - 指向不存在的 schema
+                $ref: '#/components/schemas/NonExistentSchema'
+  /invalid-param:
+    get:
+      summary: 無效參數測試
+      parameters:
+        - name: testParam
+          in: query
+          # 缺少必要的 schema 定義
+      responses:
+        '200':
+          description: 回應
+components:
+  schemas:
+    ValidSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    InvalidCircularRef:
+      type: object
+      properties:
+        self:
+          # 循環引用
+          $ref: '#/components/schemas/InvalidCircularRef'

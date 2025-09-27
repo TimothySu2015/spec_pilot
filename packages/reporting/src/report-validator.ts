@@ -2,7 +2,7 @@ import Ajv, { type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import { createStructuredLogger } from '@specpilot/shared';
 import { ExecutionReport } from './execution-report.js';
-import executionReportSchema from './schemas/execution-report.schema.json' assert { type: 'json' };
+import executionReportSchema from './schemas/execution-report.schema.json' with { type: 'json' };
 
 const logger = createStructuredLogger('report-validator');
 

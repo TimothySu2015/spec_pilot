@@ -1,0 +1,8 @@
+schema: 1
+story: '2.5'
+gate: PASS
+status_reason: 'CLI 端對端測試框架成功建立，56 個測試案例全部通過，完整覆蓋核心流程並符合 NFR2 效能要求。'
+reviewer: 'Quinn'
+updated: '2025-09-28T08:30:00Z'
+top_issues: []
+waiver: { active: false }

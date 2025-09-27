@@ -4,6 +4,8 @@ import { AuthHandler, type IAuthHandleResult } from './auth-handler.js';
 import { ReportingIntegration } from './reporting-integration.js';
 import type { ExecutionConfig } from '@specpilot/reporting';
 import type { ITestResult, IRunContext } from './index.js';
+import { HttpRunner, type IHttpRequest } from '@specpilot/http-runner';
+import { ValidationEngine, type IValidationInput } from '@specpilot/validation';
 
 const logger = createStructuredLogger('enhanced-orchestrator');
 
@@ -13,9 +15,13 @@ const logger = createStructuredLogger('enhanced-orchestrator');
 export class EnhancedFlowOrchestrator {
   private authHandler: AuthHandler;
   private reportingIntegration: ReportingIntegration | null = null;
+  private httpRunner: HttpRunner;
+  private validationEngine: ValidationEngine;
 
-  constructor(authHandler?: AuthHandler) {
+  constructor(authHandler?: AuthHandler, config?: { baseUrl?: string }) {
     this.authHandler = authHandler || new AuthHandler();
+    this.httpRunner = new HttpRunner({ baseUrl: config?.baseUrl });
+    this.validationEngine = new ValidationEngine();
   }
 
   /**
@@ -176,15 +182,16 @@ export class EnhancedFlowOrchestrator {
     try {
       let authResult: IAuthHandleResult | undefined;
 
-      // 模擬請求物件
-      const mockRequest = {
-        method: step.request.method,
-        url: step.request.url,
+      // 建立 HTTP 請求
+      const httpRequest: IHttpRequest = {
+        method: step.request.method.toUpperCase() as any,
+        url: step.request.url || step.request.path || '/',
         headers: { ...step.request.headers } || {},
         body: step.request.body
       };
 
-      // 處理靜態認證（檢查 Token 並注入 Authorization header）
+      // 處理靜態認證（檢查並注入 Token）
+      let tokenNamespace = 'default';
       if (step.auth?.type === 'static') {
         authResult = await context.authHandler.handleStepAuth(
           step,
@@ -192,53 +199,75 @@ export class EnhancedFlowOrchestrator {
           context.executionId
         );
 
-        if (authResult.success) {
-          const namespace = step.auth.namespace || 'default';
-          context.authHandler.injectAuthHeaders(mockRequest.headers, namespace);
-
-          logger.debug('注入 Authorization header', {
-            stepName: step.name,
-            namespace,
-            executionId: context.executionId,
-            component: 'enhanced-orchestrator'
-          });
-        }
+        tokenNamespace = step.auth.namespace || 'default';
+        logger.debug('使用靜態認證', {
+          stepName: step.name,
+          namespace: tokenNamespace,
+          authSuccess: authResult.success,
+          executionId: context.executionId,
+          component: 'enhanced-orchestrator'
+        });
       }
 
-      // 模擬 HTTP 請求執行
-      // TODO: 這裡應該整合實際的 HTTP Runner
-      await new Promise(resolve => setTimeout(resolve, 10));
-
-      const mockResponse = {
-        status: 200,
-        data: {
-          token: 'mock_token_value',
-          user_id: 123,
-          expires_in: 3600
-        }
-      };
+      // 執行 HTTP 請求
+      const httpResponse = await this.httpRunner.execute(httpRequest, {
+        tokenNamespace,
+        extractToken: step.auth?.type === 'login' && step.auth.tokenExtraction ? {
+          path: step.auth.tokenExtraction.jsonPath || '$.token',
+          namespace: step.auth.tokenExtraction.namespace || 'default'
+        } : undefined
+      });
 
       // 處理登入認證（提取 Token）
       if (step.auth?.type === 'login') {
         authResult = await context.authHandler.handleStepAuth(
           step,
-          mockResponse,
+          httpResponse,
           context.executionId
         );
       }
 
-      // 模擬驗證結果
-      const validationResults = ['status_check_passed', 'schema_validation_passed'];
+      // 執行驗證（如果有定義 expectations）
+      let validationSuccess = true;
+      const validationResults: string[] = [];
+
+      if (step.expectations) {
+        const validationInput: IValidationInput = {
+          step,
+          response: httpResponse,
+          expectations: step.expectations,
+          schemas: {}, // TODO: 從 OpenAPI spec 載入 schemas
+          logger,
+          executionId: context.executionId,
+          runContext: {
+            executionId: context.executionId,
+            flowId: context.flow.id,
+            timestamp: context.startTime
+          }
+        };
+
+        const validationOutcome = await this.validationEngine.validateResponse(validationInput);
+        validationSuccess = validationOutcome.status === 'success';
+
+        if (validationOutcome.status === 'success') {
+          validationResults.push('all_validations_passed');
+        } else {
+          for (const issue of validationOutcome.issues) {
+            validationResults.push(`${issue.category}_${issue.severity}: ${issue.message}`);
+          }
+        }
+      }
+
       const responseData = {
-        statusCode: mockResponse.status,
+        statusCode: httpResponse.status,
         validationResults,
-        errorMessage: undefined
+        errorMessage: validationSuccess ? undefined : 'Validation failed'
       };
 
       const result: ITestResult = {
-        status: 'passed',
+        status: validationSuccess ? 'passed' : 'failed',
         duration: Date.now() - startTime,
-        response: mockResponse,
+        response: httpResponse,
         authStatus: step.auth ? {
           hasAuth: true,
           authSuccess: authResult?.success ?? true,
@@ -254,13 +283,13 @@ export class EnhancedFlowOrchestrator {
         this.reportingIntegration.recordStepComplete(
           step,
           result,
-          mockRequest,
+          httpRequest,
           responseData
         );
         this.reportingIntegration.recordValidationResult(
           step.name,
           validationResults,
-          true
+          validationSuccess
         );
       }
 
@@ -269,6 +298,7 @@ export class EnhancedFlowOrchestrator {
         duration: result.duration,
         hasAuthProcessing: !!authResult,
         authSuccess: authResult?.success,
+        validationSuccess,
         executionId: context.executionId,
         component: 'enhanced-orchestrator'
       });
@@ -278,9 +308,9 @@ export class EnhancedFlowOrchestrator {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
 
-      const mockRequest = {
+      const httpRequest = {
         method: step.request.method,
-        url: step.request.url,
+        url: step.request.url || step.request.path || '/',
         headers: { ...step.request.headers } || {},
         body: step.request.body
       };
@@ -307,7 +337,7 @@ export class EnhancedFlowOrchestrator {
         this.reportingIntegration.recordStepComplete(
           step,
           result,
-          mockRequest,
+          httpRequest,
           errorResponse
         );
         this.reportingIntegration.recordValidationResult(

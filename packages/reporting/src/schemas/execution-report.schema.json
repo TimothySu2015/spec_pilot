@@ -135,8 +135,7 @@
             },
             "url": {
               "type": "string",
-              "description": "完整請求 URL",
-              "format": "uri"
+              "description": "請求 URL (可以是完整 URL 或相對路徑)"
             },
             "headerHash": {
               "type": "string",

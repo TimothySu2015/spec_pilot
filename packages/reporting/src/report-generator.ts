@@ -41,6 +41,11 @@ export class ReportGenerator {
    * 計算資料雜湊值
    */
   private calculateHash(data: unknown): string {
+    // 對於 undefined/null，使用空字串計算 hash
+    if (data === undefined || data === null) {
+      const hash = createHash('sha256').update('').digest('hex');
+      return `sha256:${hash}`;
+    }
     const jsonString = typeof data === 'string' ? data : JSON.stringify(data);
     const hash = createHash('sha256').update(jsonString).digest('hex');
     return `sha256:${hash}`;

@@ -5,8 +5,10 @@ import { getConfig, overrideConfig } from '@specpilot/config';
 import { createStructuredLogger } from '@specpilot/shared';
 import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
+import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
+import type { ExecutionConfig } from '@specpilot/reporting';
+import { existsSync, mkdirSync } from 'fs';
+import { resolve, join, dirname } from 'path';
 
 const logger = createStructuredLogger('cli');
 
@@ -171,22 +173,91 @@ async function main(): Promise<void> {
           process.exit(2);
         }
 
-        // TODO: 實作核心測試執行邏輯 (Story 1.5+)
-        logger.warn('核心測試引擎尚未實作', { 
-          executionId,
-          message: '待後續 Story 完成測試執行功能' 
-        });
-        
-        process.stdout.write('⚠️  核心測試執行功能將在後續版本實作\n');
+        // 執行測試流程
+        try {
+          process.stdout.write('\n🚀 開始執行測試流程...\n');
 
-        logger.info('CLI_COMPLETE', { 
-          executionId,
-          event: 'CLI_COMPLETE',
-          message: 'CLI 執行完成 - 規格與流程解析成功'
-        });
-        
-        process.stdout.write('✅ CLI 執行完成\n');
-        process.exit(0);
+          const baseUrl = config.baseUrl || 'http://localhost:3000';
+          const orchestrator = new EnhancedFlowOrchestrator(undefined, { baseUrl });
+
+          // 準備報表輸出目錄
+          const projectRoot = process.cwd();
+          const reportDir = join(projectRoot, 'reports');
+          const logDir = join(projectRoot, 'logs');
+
+          if (!existsSync(reportDir)) {
+            mkdirSync(reportDir, { recursive: true });
+          }
+          if (!existsSync(logDir)) {
+            mkdirSync(logDir, { recursive: true });
+          }
+
+          const reportPath = join(reportDir, `result-${executionId}.json`);
+          const logPath = join(logDir, `execution-${executionId}.log`);
+
+          // 準備執行配置
+          const executionConfig: ExecutionConfig = {
+            baseUrl: config.baseUrl || 'http://localhost:3000',
+            fallbackUsed: false,
+            authNamespaces: []
+          };
+
+          // 執行流程
+          const result = await orchestrator.executeFlowWithReporting(
+            flow,
+            executionConfig,
+            {
+              reportPath,
+              enableReporting: true,
+              logPath
+            }
+          );
+
+          // 輸出執行結果摘要（reportSummary 是格式化的字串）
+          if (result.reportSummary) {
+            process.stdout.write(result.reportSummary);
+            process.stdout.write('\n');
+          }
+
+          process.stdout.write(`\n📄 報表已產生：${reportPath}\n`);
+          process.stdout.write(`📝 日誌已產生：${logPath}\n`);
+
+          // 根據測試結果設定退出碼（檢查結果陣列）
+          const hasFailures = result.results.some(r => r.status === 'failed');
+
+          if (hasFailures) {
+            const failedCount = result.results.filter(r => r.status === 'failed').length;
+            logger.warn('CLI_COMPLETE_WITH_FAILURES', {
+              executionId,
+              event: 'CLI_COMPLETE_WITH_FAILURES',
+              message: 'CLI 執行完成 - 部分測試失敗',
+              failedSteps: failedCount
+            });
+
+            process.stdout.write('\n⚠️  測試執行完成，但有失敗的步驟\n');
+            process.exit(1);
+          } else {
+            logger.info('CLI_COMPLETE', {
+              executionId,
+              event: 'CLI_COMPLETE',
+              message: 'CLI 執行完成 - 所有測試通過'
+            });
+
+            process.stdout.write('\n✅ 測試執行完成 - 所有步驟通過\n');
+            process.exit(0);
+          }
+
+        } catch (error) {
+          logger.error('CLI_EXECUTION_FAILURE', {
+            executionId,
+            event: 'CLI_EXECUTION_FAILURE',
+            error: error instanceof Error ? error.message : error,
+            errorType: 'EXECUTION_ERROR'
+          });
+
+          process.stderr.write(`\n❌ 測試執行失敗：${error instanceof Error ? error.message : error}\n`);
+          process.exit(2);
+        }
 
       } catch (error) {
         logger.error('CLI_FAILURE', {
@@ -218,7 +289,9 @@ async function main(): Promise<void> {
 }
 
 // 執行主程式
-if (import.meta.url.endsWith(process.argv[1]) || process.argv[1].endsWith('index.ts')) {
+// 當檔案作為主模組執行時（包括透過 tsx 執行）
+const isMainModule = import.meta.url.includes('index.ts') || import.meta.url.includes('index.js');
+if (isMainModule) {
   main().catch((error) => {
     process.stderr.write(`未處理的錯誤: ${error}\n`);
     process.exit(1);

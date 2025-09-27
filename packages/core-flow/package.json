@@ -21,6 +21,10 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@specpilot/shared": "workspace:*"
+    "@specpilot/shared": "workspace:*",
+    "@specpilot/flow-parser": "workspace:*",
+    "@specpilot/http-runner": "workspace:*",
+    "@specpilot/validation": "workspace:*",
+    "@specpilot/reporting": "workspace:*"
   }
 }
