@@ -10,8 +10,8 @@
  * pnpm run start:mcp
  */
 
-const { spawn } = require('child_process');
-const readline = require('readline');
+import { spawn } from 'child_process';
+import readline from 'readline';
 
 class McpClient {
   constructor() {
@@ -299,8 +299,6 @@ process.on('uncaughtException', (error) => {
 });
 
 // 執行測試
-if (require.main === module) {
-  main();
-}
+main();
 
-module.exports = McpClient;
+export default McpClient;
