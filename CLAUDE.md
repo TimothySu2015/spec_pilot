@@ -27,9 +27,15 @@ SpecPilot 是一套使用 Node.js 與 TypeScript 打造的 API 測試與驗證�
 - `pnpm install` - 安裝 Monorepo 依賴套件
 - `pnpm run dev` - 啟動 CLI 開發模式
 - `pnpm run start` - 執行編譯後的 CLI
-- `pnpm run start:mcp` - 啟動 MCP JSON-RPC 伺服器
+- `pnpm run start:mcp` - 啟動 MCP Server（基於官方 TypeScript SDK）
+- `pnpm run inspect:mcp` - 使用 MCP Inspector 除錯 MCP Server
 - `pnpm run lint` - 執行程式碼品質檢查
 - `pnpm run test` - 執行單元與整合測試
+
+### MCP Server 設定
+- 編譯 MCP Server：`cd apps/mcp-server && pnpm run build`
+- 產生可執行的 JavaScript 檔案：`apps/mcp-server/dist/index.js`
+- Claude Desktop 設定範例請參考 `MCP-SETUP.md`
 
 ### 測試指令
 - `pnpm run mock` - 啟動本地模擬伺服器（開發用）
@@ -67,7 +73,7 @@ pnpm run start -- --spec specs/openapi.yaml --flow flows/user_crud.yaml --baseUr
 specpilot/
 ├── apps/
 │   ├── cli/                    # CLI 介面應用程式
-│   └── mcp-server/            # MCP JSON-RPC 伺服器
+│   └── mcp-server/            # MCP Server（基於官方 TypeScript SDK）
 ├── packages/
 │   ├── core-flow/             # 流程協調引擎
 │   ├── spec-loader/           # OpenAPI 規格解析
@@ -113,11 +119,13 @@ specpilot/
 - 執行測試流程並輸出結構化報表
 - 退出碼：0（成功）、1（測試失敗）、2（系統錯誤）
 
-### MCP 介面（JSON-RPC 2.0）
-- `listSpecs` - 列出可用的 OpenAPI 規格
-- `listFlows` - 列出可用的測試流程
-- `runFlow` - 執行測試（支援檔案路徑或內嵌內容）
-- `getReport` - 取得最新的測試報表
+### MCP 介面（基於官方 TypeScript SDK）
+- **listSpecs** - 列出可用的 OpenAPI 規格檔案
+- **listFlows** - 列出可用的測試流程檔案
+- **runFlow** - 執行測試流程並產生報表（支援檔案路徑或內嵌內容）
+- **getReport** - 取得測試執行報表（支援 JSON 和摘要格式）
+
+MCP Server 使用官方 `@modelcontextprotocol/sdk` 實作，提供標準化的工具介面，完全相容 Claude Desktop 與其他 MCP 客戶端。
 
 ### 驗證系統
 - HTTP 狀態碼驗證

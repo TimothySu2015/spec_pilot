@@ -1,15 +1,35 @@
 {
   "name": "@specpilot/mcp-server",
   "version": "0.1.0",
-  "description": "SpecPilot MCP JSON-RPC Server",
-  "type": "module",
+  "description": "SpecPilot MCP Server 基於官方 TypeScript SDK",
   "main": "dist/index.js",
+  "bin": {
+    "specpilot-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsx src/index.ts"
+    "build": "node build.js",
+    "dev": "tsx src/index.ts",
+    "prepare": "npm run build",
+    "watch": "tsup --watch",
+    "inspector": "npx @modelcontextprotocol/inspector dist/index.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.2",
     "@specpilot/config": "workspace:*",
-    "@specpilot/shared": "workspace:*"
+    "@specpilot/core-flow": "workspace:*",
+    "@specpilot/flow-parser": "workspace:*",
+    "@specpilot/reporting": "workspace:*",
+    "@specpilot/shared": "workspace:*",
+    "@specpilot/spec-loader": "workspace:*",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "axios": "1.6.8",
+    "pino": "9.0.0",
+    "pino-multi-stream": "^6.0.0",
+    "pino-pretty": "^13.1.1",
+    "zod": "^3.25.76"
   }
 }

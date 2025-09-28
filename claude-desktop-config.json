@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "specpilot": {
+      "command": "node",
+      "args": ["D:\\codes\\SpecPilot\\apps\\mcp-server\\dist\\index.js"],
+      "cwd": "D:\\codes\\SpecPilot"
+    }
+  }
+}

@@ -77,7 +77,13 @@
       "Bash(then )",
       "Bash(echo:*)",
       "Bash(else )",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(pnpm -w run test tests/e2e/helpers/ --reporter=verbose --run)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "Bash(pnpm why:*)",
+      "Bash(pnpm list:*)"
     ],
     "deny": [],
     "ask": []
