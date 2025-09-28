@@ -360,14 +360,58 @@ grep "exec-2025-09-28-123456" logs/specpilot.log
 3. **敏感資料遮罩**: 日誌系統自動遮罩認證憑證等敏感資訊
 4. **輸入驗證**: 所有方法參數都經過格式驗證
 
+## Claude Desktop 整合
+
+### 設定方式
+
+在 Claude Desktop 設定檔中新增 SpecPilot MCP 伺服器：
+
+**設定檔位置**：
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+
+**設定範例**：
+```json
+{
+  "mcpServers": {
+    "specpilot": {
+      "command": "pnpm",
+      "args": ["run", "start:mcp"],
+      "cwd": "/path/to/specpilot",
+      "env": {
+        "NODE_ENV": "production",
+        "SPEC_PILOT_BASE_URL": "https://your-api.example.com",
+        "SPEC_PILOT_TOKEN": "your-api-token"
+      }
+    }
+  }
+}
+```
+
+### 使用範例
+
+設定完成後，您可以在 Claude Desktop 中：
+
+```
+你：列出可用的 API 規格檔案
+Claude：[執行 listSpecs 方法並顯示結果]
+
+你：執行用戶測試流程並分析結果
+Claude：[執行 runFlow 和 getReport，提供測試分析]
+```
+
+詳細整合指南請參考：[Claude Desktop 整合指南](claude-desktop-integration.md)
+
 ## 與 CLI 介面比較
 
 | 特性 | CLI 介面 | MCP 介面 |
 |------|----------|----------|
-| 適用場景 | 本地開發、CI/CD | AI Agent 整合、自動化系統 |
+| 適用場景 | 本地開發、CI/CD | AI Agent 整合、Claude Desktop |
 | 參數方式 | 命令列參數 | JSON-RPC 2.0 格式 |
 | 輸出方式 | 終端輸出 + 檔案 | 結構化 JSON 回應 |
 | 執行模式 | 一次性執行 | 持續運作服務 |
 | 啟動指令 | `pnpm run start` | `pnpm run start:mcp` |
+| AI 整合 | 不支援 | 完整支援 Claude Desktop |
 
-CLI 介面適合手動操作與腳本自動化，MCP 介面則專為程式化整合設計，提供更豐富的結構化資訊。
+CLI 介面適合手動操作與腳本自動化，MCP 介面則專為程式化整合與 AI Agent 協作設計。
