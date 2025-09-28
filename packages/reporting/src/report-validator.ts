@@ -51,13 +51,13 @@ export class ReportValidator {
   /**
    * 驗證執行報表
    */
-  validateReport(report: unknown): ValidationResult {
+  validateReport(report: unknown): IValidationResult {
     logger.debug('開始驗證執行報表', {
       reportType: typeof report,
     });
 
     const valid = this.validateExecutionReport(report);
-    const errors: ValidationError[] = [];
+    const errors: IValidationError[] = [];
 
     if (!valid && this.validateExecutionReport.errors) {
       for (const error of this.validateExecutionReport.errors) {
@@ -69,7 +69,7 @@ export class ReportValidator {
       }
     }
 
-    const result: ValidationResult = {
+    const result: IValidationResult = {
       valid,
       errors,
     };
@@ -116,7 +116,7 @@ export class ReportValidator {
   /**
    * 驗證步驟結果格式
    */
-  validateStepResult(stepResult: unknown): ValidationResult {
+  validateStepResult(stepResult: unknown): IValidationResult {
     const stepSchema = executionReportSchema.definitions?.StepResult;
 
     if (!stepSchema) {
@@ -133,7 +133,7 @@ export class ReportValidator {
 
     const validateStep = this.ajv.compile(stepSchema);
     const valid = validateStep(stepResult);
-    const errors: ValidationError[] = [];
+    const errors: IValidationError[] = [];
 
     if (!valid && validateStep.errors) {
       for (const error of validateStep.errors) {

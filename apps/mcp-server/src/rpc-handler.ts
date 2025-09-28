@@ -214,6 +214,49 @@ export function validateRunFlowParams(params: unknown): {
 }
 
 /**
+ * getReport 方法參數介面（目前無參數，預留未來擴展）
+ */
+export interface IGetReportParams {
+  // 預留給未來擴展，例如：指定報表類型、時間範圍等
+}
+
+/**
+ * getReport 方法回應介面
+ */
+export interface IGetReportResult {
+  reportPath: string; // 實際讀取的報表檔案路徑
+  executionId: string; // 從報表中提取的執行 ID
+  status: 'success' | 'partial' | 'failure'; // 從報表中提取的狀態
+  reportSummary: {
+    totalSteps: number;
+    successfulSteps: number;
+    failedSteps: number;
+    skippedSteps: number;
+    duration: number; // 毫秒
+  };
+  report: unknown; // 完整報表內容
+}
+
+/**
+ * 驗證 getReport 參數
+ */
+export function validateGetReportParams(params: unknown): {
+  isValid: boolean;
+  error?: string;
+  params?: IGetReportParams;
+} {
+  // 目前版本無參數要求，但需要基礎驗證結構
+  if (params !== undefined && params !== null && typeof params !== 'object') {
+    return { isValid: false, error: '參數必須是物件或為空' };
+  }
+
+  // 如果有參數，轉換為空物件（預留未來擴展）
+  const getReportParams: IGetReportParams = {};
+
+  return { isValid: true, params: getReportParams };
+}
+
+/**
  * 建立標準 JSON-RPC 成功回應
  */
 export function createSuccessResponse(

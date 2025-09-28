@@ -98,3 +98,11 @@ export interface IPartialExecutionReport extends Omit<IExecutionReport, 'endTime
   /** 失敗原因 */
   failureReason: string;
 }
+
+/**
+ * 類型別名，用於向後兼容
+ */
+export type ExecutionReport = IExecutionReport;
+export type StepResult = IStepResult;
+export type ExecutionSummary = IExecutionSummary;
+export type ExecutionConfig = IExecutionConfig;

@@ -189,13 +189,10 @@ describe('MCP Server 整合測試', () => {
       expect(response.error.message).toContain('必須提供檔案模式或內容模式參數');
     });
 
-    it('應該處理 getReport 請求', async () => {
+    it('應該處理 getReport 請求 - 檔案不存在情況', async () => {
       const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'getReport',
-        params: {
-          executionId: 'exec-123',
-        },
         id: 4,
       });
 
@@ -204,9 +201,53 @@ describe('MCP Server 整合測試', () => {
 
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(4);
-      expect(response.result).toBeDefined();
-      expect(response.result.report).toBeNull();
-      expect(response.error).toBeUndefined();
+      expect(response.result).toBeUndefined();
+      expect(response.error).toBeDefined();
+      expect(response.error.code).toBe(-32603);
+      expect(response.error.message).toBe('找不到測試報表檔案');
+    });
+
+    it('應該處理不帶參數的 getReport 請求', async () => {
+      const requestData = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'getReport',
+        id: 'getReport-test-1',
+      });
+
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
+
+      expect(response.jsonrpc).toBe('2.0');
+      expect(response.id).toBe('getReport-test-1');
+      // 在沒有報表檔案的情況下應該回傳錯誤
+      expect(response.error).toBeDefined();
+      expect(response.error.code).toBe(-32603);
+      expect(response.error.message).toBe('找不到測試報表檔案');
+    });
+
+    it('應該正確驗證 getReport 的 JSON-RPC 回應格式', async () => {
+      const requestData = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'getReport',
+        id: 'format-test',
+      });
+
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
+
+      // 驗證 JSON-RPC 2.0 格式
+      expect(response).toHaveProperty('jsonrpc', '2.0');
+      expect(response).toHaveProperty('id', 'format-test');
+
+      // 應該有錯誤或結果其中之一，但不能兩者都有
+      if (response.error) {
+        expect(response.result).toBeUndefined();
+        expect(response.error).toHaveProperty('code');
+        expect(response.error).toHaveProperty('message');
+      } else {
+        expect(response.result).toBeDefined();
+        expect(response.error).toBeUndefined();
+      }
     });
   });
 
