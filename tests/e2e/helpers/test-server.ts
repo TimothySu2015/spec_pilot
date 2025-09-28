@@ -124,3 +124,81 @@ export class TestHttpServer {
     return this.port;
   }
 }
+
+// 獨立執行 Mock Server
+async function startMockServer() {
+  const server = new TestHttpServer();
+
+  // 預設的 Mock 端點
+  server.setup([
+    {
+      method: 'get',
+      path: '/api/health',
+      statusCode: 200,
+      response: {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+      }
+    },
+    {
+      method: 'post',
+      path: '/auth/login',
+      statusCode: 200,
+      response: {
+        token: 'test-token-12345',
+        expiresIn: 3600,
+        tokenType: 'Bearer'
+      }
+    },
+    {
+      method: 'get',
+      path: '/api/users',
+      statusCode: 200,
+      response: {
+        users: [
+          { id: 1, name: 'Test User 1', email: 'test1@example.com' },
+          { id: 2, name: 'Test User 2', email: 'test2@example.com' }
+        ]
+      }
+    },
+    {
+      method: 'post',
+      path: '/api/users',
+      statusCode: 201,
+      response: {
+        id: 3,
+        name: 'New User',
+        email: 'newuser@example.com',
+        created: new Date().toISOString()
+      }
+    }
+  ]);
+
+  const port = await server.start(3000);
+  console.log(`\n🚀 Mock Server 已啟動在 http://localhost:${port}`);
+  console.log('可用的 API 端點：');
+  console.log('  GET  /api/health  - 健康檢查');
+  console.log('  POST /auth/login  - 登入認證');
+  console.log('  GET  /api/users   - 取得使用者列表');
+  console.log('  POST /api/users   - 建立新使用者');
+  console.log('\n按 Ctrl+C 停止伺服器\n');
+
+  // 處理 Ctrl+C 優雅關閉
+  process.on('SIGINT', async () => {
+    console.log('\n正在關閉 Mock Server...');
+    await server.stop();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    console.log('\n正在關閉 Mock Server...');
+    await server.stop();
+    process.exit(0);
+  });
+}
+
+// 如果直接執行此檔案，啟動 Mock Server
+if (process.argv[1] && process.argv[1].endsWith('test-server.ts')) {
+  startMockServer().catch(console.error);
+}
