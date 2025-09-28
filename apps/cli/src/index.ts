@@ -6,9 +6,9 @@ import { createStructuredLogger } from '@specpilot/shared';
 import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
-import type { ExecutionConfig } from '@specpilot/reporting';
+import type { IExecutionConfig } from '@specpilot/reporting';
 import { existsSync, mkdirSync } from 'fs';
-import { resolve, join, dirname } from 'path';
+import { resolve, join } from 'path';
 
 const logger = createStructuredLogger('cli');
 
@@ -196,7 +196,7 @@ async function main(): Promise<void> {
           const logPath = join(logDir, `execution-${executionId}.log`);
 
           // 準備執行配置
-          const executionConfig: ExecutionConfig = {
+          const executionConfig: IExecutionConfig = {
             baseUrl: config.baseUrl || 'http://localhost:3000',
             fallbackUsed: false,
             authNamespaces: []

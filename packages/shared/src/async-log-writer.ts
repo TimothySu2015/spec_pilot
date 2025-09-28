@@ -8,17 +8,18 @@ const logger = createStructuredLogger('async-log-writer');
 /**
  * 日誌寫入任務
  */
-interface LogWriteTask {
+interface ILogWriteTask {
   id: string;
   logEntry: StructuredLogEntry;
   filePath: string;
   timestamp: number;
+  retryCount?: number;
 }
 
 /**
  * 批次日誌寫入配置
  */
-interface BatchConfig {
+interface IBatchConfig {
   /** 批次大小（筆數） */
   batchSize: number;
   /** 批次處理間隔（毫秒） */
@@ -32,13 +33,13 @@ interface BatchConfig {
  * 使用批次處理和背景執行緒來提升效能
  */
 export class AsyncLogWriter extends EventEmitter {
-  private pendingTasks: LogWriteTask[] = [];
+  private pendingTasks: ILogWriteTask[] = [];
   private worker: Worker | null = null;
-  private batchConfig: BatchConfig;
+  private batchConfig: IBatchConfig;
   private flushTimer: NodeJS.Timeout | null = null;
   private isShuttingDown = false;
 
-  constructor(batchConfig: Partial<BatchConfig> = {}) {
+  constructor(batchConfig: Partial<IBatchConfig> = {}) {
     super();
 
     this.batchConfig = {
@@ -65,7 +66,7 @@ export class AsyncLogWriter extends EventEmitter {
       throw new Error('AsyncLogWriter is shutting down');
     }
 
-    const task: LogWriteTask = {
+    const task: ILogWriteTask = {
       id: this.generateTaskId(),
       logEntry,
       filePath,
@@ -176,10 +177,10 @@ export class AsyncLogWriter extends EventEmitter {
 
       // 將失敗的任務重新加回佇列（最多重試3次）
       const retriableTasks = tasksToProcess.filter(task =>
-        (task as any).retryCount < 3
+        (task.retryCount || 0) < 3
       ).map(task => ({
         ...task,
-        retryCount: ((task as any).retryCount || 0) + 1
+        retryCount: (task.retryCount || 0) + 1
       }));
 
       this.pendingTasks.unshift(...retriableTasks);
@@ -195,20 +196,20 @@ export class AsyncLogWriter extends EventEmitter {
   /**
    * 按檔案路徑分組任務
    */
-  private groupTasksByFile(tasks: LogWriteTask[]): Record<string, LogWriteTask[]> {
+  private groupTasksByFile(tasks: ILogWriteTask[]): Record<string, ILogWriteTask[]> {
     return tasks.reduce((groups, task) => {
       if (!groups[task.filePath]) {
         groups[task.filePath] = [];
       }
       groups[task.filePath].push(task);
       return groups;
-    }, {} as Record<string, LogWriteTask[]>);
+    }, {} as Record<string, ILogWriteTask[]>);
   }
 
   /**
    * 寫入單個檔案的日誌批次
    */
-  private async writeLogBatch(filePath: string, tasks: LogWriteTask[]): Promise<void> {
+  private async writeLogBatch(filePath: string, tasks: ILogWriteTask[]): Promise<void> {
     const { appendFile } = await import('fs/promises');
 
     // 將日誌項目轉換為 JSON Lines 格式

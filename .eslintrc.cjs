@@ -57,6 +57,7 @@ module.exports = {
     '*.config.ts',
     'config/',
     '*.test.ts',
-    '*.spec.ts'
+    '*.spec.ts',
+    'examples/'
   ]
 };

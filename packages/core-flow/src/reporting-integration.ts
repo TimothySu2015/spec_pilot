@@ -5,11 +5,11 @@ import {
 } from '@specpilot/shared';
 import {
   EnhancedReportGenerator,
-  type StepInput,
-  type ExecutionConfig
+  type IStepInput,
+  type IExecutionConfig
 } from '@specpilot/reporting';
 import type { IFlowDefinition as FlowParserDefinition, IFlowStep as FlowParserStep } from '@specpilot/flow-parser';
-import type { ITestResult, IRunContext } from './index.js';
+import type { ITestResult } from './index.js';
 
 /**
  * 報表整合管理器
@@ -17,7 +17,7 @@ import type { ITestResult, IRunContext } from './index.js';
 export class ReportingIntegration {
   private logger: IEnhancedStructuredLogger;
   private reportGenerator: EnhancedReportGenerator;
-  private stepInputs: StepInput[] = [];
+  private stepInputs: IStepInput[] = [];
   private flowStartTime: string = '';
 
   constructor(executionId: string, component: string = 'reporting-integration') {
@@ -28,7 +28,7 @@ export class ReportingIntegration {
   /**
    * 記錄流程開始
    */
-  recordFlowStart(flowDefinition: FlowParserDefinition, config: ExecutionConfig): void {
+  recordFlowStart(flowDefinition: FlowParserDefinition, config: IExecutionConfig): void {
     this.flowStartTime = new Date().toISOString();
     this.stepInputs = [];
 
@@ -96,7 +96,7 @@ export class ReportingIntegration {
     }
 
     // 收集步驟資料用於報表
-    const stepInput: StepInput = {
+    const stepInput: IStepInput = {
       name: step.name,
       status: testResult.status === 'passed' ? 'success' :
               testResult.status === 'failed' ? 'failure' : 'skipped',
@@ -120,7 +120,7 @@ export class ReportingIntegration {
   async recordFlowComplete(
     executionId: string,
     flowId: string,
-    config: ExecutionConfig,
+    config: IExecutionConfig,
     reportPath: string = 'reports/result.json'
   ): Promise<string> {
     const endTime = new Date().toISOString();
@@ -200,7 +200,7 @@ export class ReportingIntegration {
   async recordFlowFailure(
     executionId: string,
     flowId: string,
-    config: ExecutionConfig,
+    config: IExecutionConfig,
     error: string
   ): Promise<void> {
     this.logger.error('流程執行失敗', {
@@ -268,7 +268,7 @@ export class ReportingIntegration {
   /**
    * 取得當前收集的步驟資料
    */
-  getCollectedSteps(): StepInput[] {
+  getCollectedSteps(): IStepInput[] {
     return [...this.stepInputs];
   }
 

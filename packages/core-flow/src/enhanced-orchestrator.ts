@@ -1,8 +1,8 @@
-import { createStructuredLogger, type TestStatus, randomUUID } from '@specpilot/shared';
+import { createStructuredLogger, randomUUID, type HttpMethod } from '@specpilot/shared';
 import type { IFlowDefinition as FlowParserDefinition, IFlowStep as FlowParserStep } from '@specpilot/flow-parser';
 import { AuthHandler, type IAuthHandleResult } from './auth-handler.js';
 import { ReportingIntegration } from './reporting-integration.js';
-import type { ExecutionConfig } from '@specpilot/reporting';
+import type { IExecutionConfig } from '@specpilot/reporting';
 import type { ITestResult, IRunContext } from './index.js';
 import { HttpRunner, type IHttpRequest } from '@specpilot/http-runner';
 import { ValidationEngine, type IValidationInput } from '@specpilot/validation';
@@ -29,7 +29,7 @@ export class EnhancedFlowOrchestrator {
    */
   async executeFlowWithReporting(
     flowDefinition: FlowParserDefinition,
-    config: ExecutionConfig,
+    config: IExecutionConfig,
     options: {
       executionId?: string;
       reportPath?: string;
@@ -184,7 +184,7 @@ export class EnhancedFlowOrchestrator {
 
       // 建立 HTTP 請求
       const httpRequest: IHttpRequest = {
-        method: step.request.method.toUpperCase() as any,
+        method: step.request.method.toUpperCase() as HttpMethod,
         url: step.request.url || step.request.path || '/',
         headers: { ...step.request.headers } || {},
         body: step.request.body

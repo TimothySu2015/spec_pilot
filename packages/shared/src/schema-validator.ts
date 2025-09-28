@@ -39,7 +39,7 @@ export class SchemaValidator {
   /**
    * 批次驗證多個日誌項目
    */
-  validateLogEntries(logEntries: unknown[]) {
+  validateLogEntries(logEntries: unknown[]): unknown[] {
     logger.debug('批次驗證日誌項目', { count: logEntries.length });
     return this.logValidator.validateLogEntries(logEntries);
   }
@@ -135,8 +135,8 @@ export class SchemaValidator {
    * 產生驗證報告
    */
   generateValidationReport(
-    reportValidation: { valid: boolean; errors?: any[] },
-    logValidation: { validCount: number; invalidCount: number; errors?: any[] }
+    reportValidation: { valid: boolean; errors?: unknown[] },
+    logValidation: { validCount: number; invalidCount: number; errors?: unknown[] }
   ): {
     summary: {
       reportValid: boolean;
@@ -145,8 +145,8 @@ export class SchemaValidator {
       overallValid: boolean;
     };
     details: {
-      reportErrors: any[];
-      logErrors: any[];
+      reportErrors: unknown[];
+      logErrors: unknown[];
     };
   } {
     const overallValid = reportValidation.valid && logValidation.invalidCount === 0;

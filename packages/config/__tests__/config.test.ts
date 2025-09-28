@@ -1,12 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { 
-  getConfig, 
-  getBaseUrl, 
-  getPort, 
-  getToken, 
+import {
+  getConfig,
+  getBaseUrl,
+  getPort,
+  getToken,
   resetConfigCache,
   overrideConfig,
-  type ISpecPilotConfig 
+  getAuthConfigManager,
+  getAuthConfig,
+  getStaticTokens,
+  getStaticToken,
+  getNamespaceConfig,
+  getDefaultExpirySeconds,
+  type ISpecPilotConfig
 } from '../src/index.js';
 
 describe('config', () => {
@@ -138,6 +144,87 @@ describe('config', () => {
       expect(() => {
         overrideConfig({ port: -1 });
       }).toThrow();
+    });
+  });
+
+  describe('auth 相關函式', () => {
+    it('應該取得認證設定管理器', () => {
+      const manager = getAuthConfigManager();
+      expect(manager).toBeDefined();
+      expect(typeof manager.getConfig).toBe('function');
+    });
+
+    it('應該取得認證設定', () => {
+      const authConfig = getAuthConfig();
+      expect(authConfig).toEqual({
+        static: [],
+        namespaces: {},
+        defaultExpirySeconds: 3600
+      });
+    });
+
+    it('應該取得靜態 Token 列表', () => {
+      const tokens = getStaticTokens();
+      expect(Array.isArray(tokens)).toBe(true);
+    });
+
+    it('應該取得特定命名空間的靜態 Token', () => {
+      const token = getStaticToken('non-existent');
+      expect(token).toBeUndefined();
+    });
+
+    it('應該取得命名空間配置', () => {
+      const namespaceConfig = getNamespaceConfig('test');
+      expect(namespaceConfig).toEqual({
+        retryOnAuthFailure: false
+      });
+    });
+
+    it('應該取得預設過期時間', () => {
+      const defaultExpiry = getDefaultExpirySeconds();
+      expect(defaultExpiry).toBe(3600);
+    });
+  });
+
+  describe('environment 設定', () => {
+    it('應該處理不同的 NODE_ENV 值', () => {
+      process.env.NODE_ENV = 'staging';
+      resetConfigCache();
+
+      const config = getConfig();
+      expect(config.environment).toBe('staging');
+    });
+
+    it('應該處理無效的 NODE_ENV 值', () => {
+      process.env.NODE_ENV = 'invalid';
+      resetConfigCache();
+
+      expect(() => getConfig()).toThrow();
+    });
+  });
+
+  describe('port 設定驗證', () => {
+    it('應該處理無效的 port 值', () => {
+      process.env.SPEC_PILOT_PORT = 'invalid';
+      resetConfigCache();
+
+      expect(() => getConfig()).toThrow();
+    });
+
+    it('應該處理負數 port 值', () => {
+      process.env.SPEC_PILOT_PORT = '-1';
+      resetConfigCache();
+
+      expect(() => getConfig()).toThrow();
+    });
+  });
+
+  describe('baseUrl 驗證', () => {
+    it('應該處理無效的 URL 格式', () => {
+      process.env.SPEC_PILOT_BASE_URL = 'invalid-url';
+      resetConfigCache();
+
+      expect(() => getConfig()).toThrow();
     });
   });
 });

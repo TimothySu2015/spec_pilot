@@ -6,7 +6,7 @@
 /**
  * 步驟執行結果
  */
-export interface StepResult {
+export interface IStepResult {
   /** 步驟名稱 */
   name: string;
   /** 執行狀態 */
@@ -42,7 +42,7 @@ export interface StepResult {
 /**
  * 執行配置資訊
  */
-export interface ExecutionConfig {
+export interface IExecutionConfig {
   /** 基礎 URL */
   baseUrl: string;
   /** 是否使用備援 */
@@ -54,7 +54,7 @@ export interface ExecutionConfig {
 /**
  * 執行摘要
  */
-export interface ExecutionSummary {
+export interface IExecutionSummary {
   /** 總步驟數 */
   totalSteps: number;
   /** 成功步驟數 */
@@ -68,7 +68,7 @@ export interface ExecutionSummary {
 /**
  * 完整執行報表
  */
-export interface ExecutionReport {
+export interface IExecutionReport {
   /** 執行 ID */
   executionId: string;
   /** 流程 ID */
@@ -82,17 +82,17 @@ export interface ExecutionReport {
   /** 整體狀態 */
   status: 'success' | 'failure' | 'partial';
   /** 執行摘要 */
-  summary: ExecutionSummary;
+  summary: IExecutionSummary;
   /** 步驟結果列表 */
-  steps: StepResult[];
+  steps: IStepResult[];
   /** 執行配置 */
-  config: ExecutionConfig;
+  config: IExecutionConfig;
 }
 
 /**
  * 部分報表（用於錯誤恢復）
  */
-export interface PartialExecutionReport extends Omit<ExecutionReport, 'endTime' | 'duration' | 'status'> {
+export interface IPartialExecutionReport extends Omit<IExecutionReport, 'endTime' | 'duration' | 'status'> {
   /** 產生時間 */
   generatedAt: string;
   /** 失敗原因 */

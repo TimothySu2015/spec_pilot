@@ -1,0 +1,8 @@
+schema: 1
+story: '3.3'
+gate: PASS
+status_reason: 'runFlow 功能實作完整，全部測試通過，類型問題已修復。可以進入生產環境。'
+reviewer: 'Quinn'
+updated: '2025-09-28T11:01:45Z'
+top_issues: []
+waiver: { active: false }

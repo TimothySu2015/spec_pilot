@@ -9,7 +9,7 @@ const logger = createStructuredLogger('report-validator');
 /**
  * 驗證錯誤詳情
  */
-export interface ValidationError {
+export interface IValidationError {
   path: string;
   message: string;
   value: unknown;
@@ -18,9 +18,9 @@ export interface ValidationError {
 /**
  * 驗證結果
  */
-export interface ValidationResult {
+export interface IValidationResult {
   valid: boolean;
-  errors: ValidationError[];
+  errors: IValidationError[];
 }
 
 /**

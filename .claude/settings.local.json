@@ -58,7 +58,15 @@
       "Bash(pnpm -w run test apps/mcp-server/__tests__/ --reporter=verbose)",
       "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/list-specs.test.ts --reporter=verbose)",
       "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/list-specs.test.ts --reporter=verbose --run)",
-      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/ --reporter=verbose --run)"
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/ --reporter=verbose --run)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/run-flow.test.ts)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/mcp-server.test.ts --reporter=verbose)",
+      "Bash(pnpm -w run test --coverage)",
+      "Bash(pnpm -w run test -- --coverage)",
+      "Bash(pnpm -w run test packages/config packages/shared --reporter=verbose --coverage)",
+      "Bash(pnpm -w run test packages/config/__tests__/config.test.ts)",
+      "Bash(pnpm -w run test packages/config/__tests__/ --reporter=verbose)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/run-flow.test.ts --reporter=verbose)"
     ],
     "deny": [],
     "ask": []

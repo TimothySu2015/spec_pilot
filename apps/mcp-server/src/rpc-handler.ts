@@ -91,6 +91,129 @@ export function createErrorResponse(
 }
 
 /**
+ * runFlow 方法參數介面
+ */
+export interface IRunFlowParams {
+  // 檔案模式參數
+  spec?: string;
+  flow?: string;
+
+  // 內容模式參數
+  specContent?: string;
+  flowContent?: string;
+
+  // 覆寫設定參數
+  baseUrl?: string;
+  port?: number;
+  token?: string;
+}
+
+/**
+ * runFlow 覆寫設定介面
+ */
+export interface IRunFlowOptions {
+  baseUrl?: string;
+  port?: number;
+  token?: string;
+}
+
+/**
+ * runFlow 執行結果介面
+ */
+export interface IRunFlowResult {
+  executionId: string;
+  status: 'success' | 'partial_failure' | 'failure';
+  reportSummary: {
+    total: number;
+    passed: number;
+    failed: number;
+    skipped: number;
+    duration: number;
+  };
+  reportPath?: string;
+  errorMessage?: string;
+}
+
+/**
+ * 驗證 runFlow 參數
+ */
+export function validateRunFlowParams(params: unknown): {
+  isValid: boolean;
+  error?: string;
+  params?: IRunFlowParams
+} {
+  if (!params || typeof params !== 'object') {
+    return { isValid: false, error: '參數必須是物件' };
+  }
+
+  const runFlowParams = params as IRunFlowParams;
+
+  // 檢查是否為檔案模式
+  const hasFileMode = runFlowParams.spec || runFlowParams.flow;
+  // 檢查是否為內容模式
+  const hasContentMode = runFlowParams.specContent || runFlowParams.flowContent;
+
+  // 兩種模式互斥
+  if (hasFileMode && hasContentMode) {
+    return { isValid: false, error: '檔案模式與內容模式不能同時使用' };
+  }
+
+  // 必須選擇其中一種模式
+  if (!hasFileMode && !hasContentMode) {
+    return { isValid: false, error: '必須提供檔案模式或內容模式參數' };
+  }
+
+  // 檔案模式需要完整參數
+  if (hasFileMode && (!runFlowParams.spec || !runFlowParams.flow)) {
+    return { isValid: false, error: '檔案模式需要同時提供 spec 和 flow 參數' };
+  }
+
+  // 內容模式需要完整參數
+  if (hasContentMode && (!runFlowParams.specContent || !runFlowParams.flowContent)) {
+    return { isValid: false, error: '內容模式需要同時提供 specContent 和 flowContent 參數' };
+  }
+
+  // 檢查內容大小限制（10MB = 10 * 1024 * 1024 bytes）
+  const maxSize = 10 * 1024 * 1024;
+  if (runFlowParams.specContent && runFlowParams.specContent.length > maxSize) {
+    return { isValid: false, error: 'specContent 大小超過 10MB 限制' };
+  }
+  if (runFlowParams.flowContent && runFlowParams.flowContent.length > maxSize) {
+    return { isValid: false, error: 'flowContent 大小超過 10MB 限制' };
+  }
+
+  // 驗證 URL 格式
+  if (runFlowParams.baseUrl) {
+    try {
+      new URL(runFlowParams.baseUrl);
+    } catch {
+      return { isValid: false, error: 'baseUrl 格式無效' };
+    }
+  }
+
+  // 驗證埠號範圍
+  if (runFlowParams.port && (runFlowParams.port < 1 || runFlowParams.port > 65535)) {
+    return { isValid: false, error: '埠號必須在 1-65535 範圍內' };
+  }
+
+  // 檢查 URL 與埠號的一致性
+  if (runFlowParams.baseUrl && runFlowParams.port) {
+    const url = new URL(runFlowParams.baseUrl);
+    const isHttps = url.protocol === 'https:';
+    const isHttp = url.protocol === 'http:';
+
+    if (isHttps && runFlowParams.port === 80) {
+      return { isValid: false, error: 'HTTPS URL 不應使用 80 埠' };
+    }
+    if (isHttp && runFlowParams.port === 443) {
+      return { isValid: false, error: 'HTTP URL 不應使用 443 埠' };
+    }
+  }
+
+  return { isValid: true, params: runFlowParams };
+}
+
+/**
  * 建立標準 JSON-RPC 成功回應
  */
 export function createSuccessResponse(

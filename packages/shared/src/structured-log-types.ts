@@ -5,7 +5,7 @@
 /**
  * 請求摘要
  */
-export interface RequestSummary {
+export interface IRequestSummary {
   /** HTTP 方法 */
   method: string;
   /** 完整 URL */
@@ -19,7 +19,7 @@ export interface RequestSummary {
 /**
  * 回應摘要
  */
-export interface ResponseSummary {
+export interface IResponseSummary {
   /** HTTP 狀態碼 */
   statusCode: number;
   /** 驗證結果列表 */
@@ -31,7 +31,7 @@ export interface ResponseSummary {
 /**
  * 結構化日誌項目
  */
-export interface StructuredLogEntry {
+export interface IStructuredLogEntry {
   /** 時間戳 */
   timestamp: string;
   /** 日誌級別 */
@@ -49,9 +49,9 @@ export interface StructuredLogEntry {
   /** 執行時長（毫秒，可選） */
   duration?: number;
   /** 請求摘要（可選） */
-  requestSummary?: RequestSummary;
+  requestSummary?: IRequestSummary;
   /** 回應摘要（可選） */
-  responseSummary?: ResponseSummary;
+  responseSummary?: IResponseSummary;
   /** 其他詳細資訊 */
   details?: Record<string, unknown>;
 }
@@ -59,7 +59,7 @@ export interface StructuredLogEntry {
 /**
  * 日誌輪替配置
  */
-export interface LogRotationConfig {
+export interface ILogRotationConfig {
   /** 單檔最大尺寸 */
   maxFileSize: string;
   /** 保留檔案數量 */

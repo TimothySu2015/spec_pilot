@@ -117,7 +117,7 @@ export class McpServer {
         case 'listFlows':
           return handleListFlows(request);
         case 'runFlow':
-          return handleRunFlow(request);
+          return await handleRunFlow(request);
         case 'getReport':
           return handleGetReport(request);
         default:

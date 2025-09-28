@@ -9,7 +9,7 @@ const logger = createStructuredLogger('log-validator');
 /**
  * 驗證錯誤詳情
  */
-export interface LogValidationError {
+export interface ILogValidationError {
   path: string;
   message: string;
   value: unknown;
@@ -18,9 +18,9 @@ export interface LogValidationError {
 /**
  * 驗證結果
  */
-export interface LogValidationResult {
+export interface ILogValidationResult {
   valid: boolean;
-  errors: LogValidationError[];
+  errors: ILogValidationError[];
 }
 
 /**
@@ -114,14 +114,14 @@ export class LogValidator {
     invalidEntries: Array<{
       index: number;
       entry: unknown;
-      errors: LogValidationError[];
+      errors: ILogValidationError[];
     }>;
   } {
     const validEntries: StructuredLogEntry[] = [];
     const invalidEntries: Array<{
       index: number;
       entry: unknown;
-      errors: LogValidationError[];
+      errors: ILogValidationError[];
     }> = [];
 
     for (let i = 0; i < logEntries.length; i++) {
@@ -179,7 +179,7 @@ export class LogValidator {
    */
   validateLogLevel(level: string): level is 'debug' | 'info' | 'warn' | 'error' {
     const validLevels = ['debug', 'info', 'warn', 'error'] as const;
-    const isValid = validLevels.includes(level as any);
+    const isValid = validLevels.includes(level as typeof validLevels[number]);
 
     if (!isValid) {
       logger.warn('無效的日誌級別', {
