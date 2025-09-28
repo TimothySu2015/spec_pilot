@@ -237,14 +237,14 @@ export function bootstrapMcpServer(): McpServer {
   const logger = createStructuredLogger('mcp-server');
 
   try {
-    // 載入設定
-    const config = getConfig();
+    // 載入設定（確保配置正確）
+    getConfig();
 
     // 建立 MCP Server 實例
     const server = new McpServer(executionId);
 
     // 設定優雅關閉處理
-    const gracefulShutdown = (signal: string) => {
+    const gracefulShutdown = (signal: string): void => {
       logger.info('收到關閉信號', {
         executionId,
         component: 'mcp-server',

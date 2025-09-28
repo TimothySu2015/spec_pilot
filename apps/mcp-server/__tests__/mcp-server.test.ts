@@ -48,7 +48,7 @@ describe('MCP Server 整合測試', () => {
       server.start();
     });
 
-    it('應該處理 listSpecs 請求', async () => {
+    it('應該處理 listSpecs 請求並回傳檔案陣列', async () => {
       const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'listSpecs',
@@ -61,11 +61,20 @@ describe('MCP Server 整合測試', () => {
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(1);
       expect(response.result).toBeDefined();
-      expect(response.result.specs).toBeDefined();
+      expect(Array.isArray(response.result)).toBe(true);
       expect(response.error).toBeUndefined();
+
+      // 如果有檔案，檢查格式
+      if (response.result.length > 0) {
+        const file = response.result[0];
+        expect(file).toHaveProperty('name');
+        expect(file).toHaveProperty('path');
+        expect(file).toHaveProperty('size');
+        expect(file).toHaveProperty('extension');
+      }
     });
 
-    it('應該處理 listFlows 請求', async () => {
+    it('應該處理 listFlows 請求並回傳檔案陣列', async () => {
       const requestData = JSON.stringify({
         jsonrpc: '2.0',
         method: 'listFlows',
@@ -78,8 +87,53 @@ describe('MCP Server 整合測試', () => {
       expect(response.jsonrpc).toBe('2.0');
       expect(response.id).toBe(2);
       expect(response.result).toBeDefined();
-      expect(response.result.flows).toBeDefined();
+      expect(Array.isArray(response.result)).toBe(true);
       expect(response.error).toBeUndefined();
+
+      // 如果有檔案，檢查格式
+      if (response.result.length > 0) {
+        const file = response.result[0];
+        expect(file).toHaveProperty('name');
+        expect(file).toHaveProperty('path');
+        expect(file).toHaveProperty('size');
+        expect(file).toHaveProperty('extension');
+      }
+    });
+
+    it('應該處理帶參數的 listFlows 請求', async () => {
+      const requestData = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'listFlows',
+        params: { prefix: 'user_' },
+        id: 'test-with-params',
+      });
+
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
+
+      expect(response.jsonrpc).toBe('2.0');
+      expect(response.id).toBe('test-with-params');
+      expect(response.result).toBeDefined();
+      expect(Array.isArray(response.result)).toBe(true);
+      expect(response.error).toBeUndefined();
+    });
+
+    it('應該處理 listFlows 的無效參數', async () => {
+      const requestData = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'listFlows',
+        params: { directory: '../invalid' },
+        id: 'test-invalid-params',
+      });
+
+      const responseData = await server.handleRequest(requestData);
+      const response = JSON.parse(responseData);
+
+      expect(response.jsonrpc).toBe('2.0');
+      expect(response.id).toBe('test-invalid-params');
+      expect(response.result).toBeUndefined();
+      expect(response.error).toBeDefined();
+      expect(response.error.code).toBe(-32602);
     });
 
     it('應該處理 runFlow 請求', async () => {

@@ -23,6 +23,16 @@ export interface IMcpResponse {
 }
 
 /**
+ * 檔案清單項目介面
+ */
+export interface IFileListItem {
+  name: string;
+  path: string;
+  size: number;
+  extension: string;
+}
+
+/**
  * JSON-RPC 錯誤碼常數
  */
 export const JSON_RPC_ERROR_CODES = {

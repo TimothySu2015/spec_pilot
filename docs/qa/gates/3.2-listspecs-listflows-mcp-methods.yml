@@ -1,0 +1,20 @@
+schema: 1
+story: '3.2'
+gate: CONCERNS
+status_reason: 'MCP 方法實作完成且功能正確，但存在 lint 錯誤和部分測試覆蓋率不足問題。'
+reviewer: 'Quinn'
+updated: '2025-09-28T05:59:00Z'
+top_issues:
+  - id: 'LINT-001'
+    severity: medium
+    finding: 'list-flows.ts 中使用控制字符正則表達式觸發 ESLint no-control-regex 錯誤'
+    suggested_action: '修正正則表達式寫法，避免使用控制字符'
+  - id: 'TEST-001'
+    severity: medium
+    finding: 'MCP 服務模組測試覆蓋率未達標準 (listSpecs: 65%, listFlows: 66.52%)'
+    suggested_action: '補充錯誤處理路徑的測試案例以提升覆蓋率'
+  - id: 'LINT-002'
+    severity: low
+    finding: 'bootstrap.ts 存在未使用變數和缺少返回型別註解'
+    suggested_action: '清理未使用變數並補充型別註解'
+waiver: { active: false }

@@ -48,7 +48,17 @@
       "Bash(pnpm -w run test tests/e2e)",
       "Bash(pnpm -w run test tests/e2e --reporter=verbose --run)",
       "Bash(timeout:*)",
-      "Bash(pnpm -w run test apps/mcp-server/__tests__/mcp-server.test.ts)"
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/mcp-server.test.ts)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/list-specs.test.ts)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/list-flows.test.ts)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/)",
+      "Bash(pnpm -w run lint)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/ --reporter=verbose --coverage)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/ --reporter=verbose)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/list-specs.test.ts --reporter=verbose)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/list-specs.test.ts --reporter=verbose --run)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/ --reporter=verbose --run)"
     ],
     "deny": [],
     "ask": []
