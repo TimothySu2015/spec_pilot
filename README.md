@@ -99,16 +99,64 @@ pnpm run start -- --help
 - `pnpm run test` - 執行單元與整合測試（含 coverage）
 
 #### MCP 伺服器操作
-```bash
-# 啟動 MCP 伺服器
-pnpm run start:mcp
 
-# MCP 客戶端可使用的方法
-# - listSpecs: 列出可用的 OpenAPI 規格
-# - listFlows: 列出可用的測試流程  
-# - runFlow: 執行測試流程
-# - getReport: 取得最新測試報表
+MCP (Model Context Protocol) 伺服器提供 JSON-RPC 2.0 介面，讓 AI Agent 與自動化系統可以透過結構化協議呼叫 SpecPilot 功能。
+
+**啟動 MCP 伺服器**：
+```bash
+# 啟動 MCP 伺服器（透過 STDIN/STDOUT 通訊）
+pnpm run start:mcp
 ```
+
+**支援的 JSON-RPC 方法**：
+
+1. **listSpecs** - 列出可用的 OpenAPI 規格檔案
+   ```json
+   {"jsonrpc": "2.0", "method": "listSpecs", "id": "1"}
+   ```
+
+2. **listFlows** - 列出可用的測試流程檔案（支援篩選）
+   ```json
+   {"jsonrpc": "2.0", "method": "listFlows", "params": {"directory": "flows/", "prefix": "user"}, "id": "2"}
+   ```
+
+3. **runFlow** - 執行測試流程（支援檔案模式與內容模式）
+   ```json
+   {
+     "jsonrpc": "2.0",
+     "method": "runFlow",
+     "params": {
+       "spec": "specs/openapi.yaml",
+       "flow": "flows/user_crud.yaml",
+       "baseUrl": "http://localhost:3000",
+       "token": "your-api-token"
+     },
+     "id": "3"
+   }
+   ```
+
+4. **getReport** - 取得最新測試報表
+   ```json
+   {"jsonrpc": "2.0", "method": "getReport", "id": "4"}
+   ```
+
+**MCP 介面特性**：
+- 遵循 JSON-RPC 2.0 標準，支援標準錯誤碼（-32700 到 -32603）
+- 支援檔案路徑與內容直接傳入兩種模式
+- 提供完整的結構化回應與錯誤處理
+- 包含安全防護（路徑遍歷防護、內容大小限制）
+- 自動遮罩敏感資料於日誌中
+
+**測試與範例**：
+```bash
+# 使用範例腳本測試 MCP 功能
+node docs/examples/mcp-test-script.js
+
+# 查看 JSON-RPC 範例檔案
+ls docs/examples/*.json
+```
+
+**詳細文件**：完整的 MCP 介面說明請參考 [`docs/mcp-interface.md`](docs/mcp-interface.md)，包含所有方法的詳細參數、回應範例與錯誤處理指引。
 
 ## 環境變數與設定
 

@@ -1,0 +1,10 @@
+{
+  "jsonrpc": "2.0",
+  "method": "runFlow",
+  "params": {
+    "specContent": "openapi: 3.0.0\ninfo:\n  title: 測試 API\n  version: 1.0.0\npaths:\n  /users:\n    post:\n      summary: 建立使用者\n      requestBody:\n        required: true\n        content:\n          application/json:\n            schema:\n              type: object\n              properties:\n                name:\n                  type: string\n                email:\n                  type: string\n      responses:\n        '201':\n          description: 使用者建立成功\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  id:\n                    type: integer\n                  name:\n                    type: string\n                  email:\n                    type: string",
+    "flowContent": "name: 使用者建立測試流程\nbaseUrl: ${SPEC_PILOT_BASE_URL}\nauth:\n  type: bearer\n  token: ${SPEC_PILOT_TOKEN}\nsteps:\n  - name: 建立新使用者\n    request:\n      method: POST\n      path: /users\n      body:\n        name: 測試使用者\n        email: test@example.com\n    validation:\n      statusCode: 201\n      schema:\n        component: '#/paths//users/post/responses/201/content/application~1json/schema'\n      customRules:\n        - field: id\n          rule: notNull\n        - field: name\n          rule: regex\n          pattern: '^測試.*'\n        - field: email\n          rule: contains\n          value: '@example.com'",
+    "baseUrl": "http://localhost:3000"
+  },
+  "id": "runFlow-content-001"
+}

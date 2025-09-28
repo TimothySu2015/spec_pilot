@@ -71,7 +71,13 @@
       "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/get-report.test.ts --reporter=verbose)",
       "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/get-report.test.ts --run)",
       "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/get-report-simple.test.ts --run)",
-      "Bash(pnpm -w run test apps/mcp-server/__tests__/mcp-server.test.ts --run)"
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/mcp-server.test.ts --run)",
+      "Bash(do )",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then )",
+      "Bash(echo:*)",
+      "Bash(else )",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

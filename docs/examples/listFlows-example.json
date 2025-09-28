@@ -1,0 +1,9 @@
+{
+  "jsonrpc": "2.0",
+  "method": "listFlows",
+  "params": {
+    "directory": "flows/",
+    "prefix": "user"
+  },
+  "id": "listFlows-001"
+}
