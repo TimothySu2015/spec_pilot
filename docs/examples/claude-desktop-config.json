@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "specpilot": {
+      "command": "pnpm",
+      "args": ["run", "start:mcp"],
+      "cwd": "D:\\codes\\SpecPilot",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

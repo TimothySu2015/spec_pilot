@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "specpilot": {
+      "command": "specpilot-mcp",
+      "args": [],
+      "env": {
+        "NODE_ENV": "production",
+        "SPEC_PILOT_BASE_URL": "https://your-api.example.com",
+        "SPEC_PILOT_TOKEN": "your-api-token-here"
+      }
+    }
+  }
+}

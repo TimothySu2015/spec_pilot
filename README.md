@@ -34,16 +34,36 @@ specpilot/
 
 ## 快速開始
 
-### 安裝需求
+### 一鍵安裝
+
+#### Windows (PowerShell)
+```powershell
+iwr -useb https://raw.githubusercontent.com/<your-repo>/main/scripts/install.ps1 | iex
+```
+
+#### macOS/Linux (Bash)
+```bash
+curl -fsSL https://raw.githubusercontent.com/<your-repo>/main/scripts/install.sh | bash
+```
+
+### 手動安裝
+
+#### 安裝需求
 1. 安裝 Node.js 20.11.1 LTS 與 pnpm 9.1，建議透過 `corepack enable` 鎖定版本。
 2. 確保系統具備 TypeScript 5.4.5 支援。
 
-### 初始化流程
+#### 初始化流程
 1. 取得程式碼：`git clone <repository-url>`，並切換至 `specpilot/` 目錄。
 2. 安裝依賴：在專案根目錄執行 `pnpm install`。
 3. 建立環境變數檔：`cp .env.example .env.local`，填寫必要欄位（詳見環境變數章節）。
 4. 執行初始建置：`pnpm run build`。
 5. 執行測試確認環境：`pnpm run test`。
+
+#### 快速測試
+```bash
+# 測試 MCP 伺服器
+echo '{"jsonrpc": "2.0", "method": "listSpecs", "id": "test"}' | pnpm run start:mcp
+```
 
 ### 主要指令
 
