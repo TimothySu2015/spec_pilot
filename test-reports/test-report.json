@@ -1,9 +1,9 @@
 {
   "executionId": "test-execution-123",
   "flowId": "report-test-flow",
-  "startTime": "2025-09-28T02:43:37.674Z",
-  "endTime": "2025-09-28T02:43:37.675Z",
-  "duration": 1,
+  "startTime": "2025-09-28T03:13:46.332Z",
+  "endTime": "2025-09-28T03:13:46.332Z",
+  "duration": 0,
   "status": "success",
   "summary": {
     "totalSteps": 1,
@@ -15,7 +15,7 @@
     {
       "name": "sample_step",
       "status": "success",
-      "startTime": "2025-09-28T02:43:36.674Z",
+      "startTime": "2025-09-28T03:13:45.332Z",
       "duration": 1000,
       "request": {
         "method": "GET",

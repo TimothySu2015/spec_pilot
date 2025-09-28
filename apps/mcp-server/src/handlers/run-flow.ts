@@ -3,8 +3,8 @@ import { createSuccessResponse, createErrorResponse, validateRunFlowParams, JSON
 import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { join, resolve, relative } from 'path';
 import { createStructuredLogger } from '@specpilot/shared';
-import { SpecLoader } from '@specpilot/spec-loader';
-import { FlowParser } from '@specpilot/flow-parser';
+import { loadSpec } from '@specpilot/spec-loader';
+import { loadFlow } from '@specpilot/flow-parser';
 import { FlowOrchestrator } from '@specpilot/core-flow';
 import { ReportGenerator } from '@specpilot/reporting';
 
@@ -72,12 +72,10 @@ export async function handleRunFlow(request: IMcpRequest): Promise<IMcpResponse>
       }
 
       // 載入並驗證 OpenAPI 規格
-      const specLoader = new SpecLoader();
-      await specLoader.loadFromString(specContent);
+      await loadSpec({ content: specContent, executionId });
 
       // 解析 YAML 測試流程
-      const flowParser = new FlowParser();
-      const flowDefinition = await flowParser.parseFromString(flowContent);
+      const flowDefinition = await loadFlow({ content: flowContent, executionId });
 
       // 處理設定覆寫
       const overrideConfig = createConfigOverride(params);
