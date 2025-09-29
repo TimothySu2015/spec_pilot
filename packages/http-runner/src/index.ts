@@ -348,7 +348,7 @@ export class HttpRunner {
   /**
    * 更新 HTTP 客戶端設定
    */
-  updateHttpConfig(config: Partial<HttpClientConfig>): void {
+  updateHttpConfig(config: Partial<IHttpClientConfig>): void {
     this.httpClient.updateConfig(config);
   }
 }

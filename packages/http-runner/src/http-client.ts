@@ -91,7 +91,7 @@ export class HttpClient {
   /**
    * GET 請求
    */
-  async get(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
+  async get(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
     return this.request({
       method: 'GET',
       url,
@@ -102,7 +102,7 @@ export class HttpClient {
   /**
    * POST 請求
    */
-  async post(url: string, body?: unknown, config?: Partial<HttpRequest>): Promise<HttpResponse> {
+  async post(url: string, body?: unknown, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
     return this.request({
       method: 'POST',
       url,
@@ -114,7 +114,7 @@ export class HttpClient {
   /**
    * PUT 請求
    */
-  async put(url: string, body?: unknown, config?: Partial<HttpRequest>): Promise<HttpResponse> {
+  async put(url: string, body?: unknown, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
     return this.request({
       method: 'PUT',
       url,
@@ -126,7 +126,7 @@ export class HttpClient {
   /**
    * PATCH 請求
    */
-  async patch(url: string, body?: unknown, config?: Partial<HttpRequest>): Promise<HttpResponse> {
+  async patch(url: string, body?: unknown, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
     return this.request({
       method: 'PATCH',
       url,
@@ -138,7 +138,7 @@ export class HttpClient {
   /**
    * DELETE 請求
    */
-  async delete(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
+  async delete(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
     return this.request({
       method: 'DELETE',
       url,
@@ -149,7 +149,7 @@ export class HttpClient {
   /**
    * HEAD 請求
    */
-  async head(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
+  async head(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
     return this.request({
       method: 'HEAD',
       url,
@@ -160,7 +160,7 @@ export class HttpClient {
   /**
    * OPTIONS 請求
    */
-  async options(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
+  async options(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
     return this.request({
       method: 'OPTIONS',
       url,
@@ -238,7 +238,7 @@ export class HttpClient {
   /**
    * 更新設定
    */
-  updateConfig(newConfig: Partial<HttpClientConfig>): void {
+  updateConfig(newConfig: Partial<IHttpClientConfig>): void {
     Object.assign(this.config, newConfig);
 
     // 更新 axios 實例的逾時設定
@@ -250,7 +250,7 @@ export class HttpClient {
   /**
    * 取得當前設定
    */
-  getConfig(): Readonly<HttpClientConfig> {
+  getConfig(): Readonly<IHttpClientConfig> {
     return { ...this.config };
   }
 }

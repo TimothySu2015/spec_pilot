@@ -40,28 +40,20 @@ vi.mock('@specpilot/flow-parser', () => ({
 }));
 
 vi.mock('@specpilot/core-flow', () => ({
-  FlowOrchestrator: vi.fn().mockImplementation(() => ({
-    executeFlowDefinition: vi.fn().mockResolvedValue([
-      { status: 'passed', duration: 100 },
-      { status: 'passed', duration: 150 }
-    ])
+  EnhancedFlowOrchestrator: vi.fn().mockImplementation(() => ({
+    executeFlowWithReporting: vi.fn().mockResolvedValue({
+      results: [
+        { status: 'passed', duration: 100 },
+        { status: 'passed', duration: 150 }
+      ],
+      reportSummary: '測試執行成功，所有步驟都通過',
+      executionId: 'test-execution-id'
+    })
   }))
 }));
 
 vi.mock('@specpilot/reporting', () => ({
-  ReportGenerator: vi.fn().mockImplementation(() => ({
-    generateReport: vi.fn().mockReturnValue({
-      executionId: 'test-execution-id',
-      summary: {
-        total: 2,
-        passed: 2,
-        failed: 0,
-        skipped: 0,
-        duration: 250
-      }
-    }),
-    saveReport: vi.fn()
-  }))
+  // 現在只需要 IExecutionConfig 型別
 }));
 
 describe('handleRunFlow', () => {
@@ -389,15 +381,19 @@ describe('handleRunFlow', () => {
 
   describe('執行狀態判斷', () => {
     it('應該回傳正確的執行狀態', async () => {
-      // 重新 mock FlowOrchestrator 來回傳部分失敗的結果
-      const { FlowOrchestrator } = await import('@specpilot/core-flow');
+      // 重新 mock EnhancedFlowOrchestrator 來回傳部分失敗的結果
+      const { EnhancedFlowOrchestrator } = await import('@specpilot/core-flow');
 
-      vi.mocked(FlowOrchestrator).mockImplementation(() => ({
-        executeFlowDefinition: vi.fn().mockResolvedValue([
-          { status: 'passed', duration: 100 },
-          { status: 'failed', duration: 150 },
-          { status: 'passed', duration: 120 }
-        ])
+      vi.mocked(EnhancedFlowOrchestrator).mockImplementation(() => ({
+        executeFlowWithReporting: vi.fn().mockResolvedValue({
+          results: [
+            { status: 'passed', duration: 100 },
+            { status: 'failed', duration: 150 },
+            { status: 'passed', duration: 120 }
+          ],
+          reportSummary: '部分測試失敗',
+          executionId: 'test-execution-id'
+        })
       }) as any);
 
       const request: IMcpRequest = {

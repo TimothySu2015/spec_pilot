@@ -83,7 +83,15 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebSearch",
       "Bash(pnpm why:*)",
-      "Bash(pnpm list:*)"
+      "Bash(pnpm list:*)",
+      "Bash(claude mcp:*)",
+      "mcp__specpilot__listSpecs",
+      "mcp__specpilot__runFlow",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/run-flow.test.ts --run)",
+      "Bash(mcp__specpilot__runFlow:*)",
+      "mcp__specpilot__listFlows",
+      "mcp__specpilot__getReport",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

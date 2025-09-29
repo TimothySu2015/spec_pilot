@@ -3,7 +3,12 @@
     "specpilot": {
       "command": "node",
       "args": ["D:\\codes\\SpecPilot\\apps\\mcp-server\\dist\\index.js"],
-      "cwd": "D:\\codes\\SpecPilot"
+      "cwd": "D:\\codes\\SpecPilot",
+      "env": {
+        "NODE_ENV": "development",
+        "SPEC_PILOT_BASE_URL": "http://localhost:3000",
+        "SPEC_PILOT_PORT": "3000"
+      }
     }
   }
 }

@@ -3,15 +3,16 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { readdirSync, statSync, existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
-import { createStructuredLogger } from '@specpilot/shared';
+// import { createStructuredLogger } from '@specpilot/shared'; // 已使用靜默日誌器
 import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
-import { FlowOrchestrator } from '@specpilot/core-flow';
-import { ReportGenerator } from '@specpilot/reporting';
+import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
+import { type IExecutionConfig } from '@specpilot/reporting';
+import { overrideConfig } from '@specpilot/config';
 
 // 為 MCP Server 建立靜默日誌記錄器（避免干擾 stdio transport）
 const logger = {
-  info: (message: string, context?: any) => {
+  info: (message: string, context?: unknown): void => {
     // 寫入檔案而非 stdout/stderr
     const logsDir = path.join(process.cwd(), 'logs');
     const logPath = path.join(logsDir, 'mcp-server.log');
@@ -31,7 +32,7 @@ const logger = {
       // 靜默處理日誌錯誤
     }
   },
-  error: (message: string, context?: any) => {
+  error: (message: string, context?: unknown): void => {
     const logsDir = path.join(process.cwd(), 'logs');
     const logPath = path.join(logsDir, 'mcp-server.log');
     try {
@@ -213,7 +214,12 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
   });
 
   try {
-    const { spec, flow, baseUrl, port, token, options = {} } = params;
+    const { spec, flow } = params;
+
+    // 使用環境變數作為預設值
+    const baseUrl = params.baseUrl || process.env.SPEC_PILOT_BASE_URL;
+    const port = params.port || (process.env.SPEC_PILOT_PORT ? parseInt(process.env.SPEC_PILOT_PORT, 10) : undefined);
+    const token = params.token || process.env.SPEC_PILOT_TOKEN;
 
     if (!spec || !flow) {
       return {
@@ -263,23 +269,55 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
     }
 
     // 解析規格和流程
-    const parsedSpec = await loadSpec(specData, { executionId });
-    const parsedFlow = await loadFlow(flowData, { executionId });
+    await loadSpec({ content: specData, executionId });
+    const parsedFlow = await loadFlow({ content: flowData, executionId });
 
-    // 執行流程
-    const orchestrator = new FlowOrchestrator({
-      executionId,
-      baseUrl,
-      port,
-      token,
-      ...options
-    });
+    // 如果有提供配置參數，覆寫全域配置
+    if (baseUrl || port || token) {
+      const configOverrides: Record<string, unknown> = {};
+      if (baseUrl) configOverrides.baseUrl = baseUrl;
+      if (port) configOverrides.port = port;
+      if (token) configOverrides.token = token;
 
-    const result = await orchestrator.execute(parsedSpec, parsedFlow);
+      overrideConfig(configOverrides);
 
-    // 產生報表
-    const reportGenerator = new ReportGenerator({ executionId });
-    const report = await reportGenerator.generateReport(result);
+      logger.info('已覆寫配置', {
+        executionId,
+        method: 'runFlow',
+        event: 'config_override',
+        details: {
+          hasBaseUrl: !!baseUrl,
+          hasPort: !!port,
+          hasToken: !!token
+        }
+      });
+    }
+
+    // 執行流程（使用增強版）
+    const finalBaseUrl = baseUrl || config.baseUrl || 'http://localhost:3000';
+    const orchestrator = new EnhancedFlowOrchestrator(undefined, { baseUrl: finalBaseUrl });
+
+    // 準備執行配置
+    const executionConfig: IExecutionConfig = {
+      baseUrl: finalBaseUrl,
+      fallbackUsed: false,
+      authNamespaces: []
+    };
+
+    // 使用增強版執行並自動產生報表
+    const flowResult = await orchestrator.executeFlowWithReporting(
+      parsedFlow,
+      executionConfig,
+      {
+        executionId,
+        enableReporting: true
+      }
+    );
+
+    const result = {
+      steps: flowResult.results,
+      success: flowResult.results.every(r => r.status !== 'failed')
+    };
 
     logger.info('runFlow 方法成功完成', {
       executionId,
@@ -294,12 +332,14 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
     return {
       content: [{
         type: "text",
-        text: `測試執行完成！\n\n` +
+        text: `測試執行完成（真實 HTTP 測試）！\n\n` +
               `執行 ID: ${executionId}\n` +
               `結果: ${result.success ? '成功' : '失敗'}\n` +
               `總步驟數: ${result.steps?.length || 0}\n` +
-              `執行時間: ${result.duration || 0}ms\n\n` +
-              `詳細報表：\n${JSON.stringify(report, null, 2)}`
+              `成功步驟: ${result.steps?.filter(s => s.status === 'passed')?.length || 0}\n` +
+              `失敗步驟: ${result.steps?.filter(s => s.status === 'failed')?.length || 0}\n\n` +
+              `報表摘要：\n${flowResult.reportSummary || '無報表摘要'}\n\n` +
+              `執行詳情：已產生完整報表與日誌`
       }]
     };
 
@@ -482,7 +522,7 @@ server.registerTool("getReport", {
 });
 
 // 啟動 MCP Server（使用官方範例的方式）
-async function startServer() {
+async function startServer(): Promise<void> {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);

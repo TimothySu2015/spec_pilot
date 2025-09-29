@@ -5,8 +5,8 @@ import { join, resolve, relative } from 'path';
 import { createStructuredLogger } from '@specpilot/shared';
 import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
-import { FlowOrchestrator } from '@specpilot/core-flow';
-import { ReportGenerator } from '@specpilot/reporting';
+import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
+import { type IExecutionConfig } from '@specpilot/reporting';
 
 const logger = createStructuredLogger('mcp-server');
 
@@ -80,29 +80,40 @@ export async function handleRunFlow(request: IMcpRequest): Promise<IMcpResponse>
       // 處理設定覆寫
       const overrideConfig = createConfigOverride(params);
 
-      // 執行測試流程（套用覆寫設定）
-      const orchestrator = new FlowOrchestrator();
+      // 執行測試流程（使用增強版）
+      const baseUrl = params.baseUrl || process.env.SPEC_PILOT_BASE_URL || 'http://localhost:3000';
+      const orchestrator = new EnhancedFlowOrchestrator(undefined, { baseUrl });
+
+      // 準備執行配置
+      const executionConfig: IExecutionConfig = {
+        baseUrl,
+        fallbackUsed: false,
+        authNamespaces: []
+      };
 
       // 將覆寫設定注入到流程定義中
       const enhancedFlowDefinition = applyConfigOverrides(flowDefinition, overrideConfig);
 
-      const testResults = await orchestrator.executeFlowDefinition(enhancedFlowDefinition, executionId);
-
-      // 產生報表
-      const reportGenerator = new ReportGenerator();
-      const report = reportGenerator.generateReport(
-        flowDefinition.name || 'Unnamed Flow',
-        testResults,
-        {
-          baseUrl: params.baseUrl,
-          port: params.port
-        },
+      // 使用增強版執行並自動產生報表
+      const flowResult = await orchestrator.executeFlowWithReporting(
+        enhancedFlowDefinition,
+        executionConfig,
         {
           executionId,
-          mode: params.spec ? 'file' : 'content',
-          timestamp: new Date().toISOString()
+          enableReporting: true
         }
       );
+
+      const testResults = flowResult.results;
+      const report = {
+        executionId,
+        timestamp: new Date().toISOString(),
+        summary: flowResult.reportSummary,
+        success: flowResult.results.every(r => r.status !== 'failed'),
+        totalSteps: flowResult.results.length,
+        successfulSteps: flowResult.results.filter(r => r.status === 'passed').length,
+        failedSteps: flowResult.results.filter(r => r.status === 'failed').length
+      };
 
       // 儲存報表
       const reportsDir = 'reports';
@@ -111,7 +122,7 @@ export async function handleRunFlow(request: IMcpRequest): Promise<IMcpResponse>
       }
 
       const reportPath = join(reportsDir, `${executionId}.json`);
-      reportGenerator.saveReport(report, reportPath);
+      writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
 
       // 建立回應
       const response: IRunFlowResult = {
