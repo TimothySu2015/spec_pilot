@@ -1,0 +1,15 @@
+name: 簡單健康檢查
+description: 最簡單的健康檢查測試
+version: 1.0.0
+
+variables:
+  test_message: Hello
+
+steps:
+  - name: 健康檢查
+    description: 檢查 API 服務狀態
+    request:
+      method: GET
+      path: /api/health
+    expect:
+      statusCode: 200

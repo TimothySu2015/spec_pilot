@@ -1,0 +1,428 @@
+name: 使用者管理完整測試流程
+description: |
+  完整測試 SpecPilot Mock Server 的使用者管理與認證功能
+  包含健康檢查、認證登入、使用者 CRUD 操作以及錯誤情境測試
+version: 1.0.0
+baseUrl: http://localhost:3000
+
+# 全域變數
+variables:
+  admin_username: admin
+  admin_password: "123456"
+  test_email_prefix: testuser
+  test_domain: example.com
+
+steps:
+  # ====== 健康檢查 ======
+  - name: 健康檢查
+    description: 驗證 API 服務狀態
+    request:
+      method: GET
+      path: /api/health
+    expect:
+      statusCode: 200
+      body:
+        status: ok
+        environment: development
+        features:
+          auth: true
+          userManagement: true
+    validation:
+      - rule: notNull
+        path: timestamp
+      - rule: notNull
+        path: features.adminAccount.username
+
+  # ====== 認證測試 ======
+  - name: 管理者登入
+    description: 使用預設管理者帳號登入取得 token
+    request:
+      method: POST
+      path: /auth/login
+      headers:
+        Content-Type: application/json
+      body:
+        username: "{{admin_username}}"
+        password: "{{admin_password}}"
+    expect:
+      statusCode: 200
+    validation:
+      - rule: notNull
+        path: token
+      - rule: contains
+        path: tokenType
+        value: Bearer
+      - rule: notNull
+        path: user.name
+    capture:
+      admin_token: token
+      admin_user_name: user.name
+
+  - name: 錯誤登入測試
+    description: 測試錯誤的登入資訊
+    request:
+      method: POST
+      path: /auth/login
+      headers:
+        Content-Type: application/json
+      body:
+        username: wronguser
+        password: wrongpass
+    expect:
+      statusCode: 401
+      body:
+        error: Unauthorized
+    validation:
+      - rule: contains
+        path: message
+        value: 帳號或密碼錯誤
+
+  # ====== 未認證存取測試 ======
+  - name: 未認證存取使用者列表
+    description: 測試沒有 token 時存取使用者 API
+    request:
+      method: GET
+      path: /api/users
+    expect:
+      statusCode: 401
+      body:
+        error: Unauthorized
+    validation:
+      - rule: contains
+        path: message
+        value: 需要有效的認證 token
+
+  # ====== 使用者列表查詢 ======
+  - name: 取得使用者列表
+    description: 使用 token 取得所有使用者列表
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: notNull
+        path: users
+      - rule: notNull
+        path: total
+    capture:
+      initial_user_count: total
+      first_user_id: users[0].id
+      first_user_name: users[0].name
+
+  # ====== 建立新使用者 ======
+  - name: 建立新使用者
+    description: 建立一個新的測試使用者
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        name: API 測試使用者
+        email: "{{test_email_prefix}}@{{test_domain}}"
+        role: user
+        status: active
+    expect:
+      statusCode: 201
+    validation:
+      - rule: notNull
+        path: id
+      - rule: contains
+        path: name
+        value: API 測試使用者
+      - rule: contains
+        path: email
+        value: testuser@example.com
+      - rule: contains
+        path: role
+        value: user
+      - rule: contains
+        path: status
+        value: active
+    capture:
+      new_user_id: id
+      new_user_email: email
+
+  - name: 驗證使用者數量增加
+    description: 確認使用者總數增加了 1
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: notNull
+        path: total
+    # TODO: 當支援數值比較時，可以驗證 total == initial_user_count + 1
+
+  # ====== 取得使用者詳情 ======
+  - name: 取得新建使用者詳情
+    description: 根據 ID 取得剛建立的使用者詳細資料
+    request:
+      method: GET
+      path: /api/users/{{new_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: email
+        value: "{{new_user_email}}"
+      - rule: contains
+        path: status
+        value: active
+
+  - name: 取得不存在的使用者
+    description: 測試取得不存在的使用者 ID
+    request:
+      method: GET
+      path: /api/users/99999
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 404
+      body:
+        error: Not Found
+    validation:
+      - rule: contains
+        path: message
+        value: 找不到該使用者
+
+  # ====== 更新使用者 ======
+  - name: 部分更新使用者狀態
+    description: 使用 PATCH 更新使用者狀態為 inactive
+    request:
+      method: PATCH
+      path: /api/users/{{new_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        status: inactive
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: status
+        value: inactive
+      - rule: contains
+        path: email
+        value: "{{new_user_email}}"
+    capture:
+      updated_timestamp: updatedAt
+
+  - name: 完整更新使用者
+    description: 使用 PUT 完整更新使用者資料
+    request:
+      method: PUT
+      path: /api/users/{{new_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        name: 完整更新的使用者
+        email: "updated-{{test_email_prefix}}@{{test_domain}}"
+        role: admin
+        status: active
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: name
+        value: 完整更新的使用者
+      - rule: contains
+        path: email
+        value: updated-testuser@example.com
+      - rule: contains
+        path: role
+        value: admin
+      - rule: contains
+        path: status
+        value: active
+
+  - name: Email 重複測試
+    description: 測試建立重複 email 的使用者
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        name: 重複 Email 使用者
+        email: "updated-{{test_email_prefix}}@{{test_domain}}"
+        role: user
+        status: active
+    expect:
+      statusCode: 409
+      body:
+        error: Conflict
+    validation:
+      - rule: contains
+        path: message
+        value: 該信箱已被使用
+
+  # ====== 建立第二個測試使用者 ======
+  - name: 建立第二個測試使用者
+    description: 建立另一個測試使用者供後續刪除測試使用
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        name: 待刪除使用者
+        email: "delete-test@{{test_domain}}"
+        role: user
+        status: active
+    expect:
+      statusCode: 201
+    validation:
+      - rule: notNull
+        path: id
+    capture:
+      delete_user_id: id
+
+  # ====== 刪除使用者 ======
+  - name: 刪除測試使用者
+    description: 刪除剛建立的第二個使用者
+    request:
+      method: DELETE
+      path: /api/users/{{delete_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: message
+        value: 使用者已成功刪除
+      - rule: notNull
+        path: deletedUser
+      - rule: contains
+        path: deletedUser.name
+        value: 待刪除使用者
+
+  - name: 驗證使用者已刪除
+    description: 確認使用者已被刪除，無法再取得
+    request:
+      method: GET
+      path: /api/users/{{delete_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 404
+      body:
+        error: Not Found
+
+  - name: 刪除不存在的使用者
+    description: 測試刪除不存在的使用者 ID
+    request:
+      method: DELETE
+      path: /api/users/99999
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 404
+      body:
+        error: Not Found
+
+  # ====== 錯誤處理測試 ======
+  - name: 建立使用者時缺少必填欄位
+    description: 測試建立使用者時缺少 name 欄位
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        email: "incomplete@{{test_domain}}"
+        role: user
+    expect:
+      statusCode: 400
+      body:
+        error: Bad Request
+    validation:
+      - rule: contains
+        path: message
+        value: 姓名和信箱為必填欄位
+
+  - name: 使用無效 token 存取
+    description: 測試使用無效的 token
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: Bearer invalid-token-12345
+    expect:
+      statusCode: 401
+      body:
+        error: Unauthorized
+
+  # ====== 最終驗證 ======
+  - name: 最終使用者列表檢查
+    description: 最終檢查使用者列表狀態
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: notNull
+        path: users
+      - rule: notNull
+        path: total
+    capture:
+      final_user_count: total
+
+  # ====== 清理測試資料 ======
+  - name: 清理建立的測試使用者
+    description: 刪除在測試過程中建立的使用者
+    request:
+      method: DELETE
+      path: /api/users/{{new_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: message
+        value: 使用者已成功刪除
+
+  - name: 最終健康檢查
+    description: 測試結束前的最後健康檢查
+    request:
+      method: GET
+      path: /api/health
+    expect:
+      statusCode: 200
+      body:
+        status: ok
+    validation:
+      - rule: notNull
+        path: timestamp
+
+# 測試執行選項
+options:
+  timeout: 5000
+  retryCount: 0
+  failFast: true
+
+# 測試報表設定
+reporting:
+  includeRequestHeaders: true
+  includeResponseHeaders: false
+  includeResponseBody: true
+  maskSensitiveData: true

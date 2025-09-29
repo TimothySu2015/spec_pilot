@@ -1,0 +1,126 @@
+name: 使用者管理基本測試流程
+description: |
+  簡化版的使用者管理 API 測試流程
+  包含核心功能：登入、查詢、建立、更新、刪除使用者
+version: 1.0.0
+baseUrl: http://localhost:3000
+
+steps:
+  # 1. 健康檢查
+  - name: 健康檢查
+    description: 確認 API 服務正常
+    request:
+      method: GET
+      path: /api/health
+    expect:
+      statusCode: 200
+      body:
+        status: ok
+
+  # 2. 管理者登入
+  - name: 管理者登入
+    description: 使用管理者帳號登入
+    request:
+      method: POST
+      path: /auth/login
+      headers:
+        Content-Type: application/json
+      body:
+        username: admin
+        password: "123456"
+    expect:
+      statusCode: 200
+    validation:
+      - rule: notNull
+        path: token
+    capture:
+      admin_token: token
+
+  # 3. 查詢使用者列表
+  - name: 取得使用者列表
+    description: 取得所有使用者
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: notNull
+        path: users
+
+  # 4. 建立新使用者
+  - name: 建立測試使用者
+    description: 建立一個新使用者
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        name: 快速測試使用者
+        email: quicktest@example.com
+        role: user
+        status: active
+    expect:
+      statusCode: 201
+    validation:
+      - rule: notNull
+        path: id
+    capture:
+      test_user_id: id
+
+  # 5. 取得使用者詳情
+  - name: 取得使用者詳情
+    description: 取得剛建立的使用者資料
+    request:
+      method: GET
+      path: /api/users/{{test_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: name
+        value: 快速測試使用者
+
+  # 6. 更新使用者
+  - name: 更新使用者狀態
+    description: 將使用者狀態改為 inactive
+    request:
+      method: PATCH
+      path: /api/users/{{test_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+        Content-Type: application/json
+      body:
+        status: inactive
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: status
+        value: inactive
+
+  # 7. 刪除使用者
+  - name: 刪除測試使用者
+    description: 清理測試資料
+    request:
+      method: DELETE
+      path: /api/users/{{test_user_id}}
+      headers:
+        Authorization: Bearer {{admin_token}}
+    expect:
+      statusCode: 200
+    validation:
+      - rule: contains
+        path: message
+        value: 使用者已成功刪除
+
+options:
+  timeout: 3000
+  retryCount: 0
+  failFast: true

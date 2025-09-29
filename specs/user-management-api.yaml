@@ -1,0 +1,618 @@
+openapi: 3.0.3
+info:
+  title: SpecPilot 使用者管理 API
+  description: |
+    SpecPilot Mock Server 的使用者管理與認證 API
+
+    ## 認證方式
+    除了登入端點外，所有 API 都需要在 Header 中提供 Bearer Token:
+    ```
+    Authorization: Bearer <your-token>
+    ```
+
+    ## 預設管理者帳號
+    - 帳號: admin
+    - 密碼: 123456
+
+  version: 1.0.0
+  contact:
+    name: SpecPilot Team
+    email: team@specpilot.local
+
+servers:
+  - url: http://localhost:3000
+    description: 本地開發伺服器
+
+tags:
+  - name: 健康檢查
+    description: 系統狀態相關 API
+  - name: 認證
+    description: 使用者認證相關 API
+  - name: 使用者管理
+    description: 使用者 CRUD 操作 API
+
+paths:
+  /api/health:
+    get:
+      summary: 健康檢查
+      description: 檢查 API 服務狀態與功能可用性
+      tags:
+        - 健康檢查
+      responses:
+        '200':
+          description: 服務正常運作
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/login:
+    post:
+      summary: 使用者登入
+      description: 使用帳號密碼登入，取得 JWT token
+      tags:
+        - 認證
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: admin
+              password: "123456"
+      responses:
+        '200':
+          description: 登入成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 帳號或密碼錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/users:
+    get:
+      summary: 取得使用者列表
+      description: 取得所有使用者的基本資料
+      tags:
+        - 使用者管理
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功取得使用者列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersListResponse'
+        '401':
+          description: 未提供有效的認證 token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: 建立新使用者
+      description: 新增一個使用者到系統中
+      tags:
+        - 使用者管理
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            example:
+              name: 新使用者
+              email: newuser@example.com
+              role: user
+              status: active
+      responses:
+        '201':
+          description: 使用者建立成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未提供有效的認證 token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email 已被使用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/users/{id}:
+    get:
+      summary: 取得使用者詳情
+      description: 根據 ID 取得特定使用者的詳細資料
+      tags:
+        - 使用者管理
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 使用者 ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: 成功取得使用者資料
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: 未提供有效的認證 token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 找不到該使用者
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: 完整更新使用者
+      description: 完整更新使用者所有可修改欄位
+      tags:
+        - 使用者管理
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 使用者 ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example:
+              name: 更新後的姓名
+              email: updated@example.com
+              role: admin
+              status: active
+      responses:
+        '200':
+          description: 使用者更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未提供有效的認證 token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 找不到該使用者
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email 已被使用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: 部分更新使用者
+      description: 部分更新使用者的特定欄位
+      tags:
+        - 使用者管理
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 使用者 ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchUserRequest'
+            example:
+              status: inactive
+      responses:
+        '200':
+          description: 使用者更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未提供有效的認證 token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 找不到該使用者
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email 已被使用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: 刪除使用者
+      description: 從系統中永久刪除使用者
+      tags:
+        - 使用者管理
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 使用者 ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: 使用者刪除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          description: 未提供有效的認證 token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 找不到該使用者
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token 取得方式：POST /auth/login
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - environment
+        - features
+      properties:
+        status:
+          type: string
+          enum: [ok, error]
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00.000Z"
+        environment:
+          type: string
+          example: development
+        features:
+          type: object
+          properties:
+            auth:
+              type: boolean
+              example: true
+            userManagement:
+              type: boolean
+              example: true
+            adminAccount:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: admin
+                note:
+                  type: string
+                  example: 預設管理者帳號
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          example: admin
+          description: 使用者名稱
+        password:
+          type: string
+          minLength: 1
+          example: "123456"
+          description: 使用者密碼
+
+    AuthResponse:
+      type: object
+      required:
+        - token
+        - expiresIn
+        - tokenType
+        - user
+      properties:
+        token:
+          type: string
+          example: admin-token-1234567890-abcd1234
+          description: JWT 認證 token
+        expiresIn:
+          type: integer
+          example: 3600
+          description: Token 有效期（秒）
+        tokenType:
+          type: string
+          enum: [Bearer]
+          example: Bearer
+        user:
+          $ref: '#/components/schemas/UserInfo'
+
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+          description: 使用者唯一識別 ID
+        name:
+          type: string
+          minLength: 1
+          example: 測試使用者
+          description: 使用者姓名
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: 使用者電子郵件
+        role:
+          type: string
+          enum: [admin, user]
+          example: user
+          description: 使用者角色
+        status:
+          type: string
+          enum: [active, inactive]
+          example: active
+          description: 使用者狀態
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00.000Z"
+          description: 建立時間
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00.000Z"
+          description: 最後更新時間
+
+    UserInfo:
+      type: object
+      description: 使用者基本資訊（不包含 ID）
+      required:
+        - name
+        - email
+        - role
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        name:
+          type: string
+          example: 系統管理員
+        email:
+          type: string
+          format: email
+          example: admin@specpilot.local
+        role:
+          type: string
+          enum: [admin, user]
+          example: admin
+        status:
+          type: string
+          enum: [active, inactive]
+          example: active
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: 新使用者
+          description: 使用者姓名
+        email:
+          type: string
+          format: email
+          example: newuser@example.com
+          description: 使用者電子郵件
+        role:
+          type: string
+          enum: [admin, user]
+          default: user
+          example: user
+          description: 使用者角色
+        status:
+          type: string
+          enum: [active, inactive]
+          default: active
+          example: active
+          description: 使用者狀態
+
+    UpdateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - role
+        - status
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: 更新後的使用者
+        email:
+          type: string
+          format: email
+          example: updated@example.com
+        role:
+          type: string
+          enum: [admin, user]
+          example: user
+        status:
+          type: string
+          enum: [active, inactive]
+          example: active
+
+    PatchUserRequest:
+      type: object
+      description: 部分更新使用者，所有欄位都是選擇性的
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: 部分更新的姓名
+        email:
+          type: string
+          format: email
+          example: patch@example.com
+        role:
+          type: string
+          enum: [admin, user]
+          example: admin
+        status:
+          type: string
+          enum: [active, inactive]
+          example: inactive
+
+    UsersListResponse:
+      type: object
+      required:
+        - users
+        - total
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        total:
+          type: integer
+          example: 2
+          description: 使用者總數
+
+    DeleteResponse:
+      type: object
+      required:
+        - message
+        - deletedUser
+      properties:
+        message:
+          type: string
+          example: 使用者已成功刪除
+        deletedUser:
+          $ref: '#/components/schemas/User'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: Bad Request
+          description: 錯誤類型
+        message:
+          type: string
+          example: 詳細錯誤訊息
+          description: 錯誤說明
+        statusCode:
+          type: integer
+          example: 400
+          description: HTTP 狀態碼
