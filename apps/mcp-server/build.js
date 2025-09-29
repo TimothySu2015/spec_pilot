@@ -20,9 +20,11 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 // 使用 tsx 運行 TypeScript 檔案
-const child = spawn('pnpm', ['exec', 'tsx', path.join(__dirname, 'src', 'index.ts')], {
+// __dirname 是 dist/ 目錄，需要往上一層找到 src/index.ts
+const child = spawn('pnpm', ['exec', 'tsx', path.join(__dirname, '..', 'src', 'index.ts')], {
   stdio: 'inherit',
-  cwd: __dirname
+  cwd: path.join(__dirname, '..'),
+  shell: true  // Windows 需要這個選項
 });
 
 child.on('exit', (code) => {
