@@ -1,5 +1,6 @@
 import { createStructuredLogger, randomUUID, type HttpMethod } from '@specpilot/shared';
 import type { IFlowDefinition as FlowParserDefinition, IFlowStep as FlowParserStep } from '@specpilot/flow-parser';
+import { VariableResolver } from '@specpilot/flow-parser';
 import { AuthHandler, type IAuthHandleResult } from './auth-handler.js';
 import { ReportingIntegration } from './reporting-integration.js';
 import type { IExecutionConfig } from '@specpilot/reporting';
@@ -17,11 +18,13 @@ export class EnhancedFlowOrchestrator {
   private reportingIntegration: ReportingIntegration | null = null;
   private httpRunner: HttpRunner;
   private validationEngine: ValidationEngine;
+  private variableResolver: VariableResolver;
 
   constructor(authHandler?: AuthHandler, config?: { baseUrl?: string }) {
     this.authHandler = authHandler || new AuthHandler();
     this.httpRunner = new HttpRunner({ baseUrl: config?.baseUrl });
     this.validationEngine = new ValidationEngine();
+    this.variableResolver = new VariableResolver();
   }
 
   /**
@@ -66,6 +69,17 @@ export class EnhancedFlowOrchestrator {
     });
 
     try {
+      // 載入全域變數
+      if (flowDefinition.variables) {
+        this.variableResolver.loadVariables(flowDefinition.variables, executionId);
+        logger.info('載入全域變數', {
+          executionId,
+          variableCount: Object.keys(flowDefinition.variables).length,
+          variableNames: Object.keys(flowDefinition.variables),
+          component: 'enhanced-orchestrator'
+        });
+      }
+
       // 載入全域靜態認證設定
       if (flowDefinition.globals?.auth && 'static' in flowDefinition.globals.auth && flowDefinition.globals.auth.static) {
         const staticAuthResults = await this.authHandler.loadGlobalStaticAuth(
@@ -103,8 +117,16 @@ export class EnhancedFlowOrchestrator {
           this.reportingIntegration.recordStepStart(step);
         }
 
-        const stepResult = await this.executeStepWithReporting(step, context);
+        // 解析步驟中的變數
+        const resolvedStep = this.resolveStepVariables(step, executionId);
+
+        const stepResult = await this.executeStepWithReporting(resolvedStep, context);
         results.push(stepResult);
+
+        // 處理 capture：從回應中提取變數
+        if (step.capture && stepResult.response?.data) {
+          this.captureVariables(step.capture, stepResult.response.data, executionId);
+        }
 
         // 如果步驟失敗且非認證錯誤，考慮是否繼續執行
         if (stepResult.status === 'failed' && !stepResult.authStatus?.authError) {
@@ -397,5 +419,57 @@ export class EnhancedFlowOrchestrator {
    */
   clearAllTokens(): void {
     this.authHandler.clearAllTokens();
+  }
+
+  /**
+   * 解析步驟中的變數引用
+   */
+  private resolveStepVariables(step: FlowParserStep, executionId: string): FlowParserStep {
+    return {
+      ...step,
+      request: {
+        ...step.request,
+        headers: this.variableResolver.resolve(step.request.headers, executionId) as Record<string, string> | undefined,
+        body: this.variableResolver.resolve(step.request.body, executionId),
+        query: this.variableResolver.resolve(step.request.query, executionId) as Record<string, string> | undefined,
+        path: step.request.path ? this.variableResolver.resolve(step.request.path, executionId) as string : step.request.path,
+        url: step.request.url ? this.variableResolver.resolve(step.request.url, executionId) as string : step.request.url,
+      }
+    };
+  }
+
+  /**
+   * 從回應中提取變數（capture）
+   */
+  private captureVariables(capture: Record<string, string>, responseData: unknown, executionId: string): void {
+    Object.entries(capture).forEach(([varName, jsonPath]) => {
+      const value = this.variableResolver.extractValueByPath(responseData, jsonPath);
+
+      if (value !== undefined) {
+        this.variableResolver.captureVariable(varName, value, executionId);
+        logger.info('Capture 變數成功', {
+          executionId,
+          variableName: varName,
+          jsonPath,
+          valueType: typeof value,
+          component: 'enhanced-orchestrator'
+        });
+      } else {
+        logger.warn('Capture 變數失敗：路徑無效', {
+          executionId,
+          variableName: varName,
+          jsonPath,
+          responseData,
+          component: 'enhanced-orchestrator'
+        });
+      }
+    });
+  }
+
+  /**
+   * 取得變數解析器（用於測試）
+   */
+  getVariableResolver(): VariableResolver {
+    return this.variableResolver;
   }
 }

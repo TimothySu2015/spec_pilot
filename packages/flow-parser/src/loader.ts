@@ -82,12 +82,16 @@ export class FlowLoader {
       // 驗證結構
       const validatedFlow = this.validateFlowStructure(flowData, executionId);
 
+      // 規範化欄位名稱（expect -> expectations, validation -> expectations.custom）
+      this.normalizeFlowStructure(validatedFlow, executionId);
+
       // 建立 Flow 定義
       const flowDefinition: IFlowDefinition = {
-        id: validatedFlow.id || 'unnamed-flow',
+        id: validatedFlow.id || validatedFlow.name || 'unnamed-flow',
         rawContent: content,
         steps: validatedFlow.steps,
-        globals: validatedFlow.globals
+        globals: validatedFlow.globals,
+        variables: validatedFlow.variables
       };
 
       this.logger.info('FLOW_LOAD_SUCCESS', 'Flow 載入成功', {
@@ -216,10 +220,11 @@ export class FlowLoader {
       );
     }
 
-    // 驗證請求路徑
-    if (!requestData.path || typeof requestData.path !== 'string') {
+    // 驗證請求路徑或 URL（至少需要一個）
+    if ((!requestData.path || typeof requestData.path !== 'string') &&
+        (!requestData.url || typeof requestData.url !== 'string')) {
       throw FlowValidationError.missingRequiredField(
-        `steps[${index}].request.path`,
+        `steps[${index}].request.path 或 request.url`,
         executionId
       );
     }
@@ -325,6 +330,122 @@ export class FlowLoader {
         executionId
       );
     }
+  }
+
+  /**
+   * 規範化 Flow 結構
+   * 將 YAML 的欄位名稱映射到內部標準格式
+   */
+  private normalizeFlowStructure(flow: Record<string, unknown>, executionId?: string): void {
+    if (!flow.steps || !Array.isArray(flow.steps)) {
+      return;
+    }
+
+    (flow.steps as unknown[]).forEach((step: unknown, index: number) => {
+      this.normalizeStep(step, index, executionId);
+    });
+  }
+
+  /**
+   * 規範化單個步驟
+   */
+  private normalizeStep(step: unknown, index: number, executionId?: string): void {
+    if (!step || typeof step !== 'object') {
+      return;
+    }
+
+    const stepData = step as Record<string, unknown>;
+
+    // 1. 規範化 expect -> expectations
+    if (stepData.expect) {
+      const expect = stepData.expect as Record<string, unknown>;
+
+      if (!stepData.expectations) {
+        stepData.expectations = {};
+      }
+
+      const expectations = stepData.expectations as Record<string, unknown>;
+
+      // 映射 statusCode -> status
+      if (expect.statusCode !== undefined) {
+        expectations.status = expect.statusCode;
+        this.logger.debug('規範化欄位', {
+          executionId,
+          component: 'flow-parser',
+          stepIndex: index,
+          stepName: stepData.name,
+          mapping: 'expect.statusCode -> expectations.status',
+          value: expect.statusCode
+        });
+      }
+
+      // 映射 body
+      if (expect.body !== undefined) {
+        expectations.body = expect.body;
+      }
+
+      // 映射其他可能的 expect 欄位
+      if (expect.headers !== undefined) {
+        expectations.headers = expect.headers;
+      }
+    }
+
+    // 2. 規範化 validation -> expectations.custom
+    if (stepData.validation && Array.isArray(stepData.validation)) {
+      if (!stepData.expectations) {
+        stepData.expectations = {};
+      }
+
+      const expectations = stepData.expectations as Record<string, unknown>;
+      expectations.custom = this.convertValidationToCustomRules(stepData.validation);
+
+      this.logger.debug('規範化欄位', {
+        executionId,
+        component: 'flow-parser',
+        stepIndex: index,
+        stepName: stepData.name,
+        mapping: 'validation -> expectations.custom',
+        ruleCount: (stepData.validation as unknown[]).length
+      });
+    }
+
+    // 3. 確保 request.path 或 request.url 存在
+    if (stepData.request && typeof stepData.request === 'object') {
+      const request = stepData.request as Record<string, unknown>;
+      if (!request.url && !request.path) {
+        this.logger.warn('請求缺少 path 或 url', {
+          executionId,
+          component: 'flow-parser',
+          stepIndex: index,
+          stepName: stepData.name
+        });
+      }
+    }
+  }
+
+  /**
+   * 轉換 validation 規則為 custom 規則格式
+   */
+  private convertValidationToCustomRules(validation: unknown[]): Array<{
+    type: string;
+    field: string;
+    value?: unknown;
+    message?: string;
+  }> {
+    return validation.map((rule: unknown) => {
+      if (!rule || typeof rule !== 'object') {
+        return { type: 'unknown', field: '' };
+      }
+
+      const ruleData = rule as Record<string, unknown>;
+
+      return {
+        type: ruleData.rule as string || ruleData.type as string || 'unknown',
+        field: ruleData.path as string || ruleData.field as string || '',
+        value: ruleData.value,
+        message: ruleData.message as string
+      };
+    });
   }
 
   /**

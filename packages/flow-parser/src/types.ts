@@ -36,7 +36,9 @@ export interface IFlowRequest {
   /** HTTP 方法 */
   method: HttpMethod;
   /** 請求路徑 */
-  path: string;
+  path?: string;
+  /** 請求 URL（與 path 二擇一） */
+  url?: string;
   /** 請求標頭 */
   headers?: Record<string, string>;
   /** 請求主體 */
@@ -108,6 +110,8 @@ export interface IFlowAuth {
 export interface IFlowStep {
   /** 步驟名稱 */
   name: string;
+  /** 步驟描述 */
+  description?: string;
   /** HTTP 請求設定 */
   request: IFlowRequest;
   /** 期望驗證設定 */
@@ -116,6 +120,8 @@ export interface IFlowStep {
   retryPolicy?: IRetryPolicy;
   /** 認證設定 */
   auth?: IFlowAuth;
+  /** Capture 設定：從回應中提取變數 */
+  capture?: Record<string, string>;
 }
 
 /**
@@ -164,6 +170,8 @@ export interface IFlowDefinition {
   steps: IFlowStep[];
   /** 全域設定 */
   globals?: IFlowGlobals;
+  /** 全域變數定義 */
+  variables?: Record<string, unknown>;
 }
 
 /**

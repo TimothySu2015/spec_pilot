@@ -11,6 +11,7 @@ export * from './types.js';
 export * from './errors.js';
 export { FlowLoader } from './loader.js';
 export { AuthParser, AuthConfigValidationError } from './auth-parser.js';
+export { VariableResolver } from './variable-resolver.js';
 
 // 預設的 logger 實例
 const defaultLogger = createStructuredLogger('flow-parser');
