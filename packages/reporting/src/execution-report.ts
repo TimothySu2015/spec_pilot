@@ -4,6 +4,22 @@
  */
 
 /**
+ * 錯誤詳情（失敗時才包含）
+ */
+export interface IErrorDetails {
+  /** 完整錯誤回應 body（已遮罩敏感資料） */
+  body: unknown;
+  /** 回應 Headers（已遮罩敏感資料） */
+  headers: Record<string, string>;
+  /** 回應時間（毫秒） */
+  responseTime: number;
+  /** 原始 body 大小（bytes） */
+  bodySize: number;
+  /** 是否被截斷 */
+  bodyTruncated: boolean;
+}
+
+/**
  * 步驟執行結果
  */
 export interface IStepResult {
@@ -36,6 +52,8 @@ export interface IStepResult {
     validationResults: string[];
     /** 錯誤訊息（如果有） */
     errorMessage: string | null;
+    /** ✨ 新增: 失敗時的完整錯誤資訊 */
+    errorDetails?: IErrorDetails;
   };
 }
 
@@ -106,3 +124,4 @@ export type ExecutionReport = IExecutionReport;
 export type StepResult = IStepResult;
 export type ExecutionSummary = IExecutionSummary;
 export type ExecutionConfig = IExecutionConfig;
+export type ErrorDetails = IErrorDetails;

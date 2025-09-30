@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { IMcpRequest, IMcpResponse, IGetReportResult } from '../rpc-handler.js';
 import { createSuccessResponse, createErrorResponse, validateGetReportParams, JSON_RPC_ERROR_CODES } from '../rpc-handler.js';
-import { ReportValidator } from '@specpilot/reporting';
+import { ReportValidator, DiagnosticContextBuilder } from '@specpilot/reporting';
 import { createStructuredLogger } from '@specpilot/shared';
 import type { IExecutionReport } from '@specpilot/reporting';
 
@@ -140,6 +140,51 @@ export function handleGetReport(request: IMcpRequest): IMcpResponse {
     // 類型斷言為執行報表
     const report = parsedReport as IExecutionReport;
 
+    // ✨ 階段 3: 建立或取得診斷上下文
+    let diagnosticContext = report.diagnosticContext || null;
+
+    // 如果報表中沒有診斷上下文，則現場建立（向下相容舊報表）
+    if (!diagnosticContext && report.summary.failedSteps > 0) {
+      logger.info('報表中無診斷上下文，現場建立', {
+        component: 'mcp-server',
+        method: 'getReport',
+        executionId: report.executionId,
+        failedSteps: report.summary.failedSteps,
+        requestId,
+      });
+
+      const diagnosticBuilder = new DiagnosticContextBuilder();
+      diagnosticContext = diagnosticBuilder.build(report);
+
+      // 📝 記錄完整的診斷上下文（供除錯與確認）
+      if (diagnosticContext) {
+        logger.info('diagnostic_context_generated', {
+          component: 'mcp-server',
+          method: 'getReport',
+          executionId: report.executionId,
+          source: 'on-demand',
+          diagnosticContext: JSON.stringify(diagnosticContext, null, 2),
+          requestId,
+        });
+      }
+    } else if (diagnosticContext) {
+      logger.info('使用報表中的診斷上下文', {
+        component: 'mcp-server',
+        method: 'getReport',
+        executionId: report.executionId,
+        source: 'report',
+        failureCount: diagnosticContext.failureCount,
+        requestId,
+      });
+    } else {
+      logger.info('無失敗步驟，無需診斷上下文', {
+        component: 'mcp-server',
+        method: 'getReport',
+        executionId: report.executionId,
+        requestId,
+      });
+    }
+
     // 建立回應結果
     const result: IGetReportResult = {
       reportPath,
@@ -153,6 +198,7 @@ export function handleGetReport(request: IMcpRequest): IMcpResponse {
         duration: report.duration,
       },
       report,
+      diagnosticContext: diagnosticContext || undefined, // 只在有失敗時才有診斷上下文
     };
 
     logger.info('get_report_success', {
@@ -161,6 +207,8 @@ export function handleGetReport(request: IMcpRequest): IMcpResponse {
       reportPath,
       executionId: report.executionId,
       status: report.status,
+      hasDiagnosticContext: !!diagnosticContext,
+      failureCount: diagnosticContext?.failureCount || 0,
       requestId,
     });
 

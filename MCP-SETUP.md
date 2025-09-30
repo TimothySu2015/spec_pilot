@@ -67,12 +67,29 @@ SpecPilot MCP Server 提供以下工具：
 ```
 
 ### 📊 getReport
-取得測試執行報表
+取得測試執行報表（含 AI 智能診斷）
 ```
 參數：
 - executionId (選填): 特定執行 ID，若未指定則取得最新報表
 - format (選填): 報表格式 ('json' 或 'summary')
+
+回應結構：
+- reportPath: 報表檔案路徑
+- executionId: 執行 ID
+- status: 執行狀態 ('success' | 'partial' | 'failure')
+- reportSummary: 測試摘要統計
+- report: 完整測試報表
+- diagnosticContext (失敗時): AI 診斷上下文
 ```
+
+**✨ AI 智能診斷功能**：
+當測試失敗時，`getReport` 會自動包含 `diagnosticContext` 欄位，提供：
+- 智能錯誤分類（網路、認證、驗證、伺服器、未知）與信心度評分
+- 錯誤模式偵測（連鎖失敗、連續認證失敗、全網路錯誤等）
+- 診斷提示（快速診斷、可能原因、建議動作、問題引導）
+- 環境資訊（baseUrl、認證命名空間、是否使用備援）
+
+診斷上下文幫助 Claude 快速理解問題並提供精準的修復建議。
 
 ## 🛠️ 除錯
 

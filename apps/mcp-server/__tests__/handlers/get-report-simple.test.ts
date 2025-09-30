@@ -13,9 +13,13 @@ vi.mock('@specpilot/shared', () => ({
 }));
 
 const mockValidateReport = vi.fn().mockReturnValue({ valid: true, errors: [] });
+const mockBuildDiagnostic = vi.fn().mockReturnValue(null);
 vi.mock('@specpilot/reporting', () => ({
   ReportValidator: vi.fn().mockImplementation(() => ({
     validateReport: mockValidateReport,
+  })),
+  DiagnosticContextBuilder: vi.fn().mockImplementation(() => ({
+    build: mockBuildDiagnostic,
   })),
 }));
 

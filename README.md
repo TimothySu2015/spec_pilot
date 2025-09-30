@@ -166,6 +166,7 @@ pnpm run start:mcp
 - 提供完整的結構化回應與錯誤處理
 - 包含安全防護（路徑遍歷防護、內容大小限制）
 - 自動遮罩敏感資料於日誌中
+- **✨ AI 智能診斷**: 失敗時自動生成診斷上下文，幫助 AI 快速定位問題
 
 **測試與範例**：
 ```bash
@@ -177,6 +178,69 @@ ls docs/examples/*.json
 ```
 
 **詳細文件**：完整的 MCP 介面說明請參考 [`docs/mcp-interface.md`](docs/mcp-interface.md)，包含所有方法的詳細參數、回應範例與錯誤處理指引。
+
+### AI 智能診斷功能
+
+SpecPilot 整合了智能診斷系統，當測試失敗時自動分析錯誤並生成結構化的診斷上下文，幫助 AI (如 Claude) 快速理解問題並提供精準的修復建議。
+
+**診斷功能特點**：
+- 🎯 **智能錯誤分類**: 自動識別網路、認證、驗證、伺服器等 5 種錯誤類型，並提供信心度評分
+- 🔍 **錯誤模式偵測**: 識別連鎖失敗、連續認證失敗、網路問題等常見模式
+- 💡 **診斷提示生成**: 提供快速診斷摘要、可能原因、建議動作與問題引導
+- 🔒 **安全資料遮罩**: 自動遮罩敏感資訊（Token、密碼）同時保留診斷必需的資料
+- 🌐 **繁體中文支援**: 所有診斷資訊都使用繁體中文，便於理解
+
+**診斷上下文結構**：
+```json
+{
+  "diagnosticContext": {
+    "hasFailed": true,
+    "failureCount": 2,
+    "failedSteps": [{
+      "stepName": "取得使用者資料",
+      "stepIndex": 1,
+      "statusCode": 401,
+      "classification": {
+        "primaryType": "auth",
+        "confidence": 95,
+        "indicators": ["HTTP 401", "error: TOKEN_EXPIRED"]
+      }
+    }],
+    "environment": {
+      "baseUrl": "https://api.example.com",
+      "fallbackUsed": false,
+      "authNamespaces": ["default"]
+    },
+    "errorPatterns": [{
+      "pattern": "consecutive_auth_failures",
+      "description": "連續 2 個步驟認證失敗",
+      "likelihood": "high"
+    }],
+    "diagnosticHints": {
+      "quickDiagnosis": "2 個步驟失敗，主要是認證問題",
+      "likelyCauses": [
+        "認證 Token 遺失、無效或已過期",
+        "API Key 設定錯誤"
+      ],
+      "suggestedActions": [
+        "更新或重新取得認證 Token",
+        "檢查 .env.local 中的認證設定"
+      ],
+      "suggestedQuestions": [
+        "Token 是什麼時候過期的？如何刷新？",
+        "API 使用哪種認證方式（Bearer Token / API Key）？"
+      ]
+    }
+  }
+}
+```
+
+**使用方式**：
+1. 透過 MCP 的 `getReport` 方法取得測試報表
+2. 當測試失敗時，回應中會自動包含 `diagnosticContext` 欄位
+3. AI 可以直接讀取診斷上下文，快速理解問題並提供解決方案
+
+**詳細說明**：請參考 [`docs/ai-diagnosis-implementation-plan.md`](docs/ai-diagnosis-implementation-plan.md) 了解診斷系統的設計理念與實作細節。
 
 ## 環境變數與設定
 

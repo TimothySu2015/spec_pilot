@@ -4,8 +4,12 @@ import { writeFileSync } from 'fs';
 
 // 匯出新的類型與功能
 export * from './execution-report.js';
-export { ReportGenerator as EnhancedReportGenerator } from './report-generator.js';
+export { ReportGenerator as EnhancedReportGenerator, type IStepInput } from './report-generator.js';
 export * from './report-validator.js';
+
+// ✨ 匯出診斷相關功能
+export * from './diagnostic-context.js';
+export { DiagnosticContextBuilder } from './diagnostic-context-builder.js';
 
 const logger = createStructuredLogger('reporting');
 

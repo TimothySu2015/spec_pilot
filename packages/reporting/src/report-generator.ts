@@ -8,6 +8,7 @@ import {
   ExecutionConfig,
   PartialExecutionReport
 } from './execution-report.js';
+import { DiagnosticContextBuilder } from './diagnostic-context-builder.js';
 
 const logger = createStructuredLogger('report-generator');
 
@@ -30,6 +31,10 @@ export interface IStepInput {
     success: boolean;
     validationResults: string[];
     errorMessage?: string;
+    // ✨ 新增: 完整回應資料（用於錯誤診斷）
+    body?: unknown;
+    headers?: Record<string, string>;
+    responseTime?: number;
   };
 }
 
@@ -37,6 +42,15 @@ export interface IStepInput {
  * 完整的報表產生器類別
  */
 export class ReportGenerator {
+  private diagnosticBuilder: DiagnosticContextBuilder;
+
+  constructor() {
+    this.diagnosticBuilder = new DiagnosticContextBuilder();
+    logger.info('ReportGenerator 初始化完成', {
+      features: ['診斷上下文建構']
+    });
+  }
+
   /**
    * 計算資料雜湊值
    */
@@ -52,9 +66,89 @@ export class ReportGenerator {
   }
 
   /**
+   * 遮罩敏感欄位（遞迴處理）
+   */
+  private maskSensitiveFields(obj: unknown): unknown {
+    if (typeof obj !== 'object' || obj === null) {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.maskSensitiveFields(item));
+    }
+
+    const masked: Record<string, unknown> = {};
+    const sensitiveKeys = [
+      'password', 'token', 'secret', 'apikey', 'api_key',
+      'authorization', 'jwt', 'bearer', 'credentials', 'access_token'
+    ];
+
+    for (const [key, value] of Object.entries(obj)) {
+      const keyLower = key.toLowerCase();
+
+      // stack_trace 不遮罩（診斷需要）
+      if (key === 'stack_trace' || key === 'stackTrace') {
+        masked[key] = value;
+        continue;
+      }
+
+      // 敏感欄位遮罩
+      if (sensitiveKeys.some(sk => keyLower.includes(sk))) {
+        masked[key] = '***';
+      } else {
+        masked[key] = this.maskSensitiveFields(value);
+      }
+    }
+
+    return masked;
+  }
+
+  /**
+   * 遮罩敏感 Headers
+   */
+  private maskSensitiveHeaders(headers: Record<string, string>): Record<string, string> {
+    const sensitiveHeaders = [
+      'authorization', 'cookie', 'set-cookie',
+      'x-api-key', 'x-auth-token', 'proxy-authorization'
+    ];
+
+    const masked: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(headers)) {
+      const keyLower = key.toLowerCase();
+      if (sensitiveHeaders.includes(keyLower)) {
+        masked[key] = '***';
+      } else {
+        masked[key] = value;
+      }
+    }
+
+    return masked;
+  }
+
+  /**
    * 產生步驟結果
    */
   private generateStepResult(stepInput: StepInput): StepResult {
+    const isFailure = stepInput.status === 'failure';
+    const responseBody = stepInput.response.body;
+
+    // ✨ 失敗時建立 errorDetails
+    let errorDetails = undefined;
+    if (isFailure && responseBody !== undefined && responseBody !== null) {
+      const bodyString = typeof responseBody === 'string'
+        ? responseBody
+        : JSON.stringify(responseBody);
+
+      errorDetails = {
+        body: this.maskSensitiveFields(responseBody),
+        headers: this.maskSensitiveHeaders(stepInput.response.headers || {}),
+        responseTime: stepInput.response.responseTime || 0,
+        bodySize: bodyString.length,
+        bodyTruncated: false // TODO: 實作截斷邏輯（未來若需要）
+      };
+    }
+
     return {
       name: stepInput.name,
       status: stepInput.status,
@@ -71,6 +165,7 @@ export class ReportGenerator {
         success: stepInput.response.success,
         validationResults: stepInput.response.validationResults,
         errorMessage: stepInput.response.errorMessage || null,
+        errorDetails
       },
     };
   }
@@ -129,11 +224,45 @@ export class ReportGenerator {
       config,
     };
 
+    // ✨ 建立診斷上下文（僅在有失敗時）
+    if (failedSteps > 0) {
+      logger.info('偵測到失敗步驟，開始建立診斷上下文', {
+        executionId,
+        failedCount: failedSteps,
+        totalSteps: steps.length
+      });
+
+      const diagnosticContext = this.diagnosticBuilder.build(report);
+
+      if (diagnosticContext) {
+        report.diagnosticContext = diagnosticContext;
+
+        logger.info('診斷上下文已加入報表', {
+          executionId,
+          hasDiagnostic: true,
+          failureCount: diagnosticContext.failureCount,
+          errorPatterns: diagnosticContext.errorPatterns.length,
+          quickDiagnosis: diagnosticContext.diagnosticHints.quickDiagnosis
+        });
+      } else {
+        logger.warn('診斷上下文建立失敗', {
+          executionId,
+          failedCount: failedSteps
+        });
+      }
+    } else {
+      logger.info('無失敗步驟，跳過診斷上下文建立', {
+        executionId,
+        totalSteps: steps.length
+      });
+    }
+
     logger.info('執行報表產生完成', {
       executionId,
       flowId,
       status,
       summary: report.summary,
+      hasDiagnostic: !!report.diagnosticContext
     });
 
     return report;

@@ -168,9 +168,12 @@ describe('HttpClient', () => {
         .delay(2000)
         .reply(200, { data: 'response' });
 
-      await expect(
-        httpClient.get(`${baseUrl}/slow`, { timeout: 1000 })
-      ).rejects.toThrow();
+      // ✨ 修改: 現在回傳虛擬 response 而不是拋出錯誤
+      const response = await httpClient.get(`${baseUrl}/slow`, { timeout: 1000 });
+
+      expect(response.status).toBe(0);
+      expect(response.data).toHaveProperty('_network_error', true);
+      expect(response.data).toHaveProperty('error', 'NETWORK_ERROR');
     });
   });
 
@@ -204,9 +207,13 @@ describe('HttpClient', () => {
         .get('/network-error')
         .replyWithError('Network Error');
 
-      await expect(
-        httpClient.get(`${baseUrl}/network-error`)
-      ).rejects.toThrow('Network Error');
+      // ✨ 修改: 現在回傳虛擬 response 而不是拋出錯誤
+      const response = await httpClient.get(`${baseUrl}/network-error`);
+
+      expect(response.status).toBe(0);
+      expect(response.data).toHaveProperty('_network_error', true);
+      expect(response.data).toHaveProperty('error', 'NETWORK_ERROR');
+      expect(response.data).toHaveProperty('message', 'Network Error');
     });
   });
 

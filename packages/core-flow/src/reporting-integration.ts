@@ -107,7 +107,11 @@ export class ReportingIntegration {
         statusCode: response.statusCode,
         success: testResult.status === 'passed',
         validationResults: response.validationResults,
-        errorMessage: response.errorMessage || testResult.error
+        errorMessage: response.errorMessage || testResult.error,
+        // ✨ 新增: 從 testResult.response 傳遞完整資料
+        body: testResult.response?.data,
+        headers: testResult.response?.headers,
+        responseTime: testResult.response?.duration
       }
     };
 

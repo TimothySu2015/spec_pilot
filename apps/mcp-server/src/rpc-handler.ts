@@ -235,6 +235,7 @@ export interface IGetReportResult {
     duration: number; // 毫秒
   };
   report: unknown; // 完整報表內容
+  diagnosticContext?: unknown; // ✨ 階段 3: 診斷上下文（僅失敗時存在）
 }
 
 /**

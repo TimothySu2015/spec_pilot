@@ -74,6 +74,9 @@ export class HttpClient {
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      const errorCode = error && typeof error === 'object' && 'code' in error
+        ? (error as { code?: string }).code
+        : undefined;
 
       logger.error(EVENT_CODES.STEP_FAILURE, {
         executionId,
@@ -81,10 +84,25 @@ export class HttpClient {
         method: request.method,
         url: request.url,
         error: errorMessage,
+        errorCode,
         duration,
       });
 
-      throw error;
+      // ✨ 回傳虛擬 response 而不是拋出錯誤
+      // status: 0 表示網路層級錯誤（非 HTTP 錯誤）
+      return {
+        status: 0,
+        headers: {},
+        data: {
+          _network_error: true,
+          error: 'NETWORK_ERROR',
+          message: errorMessage,
+          error_code: errorCode,
+          url: request.url,
+          method: request.method
+        },
+        duration
+      };
     }
   }
 

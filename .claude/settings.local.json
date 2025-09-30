@@ -92,7 +92,14 @@
       "mcp__specpilot__listFlows",
       "mcp__specpilot__getReport",
       "Bash(curl:*)",
-      "Bash(pnpm -w run test packages/flow-parser/__tests__/ --run)"
+      "Bash(pnpm -w run test packages/flow-parser/__tests__/ --run)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/ --run)",
+      "Bash(pnpm -w run test packages/reporting/__tests__/diagnostic-context-builder.test.ts --run)",
+      "Bash(pnpm -w run test apps/mcp-server/__tests__/handlers/get-report-diagnostic.test.ts --run)",
+      "Bash(pnpm -w run test packages/reporting/__tests__/ --run)",
+      "Bash(pnpm -w run test packages/reporting/__tests__/diagnostic-context-builder.test.ts packages/reporting/__tests__/enhanced-report-generator.test.ts apps/mcp-server/__tests__/handlers/get-report-simple.test.ts --run)",
+      "Bash(rm:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []

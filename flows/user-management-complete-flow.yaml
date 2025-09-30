@@ -8,7 +8,7 @@ baseUrl: http://localhost:3000
 # 全域變數
 variables:
   admin_username: admin
-  admin_password: "123456"
+  admin_password: '1234562'
   test_email_prefix: newtestuser99
   test_domain: example.com
 
@@ -42,8 +42,8 @@ steps:
       headers:
         Content-Type: application/json
       body:
-        username: "{{admin_username}}"
-        password: "{{admin_password}}"
+        username: '{{admin_username}}'
+        password: '{{admin_password}}'
     expect:
       statusCode: 200
     validation:
@@ -123,7 +123,7 @@ steps:
         Content-Type: application/json
       body:
         name: API 測試使用者
-        email: "{{test_email_prefix}}@{{test_domain}}"
+        email: '{{test_email_prefix}}@{{test_domain}}'
         role: user
         status: active
     expect:
@@ -136,7 +136,7 @@ steps:
         value: API 測試使用者
       - rule: contains
         path: email
-        value: "{{test_email_prefix}}@{{test_domain}}"
+        value: '{{test_email_prefix}}@{{test_domain}}'
       - rule: contains
         path: role
         value: user
@@ -174,7 +174,7 @@ steps:
     validation:
       - rule: contains
         path: email
-        value: "{{new_user_email}}"
+        value: '{{new_user_email}}'
       - rule: contains
         path: status
         value: active
@@ -214,7 +214,7 @@ steps:
         value: inactive
       - rule: contains
         path: email
-        value: "{{new_user_email}}"
+        value: '{{new_user_email}}'
     capture:
       updated_timestamp: updatedAt
 
@@ -228,7 +228,7 @@ steps:
         Content-Type: application/json
       body:
         name: 完整更新的使用者
-        email: "updated-{{test_email_prefix}}@{{test_domain}}"
+        email: 'updated-{{test_email_prefix}}@{{test_domain}}'
         role: admin
         status: active
     expect:
@@ -239,7 +239,7 @@ steps:
         value: 完整更新的使用者
       - rule: contains
         path: email
-        value: "updated-{{test_email_prefix}}@{{test_domain}}"
+        value: 'updated-{{test_email_prefix}}@{{test_domain}}'
       - rule: contains
         path: role
         value: admin
@@ -257,7 +257,7 @@ steps:
         Content-Type: application/json
       body:
         name: 重複 Email 使用者
-        email: "updated-{{test_email_prefix}}@{{test_domain}}"
+        email: 'updated-{{test_email_prefix}}@{{test_domain}}'
         role: user
         status: active
     expect:
@@ -280,7 +280,7 @@ steps:
         Content-Type: application/json
       body:
         name: 待刪除使用者
-        email: "delete-test@{{test_domain}}"
+        email: 'delete-test@{{test_domain}}'
         role: user
         status: active
     expect:
@@ -345,7 +345,7 @@ steps:
         Authorization: Bearer {{admin_token}}
         Content-Type: application/json
       body:
-        email: "incomplete@{{test_domain}}"
+        email: 'incomplete@{{test_domain}}'
         role: user
     expect:
       statusCode: 400

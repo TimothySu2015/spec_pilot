@@ -248,7 +248,12 @@ describe('HttpRunner', () => {
         .get('/network-error')
         .replyWithError('Network Error');
 
-      await expect(runner.get('/network-error')).rejects.toThrow('Network Error');
+      // ✨ 修改: 現在回傳虛擬 response 而不是拋出錯誤
+      const response = await runner.get('/network-error');
+
+      expect(response.status).toBe(0);
+      expect(response.data).toHaveProperty('_network_error', true);
+      expect(response.data).toHaveProperty('error', 'NETWORK_ERROR');
     });
   });
 

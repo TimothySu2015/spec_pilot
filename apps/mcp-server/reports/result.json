@@ -1,0 +1,1089 @@
+{
+  "executionId": "run-1759251212437-8eeztmc",
+  "flowId": "使用者管理完整測試流程",
+  "startTime": "2025-09-30T16:53:32.609Z",
+  "endTime": "2025-09-30T16:53:36.924Z",
+  "duration": 4315,
+  "status": "partial",
+  "summary": {
+    "totalSteps": 21,
+    "successfulSteps": 5,
+    "failedSteps": 16,
+    "skippedSteps": 0
+  },
+  "steps": [
+    {
+      "name": "健康檢查",
+      "status": "success",
+      "startTime": "2025-09-30T16:53:32.611Z",
+      "duration": 34,
+      "request": {
+        "method": "GET",
+        "url": "/api/health",
+        "headerHash": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 200,
+        "success": true,
+        "validationResults": [
+          "all_validations_passed"
+        ],
+        "errorMessage": null
+      }
+    },
+    {
+      "name": "管理者登入",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.645Z",
+      "duration": 15,
+      "request": {
+        "method": "POST",
+        "url": "/auth/login",
+        "headerHash": "sha256:b34f63d6179cf35901b3d2f2decfb81aedb38a9a83f5787eac10ce10baf0ff1b",
+        "bodyHash": "sha256:a88c0eddbec504da5ec1cb71770e03345d065b2a7266e82bf10f5a02d0fb49e7"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 token 不能為空值",
+          "custom_error: 欄位 tokenType 未包含 \"Bearer\"",
+          "custom_error: 欄位 user.name 不能為空值"
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "帳號或密碼錯誤"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 14,
+          "bodySize": 44,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "錯誤登入測試",
+      "status": "success",
+      "startTime": "2025-09-30T16:53:32.661Z",
+      "duration": 2,
+      "request": {
+        "method": "POST",
+        "url": "/auth/login",
+        "headerHash": "sha256:b34f63d6179cf35901b3d2f2decfb81aedb38a9a83f5787eac10ce10baf0ff1b",
+        "bodyHash": "sha256:f4c81729f267bbd7c875faa005d567a9e530748d4072863f5c4cca5bb79139a7"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": true,
+        "validationResults": [
+          "all_validations_passed"
+        ],
+        "errorMessage": null
+      }
+    },
+    {
+      "name": "未認證存取使用者列表",
+      "status": "success",
+      "startTime": "2025-09-30T16:53:32.664Z",
+      "duration": 1,
+      "request": {
+        "method": "GET",
+        "url": "/api/users",
+        "headerHash": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": true,
+        "validationResults": [
+          "all_validations_passed"
+        ],
+        "errorMessage": null
+      }
+    },
+    {
+      "name": "取得使用者列表",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.665Z",
+      "duration": 2,
+      "request": {
+        "method": "GET",
+        "url": "/api/users",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 users 不能為空值",
+          "custom_error: 欄位 total 不能為空值"
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "建立新使用者",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.668Z",
+      "duration": 2,
+      "request": {
+        "method": "POST",
+        "url": "/api/users",
+        "headerHash": "sha256:a6d474294fd660abc8a4e0799266110f168a2f7566f971bd14d3bc15f513f096",
+        "bodyHash": "sha256:4a48f088a8a83c442a5d241a9470e3b04e3e0c861e60e49d4309b14fc5b1211b"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 201，實際收到 401",
+          "custom_error: 欄位 id 不能為空值",
+          "custom_error: 欄位 name 未包含 \"API 測試使用者\"",
+          "custom_error: 欄位 email 未包含 \"newtestuser99@example.com\"",
+          "custom_error: 欄位 role 未包含 \"user\"",
+          "custom_error: 欄位 status 未包含 \"active\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "驗證使用者數量增加",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.670Z",
+      "duration": 2,
+      "request": {
+        "method": "GET",
+        "url": "/api/users",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 total 不能為空值"
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 2,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "取得新建使用者詳情",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.672Z",
+      "duration": 3,
+      "request": {
+        "method": "GET",
+        "url": "/api/users/{{new_user_id}}",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 email 未包含 \"{{new_user_email}}\"",
+          "custom_error: 欄位 status 未包含 \"active\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "取得不存在的使用者",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.675Z",
+      "duration": 3,
+      "request": {
+        "method": "GET",
+        "url": "/api/users/99999",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 404，實際收到 401",
+          "custom_error: 欄位 message 未包含 \"找不到該使用者\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 3,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "部分更新使用者狀態",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.685Z",
+      "duration": 3,
+      "request": {
+        "method": "PATCH",
+        "url": "/api/users/{{new_user_id}}",
+        "headerHash": "sha256:a6d474294fd660abc8a4e0799266110f168a2f7566f971bd14d3bc15f513f096",
+        "bodyHash": "sha256:0587694d437b2079ff3aa2a258fec1436c9bf404b4161d29f84c39f3ba9fdd01"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 status 未包含 \"inactive\"",
+          "custom_error: 欄位 email 未包含 \"{{new_user_email}}\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "完整更新使用者",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.688Z",
+      "duration": 2,
+      "request": {
+        "method": "PUT",
+        "url": "/api/users/{{new_user_id}}",
+        "headerHash": "sha256:a6d474294fd660abc8a4e0799266110f168a2f7566f971bd14d3bc15f513f096",
+        "bodyHash": "sha256:ea5f7daba45e78afa459d11be4d8134a861a5cf5ae8ded8b9522df8c53182a2b"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 name 未包含 \"完整更新的使用者\"",
+          "custom_error: 欄位 email 未包含 \"updated-newtestuser99@example.com\"",
+          "custom_error: 欄位 role 未包含 \"admin\"",
+          "custom_error: 欄位 status 未包含 \"active\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 0,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "Email 重複測試",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.690Z",
+      "duration": 2,
+      "request": {
+        "method": "POST",
+        "url": "/api/users",
+        "headerHash": "sha256:a6d474294fd660abc8a4e0799266110f168a2f7566f971bd14d3bc15f513f096",
+        "bodyHash": "sha256:7b878435acbf73aa87485b4e898341079d25ee41551597dc492a185764e9a79a"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 409，實際收到 401",
+          "custom_error: 欄位 message 未包含 \"該信箱已被使用\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 2,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "建立第二個測試使用者",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.692Z",
+      "duration": 2,
+      "request": {
+        "method": "POST",
+        "url": "/api/users",
+        "headerHash": "sha256:a6d474294fd660abc8a4e0799266110f168a2f7566f971bd14d3bc15f513f096",
+        "bodyHash": "sha256:9f480b53295492c1ca1df59912032de241976f049e65657d073eaa15efad8e94"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 201，實際收到 401",
+          "custom_error: 欄位 id 不能為空值"
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "刪除測試使用者",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.695Z",
+      "duration": 1,
+      "request": {
+        "method": "DELETE",
+        "url": "/api/users/{{delete_user_id}}",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 message 未包含 \"使用者已成功刪除\"",
+          "custom_error: 欄位 deletedUser 不能為空值",
+          "custom_error: 欄位 deletedUser.name 未包含 \"待刪除使用者\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "驗證使用者已刪除",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.696Z",
+      "duration": 2,
+      "request": {
+        "method": "GET",
+        "url": "/api/users/{{delete_user_id}}",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 404，實際收到 401"
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "刪除不存在的使用者",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.698Z",
+      "duration": 2,
+      "request": {
+        "method": "DELETE",
+        "url": "/api/users/99999",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 404，實際收到 401"
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 2,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "建立使用者時缺少必填欄位",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.700Z",
+      "duration": 2,
+      "request": {
+        "method": "POST",
+        "url": "/api/users",
+        "headerHash": "sha256:a6d474294fd660abc8a4e0799266110f168a2f7566f971bd14d3bc15f513f096",
+        "bodyHash": "sha256:0c2600e0eaa6ddb9aabb6020872ace53f3446855c8620b0a67580e34d591fc2c"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 400，實際收到 401",
+          "custom_error: 欄位 message 未包含 \"姓名和信箱為必填欄位\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "使用無效 token 存取",
+      "status": "success",
+      "startTime": "2025-09-30T16:53:32.702Z",
+      "duration": 1,
+      "request": {
+        "method": "GET",
+        "url": "/api/users",
+        "headerHash": "sha256:c372b06e6c9a58b83078c4c238da8b9a9617b9127e95d42d1b1cee7f9f17e0fa",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": true,
+        "validationResults": [
+          "all_validations_passed"
+        ],
+        "errorMessage": null
+      }
+    },
+    {
+      "name": "最終使用者列表檢查",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:32.704Z",
+      "duration": 1,
+      "request": {
+        "method": "GET",
+        "url": "/api/users",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 users 不能為空值",
+          "custom_error: 欄位 total 不能為空值"
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:32 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 1,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "清理建立的測試使用者",
+      "status": "failure",
+      "startTime": "2025-09-30T16:53:36.911Z",
+      "duration": 2,
+      "request": {
+        "method": "DELETE",
+        "url": "/api/users/{{new_user_id}}",
+        "headerHash": "sha256:91c21758f1c9c1aaadcf4cd92ddfcec58551a07a752a538e66e29edd8838514b",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 401,
+        "success": false,
+        "validationResults": [
+          "status_error: 狀態碼驗證失敗：期望 200，實際收到 401",
+          "custom_error: 欄位 message 未包含 \"使用者已成功刪除\""
+        ],
+        "errorMessage": "Validation failed",
+        "errorDetails": {
+          "body": {
+            "error": "Unauthorized",
+            "message": "需要有效的認證 token"
+          },
+          "headers": {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "*",
+            "access-control-allow-headers": "*",
+            "content-type": "application/json",
+            "date": "Tue, 30 Sep 2025 16:53:36 GMT",
+            "connection": "keep-alive",
+            "keep-alive": "timeout=5",
+            "transfer-encoding": "chunked"
+          },
+          "responseTime": 2,
+          "bodySize": 50,
+          "bodyTruncated": false
+        }
+      }
+    },
+    {
+      "name": "最終健康檢查",
+      "status": "success",
+      "startTime": "2025-09-30T16:53:36.913Z",
+      "duration": 11,
+      "request": {
+        "method": "GET",
+        "url": "/api/health",
+        "headerHash": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "bodyHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "response": {
+        "statusCode": 200,
+        "success": true,
+        "validationResults": [
+          "all_validations_passed"
+        ],
+        "errorMessage": null
+      }
+    }
+  ],
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "fallbackUsed": false,
+    "authNamespaces": []
+  },
+  "diagnosticContext": {
+    "hasFailed": true,
+    "failureCount": 16,
+    "failedSteps": [
+      {
+        "stepName": "管理者登入",
+        "stepIndex": 1,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 14
+      },
+      {
+        "stepName": "取得使用者列表",
+        "stepIndex": 4,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "建立新使用者",
+        "stepIndex": 5,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "驗證使用者數量增加",
+        "stepIndex": 6,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 2
+      },
+      {
+        "stepName": "取得新建使用者詳情",
+        "stepIndex": 7,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "取得不存在的使用者",
+        "stepIndex": 8,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 3
+      },
+      {
+        "stepName": "部分更新使用者狀態",
+        "stepIndex": 9,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "完整更新使用者",
+        "stepIndex": 10,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 0
+      },
+      {
+        "stepName": "Email 重複測試",
+        "stepIndex": 11,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 2
+      },
+      {
+        "stepName": "建立第二個測試使用者",
+        "stepIndex": 12,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "刪除測試使用者",
+        "stepIndex": 13,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "驗證使用者已刪除",
+        "stepIndex": 14,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "刪除不存在的使用者",
+        "stepIndex": 15,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 2
+      },
+      {
+        "stepName": "建立使用者時缺少必填欄位",
+        "stepIndex": 16,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "最終使用者列表檢查",
+        "stepIndex": 18,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 1
+      },
+      {
+        "stepName": "清理建立的測試使用者",
+        "stepIndex": 19,
+        "statusCode": 401,
+        "classification": {
+          "primaryType": "auth",
+          "confidence": 80,
+          "indicators": [
+            "HTTP 401"
+          ]
+        },
+        "errorMessage": "Validation failed",
+        "hasErrorDetails": true,
+        "responseTime": 2
+      }
+    ],
+    "environment": {
+      "baseUrl": "http://localhost:3000",
+      "fallbackUsed": false,
+      "authNamespaces": []
+    },
+    "errorPatterns": [
+      {
+        "pattern": "consecutive_auth_failures",
+        "description": "連續 16 個步驟認證失敗",
+        "likelihood": "high",
+        "affectedSteps": [
+          1,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          18,
+          19
+        ]
+      },
+      {
+        "pattern": "same_resource_failures",
+        "description": "針對資源 'api' 的多個操作都失敗",
+        "likelihood": "medium",
+        "affectedSteps": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          18,
+          19
+        ]
+      }
+    ],
+    "diagnosticHints": {
+      "quickDiagnosis": "16 個步驟失敗，主要是認證問題",
+      "likelyCauses": [
+        "認證 Token 遺失、無效或已過期",
+        "API Key 設定錯誤",
+        "使用者權限不足"
+      ],
+      "suggestedActions": [
+        "更新或重新取得認證 Token",
+        "檢查 .env.local 中的認證設定",
+        "確認使用者帳號具有足夠的權限"
+      ],
+      "suggestedQuestions": [
+        "Token 是什麼時候過期的？如何刷新？",
+        "API 使用哪種認證方式（Bearer Token / API Key）？"
+      ]
+    }
+  }
+}
