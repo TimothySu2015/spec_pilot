@@ -9,7 +9,7 @@ baseUrl: http://localhost:3000
 variables:
   admin_username: admin
   admin_password: "123456"
-  test_email_prefix: testuser
+  test_email_prefix: newtestuser99
   test_domain: example.com
 
 steps:
@@ -136,7 +136,7 @@ steps:
         value: API 測試使用者
       - rule: contains
         path: email
-        value: testuser@example.com
+        value: "{{test_email_prefix}}@{{test_domain}}"
       - rule: contains
         path: role
         value: user
@@ -239,7 +239,7 @@ steps:
         value: 完整更新的使用者
       - rule: contains
         path: email
-        value: updated-testuser@example.com
+        value: "updated-{{test_email_prefix}}@{{test_domain}}"
       - rule: contains
         path: role
         value: admin

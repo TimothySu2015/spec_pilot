@@ -190,6 +190,7 @@ export class EnhancedFlowOrchestrator {
 
   /**
    * 執行單個步驟（增強版，支援報表記錄）
+   * @param step - 已解析變數的步驟（從 executeFlowWithReporting 傳入）
    */
   private async executeStepWithReporting(step: FlowParserStep, context: IRunContext): Promise<ITestResult> {
     const startTime = Date.now();
@@ -204,6 +205,7 @@ export class EnhancedFlowOrchestrator {
     try {
       let authResult: IAuthHandleResult | undefined;
 
+      // 注意：step 參數已經是解析過變數的步驟（在 executeFlowWithReporting 中解析）
       // 建立 HTTP 請求
       const httpRequest: IHttpRequest = {
         method: step.request.method.toUpperCase() as HttpMethod,
@@ -249,13 +251,13 @@ export class EnhancedFlowOrchestrator {
         );
       }
 
-      // 執行驗證（如果有定義 expectations）
+      // 執行驗證（step 已經是解析過變數的步驟）
       let validationSuccess = true;
       const validationResults: string[] = [];
 
       if (step.expectations) {
         const validationInput: IValidationInput = {
-          step,
+          step: step,
           response: httpResponse,
           expectations: step.expectations,
           schemas: {}, // TODO: 從 OpenAPI spec 載入 schemas
@@ -330,6 +332,7 @@ export class EnhancedFlowOrchestrator {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
 
+      // step 已經是解析過變數的步驟，直接使用
       const httpRequest = {
         method: step.request.method,
         url: step.request.url || step.request.path || '/',
@@ -434,7 +437,19 @@ export class EnhancedFlowOrchestrator {
         query: this.variableResolver.resolve(step.request.query, executionId) as Record<string, string> | undefined,
         path: step.request.path ? this.variableResolver.resolve(step.request.path, executionId) as string : step.request.path,
         url: step.request.url ? this.variableResolver.resolve(step.request.url, executionId) as string : step.request.url,
-      }
+      },
+      // 解析 expectations 中的變數（支援 custom 規則和 body 物件）
+      expectations: step.expectations ? {
+        status: step.expectations.status,
+        schema: step.expectations.schema,
+        custom: step.expectations.custom ? step.expectations.custom.map(rule => {
+          const resolvedValue = rule.value !== undefined ? this.variableResolver.resolve(rule.value, executionId) : rule.value;
+          return {
+            ...rule,
+            value: resolvedValue
+          };
+        }) : undefined
+      } : step.expectations
     };
   }
 
