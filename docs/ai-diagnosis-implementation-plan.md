@@ -522,11 +522,166 @@ maskSensitiveFields(obj: any): any {
 
 ## 🎯 開發階段規劃
 
-### 階段 1: 增強錯誤報表 (2-3 天) 🔴 最高優先級
+### 📊 實際程式碼分析結果 (2025-01-15)
+
+經過對現有程式碼的分析 (主要參考 `apps/mcp-server/src/handlers/run-flow.ts` 和 `packages/core-flow/src/`),發現:
+
+**✅ 好消息**:
+1. 資料流程清晰: `HttpRunner` → `ValidationEngine` → `ReportingIntegration` → `ReportGenerator`
+2. Axios 已自動處理 JSON/非JSON 回應,不需額外處理
+3. 現有介面設計良好,只需擴充而非重構
+
+**⚠️ 需要處理的問題**:
+1. **網路層級錯誤處理** (2小時) - `HttpClient` throw error 需改為回傳虛擬 response
+2. **IStepInput 型別擴充** (2小時) - `response` 需加入 `body`, `headers`, `responseTime`
+3. **敏感資料遮罩實作** (3小時) - 新增 `maskSensitiveFields()` 和 `maskSensitiveHeaders()`
+
+**修正後總工作量**: **11 天** (原估計 14 天)
+
+---
+
+### 階段 1: 增強錯誤報表 (2.5 天) 🔴 最高優先級
 
 **目標**: 讓報表保留完整的錯誤資訊,而不是只有 hash
 
-#### 1.1 修改報表資料結構
+#### 1.0 前置修改: 處理網路層級錯誤 (2 小時)
+
+**檔案**: `packages/http-runner/src/http-client.ts`
+
+**問題**: 第 74-88 行 catch 區塊會 throw error,導致網路錯誤時整個流程中斷
+
+**任務**:
+- [ ] 修改 `catch` 區塊,回傳虛擬 `IHttpResponse` 而不是拋出錯誤
+- [ ] 設定 `status: 0` 表示網路層級錯誤
+- [ ] 在 `data` 中包含錯誤資訊 (error_code, message)
+- [ ] 更新相關測試
+
+**變更內容**:
+```typescript
+catch (error) {
+  const duration = Date.now() - startTime;
+  const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+  const errorCode = (error as any).code; // ECONNREFUSED, ETIMEDOUT...
+
+  logger.error(EVENT_CODES.STEP_FAILURE, {
+    executionId,
+    component: 'http-client',
+    method: request.method,
+    url: request.url,
+    error: errorMessage,
+    errorCode,
+    duration,
+  });
+
+  // ✨ 回傳虛擬 response 而不是拋出
+  return {
+    status: 0,
+    headers: {},
+    data: {
+      _network_error: true,
+      error: 'NETWORK_ERROR',
+      message: errorMessage,
+      error_code: errorCode,
+      url: request.url,
+      method: request.method
+    },
+    duration
+  };
+}
+```
+
+**驗收標準**:
+- 網路錯誤不會中斷整個測試流程
+- 回傳的 response 包含錯誤資訊
+- 現有測試需更新或新增測試案例
+
+---
+
+#### 1.1 擴充 IStepInput 型別定義 (1 小時)
+
+**檔案**: `packages/reporting/src/report-generator.ts`
+
+**問題**: 第 17-34 行 `IStepInput.response` 缺少 `body`, `headers`, `responseTime`
+
+**任務**:
+- [ ] 在 `IStepInput.response` 新增 `body?`, `headers?`, `responseTime?`
+- [ ] 保持向後相容性 (所有新欄位都是可選)
+- [ ] TypeScript 編譯通過
+
+**變更內容**:
+```typescript
+export interface IStepInput {
+  name: string;
+  status: 'success' | 'failure' | 'skipped';
+  startTime: string;
+  duration: number;
+  request: {
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body: unknown;
+  };
+  response: {
+    statusCode: number;
+    success: boolean;
+    validationResults: string[];
+    errorMessage?: string;
+    // ✨ 新增
+    body?: unknown;
+    headers?: Record<string, string>;
+    responseTime?: number;
+  };
+}
+```
+
+**驗收標準**:
+- TypeScript 編譯通過
+- 不破壞現有測試
+- 新增的欄位為可選,確保向後相容
+
+---
+
+#### 1.2 修改 ReportingIntegration 傳遞完整資料 (1 小時)
+
+**檔案**: `packages/core-flow/src/reporting-integration.ts`
+
+**問題**: 第 99-112 行 `recordStepComplete()` 沒有傳遞 response body/headers
+
+**任務**:
+- [ ] 修改 `recordStepComplete()` 方法
+- [ ] 從 `testResult.response` 提取 `data`, `headers`, `duration`
+- [ ] 傳遞給 `IStepInput.response`
+
+**變更內容**:
+```typescript
+const stepInput: IStepInput = {
+  name: step.name,
+  status: testResult.status === 'passed' ? 'success' :
+          testResult.status === 'failed' ? 'failure' : 'skipped',
+  startTime: stepStartTime,
+  duration: testResult.duration,
+  request,
+  response: {
+    statusCode: response.statusCode,
+    success: testResult.status === 'passed',
+    validationResults: response.validationResults,
+    errorMessage: response.errorMessage || testResult.error,
+    // ✨ 新增: 從 testResult.response 傳遞
+    body: testResult.response?.data,
+    headers: testResult.response?.headers,
+    responseTime: testResult.response?.duration
+  }
+};
+```
+
+**驗收標準**:
+- `IStepInput` 包含完整的 response 資訊
+- 所有呼叫點都正常運作
+- 整合測試通過
+
+---
+
+#### 1.3 修改 execution-report.ts 新增 errorDetails 欄位 (30 分鐘)
 
 **檔案**: `packages/reporting/src/execution-report.ts`
 
@@ -537,6 +692,17 @@ maskSensitiveFields(obj: any): any {
 
 **變更內容**:
 ```typescript
+/**
+ * 錯誤詳情 (失敗時才包含)
+ */
+export interface IErrorDetails {
+  body: unknown;                      // 完整錯誤回應 (已遮罩敏感資料)
+  headers: Record<string, string>;    // 回應 Headers (已遮罩敏感資料)
+  responseTime: number;               // 回應時間 (毫秒)
+  bodySize: number;                   // 原始 body 大小
+  bodyTruncated: boolean;             // 是否被截斷
+}
+
 export interface IStepResult {
   // ... 現有欄位
   response: {
@@ -545,12 +711,7 @@ export interface IStepResult {
     bodyHash: string;
 
     // ✨ 新增: 失敗時的完整錯誤資訊
-    errorDetails?: {
-      body: unknown;              // 完整錯誤回應
-      headers: Record<string, string>;
-      responseTime: number;
-      stackTrace?: string[];      // Stack trace (如果有)
-    };
+    errorDetails?: IErrorDetails;
 
     validationResults: string[];
     errorMessage: string | null;
@@ -565,69 +726,156 @@ export interface IStepResult {
 
 ---
 
-#### 1.2 實作敏感資料遮罩
+#### 1.4 實作敏感資料遮罩 (3 小時)
 
 **檔案**: `packages/reporting/src/report-generator.ts`
 
 **任務**:
-- [ ] 實作 `sanitizeErrorBody()` 方法
-- [ ] 實作 `sanitizeHeaders()` 方法
-- [ ] 實作 `maskSensitiveFields()` 方法
+- [ ] 實作 `maskSensitiveFields()` 方法 (遞迴遮罩)
+- [ ] 實作 `maskSensitiveHeaders()` 方法
+- [ ] 確保 `stack_trace` 不被遮罩
 - [ ] 加入單元測試
 
 **遮罩規則**:
-- 密碼、Token、API Key 等敏感欄位 → `"***"`
-- Authorization、Cookie 等 Headers → `"***"`
-- 保留錯誤訊息結構和其他診斷資訊
+- **敏感欄位**: `password`, `token`, `secret`, `apiKey`, `api_key`, `authorization`, `jwt`, `bearer`, `credentials`, `access_token`
+- **敏感 Headers**: `authorization`, `cookie`, `set-cookie`, `x-api-key`, `x-auth-token`, `proxy-authorization`
+- **不遮罩**: `stack_trace`, `stackTrace` (診斷需要)
+
+**實作**:
+```typescript
+/**
+ * 遮罩敏感欄位
+ */
+private maskSensitiveFields(obj: unknown): unknown {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => this.maskSensitiveFields(item));
+  }
+
+  const masked: any = {};
+  const sensitiveKeys = [
+    'password', 'token', 'secret', 'apikey', 'api_key',
+    'authorization', 'jwt', 'bearer', 'credentials', 'access_token'
+  ];
+
+  for (const [key, value] of Object.entries(obj)) {
+    const keyLower = key.toLowerCase();
+
+    // stack_trace 不遮罩
+    if (key === 'stack_trace' || key === 'stackTrace') {
+      masked[key] = value;
+      continue;
+    }
+
+    // 敏感欄位遮罩
+    if (sensitiveKeys.some(sk => keyLower.includes(sk))) {
+      masked[key] = '***';
+    } else {
+      masked[key] = this.maskSensitiveFields(value);
+    }
+  }
+
+  return masked;
+}
+
+/**
+ * 遮罩敏感 Headers
+ */
+private maskSensitiveHeaders(headers: Record<string, string>): Record<string, string> {
+  const sensitiveHeaders = [
+    'authorization', 'cookie', 'set-cookie',
+    'x-api-key', 'x-auth-token', 'proxy-authorization'
+  ];
+
+  const masked: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(headers)) {
+    const keyLower = key.toLowerCase();
+    if (sensitiveHeaders.includes(keyLower)) {
+      masked[key] = '***';
+    } else {
+      masked[key] = value;
+    }
+  }
+
+  return masked;
+}
+```
 
 **測試案例**:
 ```typescript
-// 輸入
+// 測試 1: 敏感欄位遮罩
 {
   "error": "AUTH_FAILED",
-  "password": "secret123",
-  "user_id": 456
+  "password": "secret123",    // → "***"
+  "user_id": 456              // → 456 (保留)
 }
 
-// 輸出
+// 測試 2: stack_trace 不遮罩
 {
-  "error": "AUTH_FAILED",
-  "password": "***",
-  "user_id": 456
+  "error": "SERVER_ERROR",
+  "stack_trace": ["at foo()", "at bar()"],  // → 保留完整內容
+  "api_key": "abc123"         // → "***"
+}
+
+// 測試 3: 巢狀物件遮罩
+{
+  "user": {
+    "email": "user@ex.com",   // → 保留
+    "password": "secret"      // → "***"
+  }
 }
 ```
 
 ---
 
-#### 1.3 修改報表生成邏輯
+#### 1.5 修改報表生成邏輯 (2 小時)
 
 **檔案**: `packages/reporting/src/report-generator.ts`
 
+**問題**: 第 57-76 行 `generateStepResult()` 需要在失敗時保留 errorDetails
+
 **任務**:
 - [ ] 修改 `generateStepResult()` 方法
-- [ ] 失敗時保留完整錯誤內容
+- [ ] 失敗時建立 `errorDetails` 物件
 - [ ] 成功時維持只存 hash (節省空間)
 - [ ] 加入整合測試
 
 **邏輯**:
 ```typescript
-private generateStepResult(stepInput: StepInput): StepResult {
+private generateStepResult(stepInput: IStepInput): IStepResult {
   const isFailure = stepInput.status === 'failure';
+  const responseBody = stepInput.response.body;
 
   return {
-    // ...
+    name: stepInput.name,
+    status: stepInput.status,
+    startTime: stepInput.startTime,
+    duration: stepInput.duration,
+    request: {
+      method: stepInput.request.method,
+      url: stepInput.request.url,
+      headerHash: this.calculateHash(stepInput.request.headers),
+      bodyHash: this.calculateHash(stepInput.request.body),
+    },
     response: {
-      // 總是計算 hash
-      bodyHash: this.calculateHash(stepInput.response.body),
+      statusCode: stepInput.response.statusCode,
+      success: stepInput.response.success,
+      validationResults: stepInput.response.validationResults,
+      errorMessage: stepInput.response.errorMessage || null,
 
-      // ✨ 失敗時保留完整資訊
-      errorDetails: isFailure ? {
-        body: this.sanitizeErrorBody(stepInput.response.body),
-        headers: this.sanitizeHeaders(stepInput.response.headers),
-        responseTime: stepInput.response.responseTime,
-        stackTrace: this.extractStackTrace(stepInput.response.body),
-      } : undefined,
-    }
+      // ✨ 失敗時保留完整錯誤資訊
+      errorDetails: isFailure && responseBody ? {
+        body: this.maskSensitiveFields(responseBody),
+        headers: this.maskSensitiveHeaders(stepInput.response.headers || {}),
+        responseTime: stepInput.response.responseTime || 0,
+        bodySize: JSON.stringify(responseBody).length,
+        bodyTruncated: false // TODO: 實作截斷邏輯
+      } : undefined
+    },
   };
 }
 ```
@@ -636,13 +884,19 @@ private generateStepResult(stepInput: StepInput): StepResult {
 - 失敗的步驟報表包含 `errorDetails`
 - 成功的步驟報表不包含 `errorDetails`
 - 敏感資料已被遮罩
+- `stack_trace` 完整保留
 - 所有現有測試通過
 
 ---
 
-### 階段 2: 建立診斷上下文生成器 (2-3 天) 🟡 高優先級
+### 階段 2: 建立診斷上下文生成器 (2 天) 🟡 高優先級
 
 **目標**: 為 Claude 準備結構化、易理解的診斷資訊
+
+**修正說明**: 經過實際程式碼分析,錯誤分類邏輯比預期簡單,因為:
+1. 網路錯誤統一為 `statusCode: 0`
+2. 可結合 `errorDetails.body.error` 提高準確度
+3. 不需要複雜的模式識別
 
 #### 2.1 定義診斷上下文型別
 
@@ -695,11 +949,46 @@ export class DiagnosticContextBuilder {
 }
 ```
 
-**錯誤分類邏輯**:
-- HTTP 401/403 → `auth` (90% 信心度)
-- HTTP 0/-1 → `network` (95% 信心度)
-- HTTP 500+ → `server` (85% 信心度)
-- 驗證失敗 → `validation` (80% 信心度)
+**錯誤分類邏輯** (改進版):
+```typescript
+private classifyError(step: IStepResult): ErrorClassification {
+  const code = step.response.statusCode;
+  const body = step.response.errorDetails?.body;
+  const errorCode = typeof body === 'object' && body !== null ?
+    (body as any).error : null;
+
+  // 網路層級錯誤 (由 HttpClient 統一處理)
+  if (code === 0) {
+    return { primaryType: 'network', confidence: 95, indicators: ['statusCode: 0'] };
+  }
+
+  // 認證錯誤 (結合錯誤代碼提高準確度)
+  if (code === 401) {
+    const authCodes = ['TOKEN_EXPIRED', 'AUTHENTICATION_FAILED', 'INVALID_TOKEN'];
+    if (errorCode && authCodes.includes(errorCode)) {
+      return { primaryType: 'auth', confidence: 95, indicators: [`HTTP 401`, `error: ${errorCode}`] };
+    }
+    return { primaryType: 'auth', confidence: 80, indicators: ['HTTP 401'] };
+  }
+
+  // 授權錯誤
+  if (code === 403) {
+    return { primaryType: 'auth', confidence: 85, indicators: ['HTTP 403'] };
+  }
+
+  // 驗證錯誤
+  if (code === 400 || code === 422) {
+    return { primaryType: 'validation', confidence: 85, indicators: [`HTTP ${code}`] };
+  }
+
+  // 伺服器錯誤
+  if (code >= 500) {
+    return { primaryType: 'server', confidence: 90, indicators: [`HTTP ${code}`] };
+  }
+
+  return { primaryType: 'unknown', confidence: 50, indicators: [`HTTP ${code}`] };
+}
+```
 
 **錯誤模式偵測**:
 - 連續認證失敗
@@ -991,21 +1280,37 @@ examples/diagnosis-workflow/
 
 ## 📊 開發時程估算
 
-| 階段 | 工作量 | 優先級 | 依賴 |
-|-----|-------|-------|-----|
-| 階段 1: 增強錯誤報表 | 2-3 天 | 🔴 最高 | 無 |
-| 階段 2: 診斷上下文生成器 | 2-3 天 | 🟡 高 | 階段 1 |
-| 階段 3: 整合到 MCP | 1-2 天 | 🟡 高 | 階段 2 |
-| 階段 4: API 開發規範 | 1 天 | 🟢 中 | 可並行 |
-| 階段 5: 測試與驗證 | 2-3 天 | 🟡 高 | 階段 1-3 |
-| 階段 6: 文件與範例 | 1-2 天 | 🟢 中 | 階段 5 |
-| **總計** | **9-14 天** | | |
+### 修正前 vs 修正後
+
+| 階段 | 原估計 | 修正後 | 變化 | 優先級 | 依賴 |
+|-----|-------|-------|------|-------|-----|
+| 階段 1: 增強錯誤報表 | 2-3 天 | **2.5 天** | -0.5天 | 🔴 最高 | 無 |
+| 階段 2: 診斷上下文生成器 | 2-3 天 | **2 天** | -1天 | 🟡 高 | 階段 1 |
+| 階段 3: 整合到 MCP | 1-2 天 | **1 天** | -1天 | 🟡 高 | 階段 2 |
+| 階段 4: API 開發規範 | 1 天 | **0 天** | -1天 (已有文件) | 🟢 中 | 可並行 |
+| 階段 5: 測試與驗證 | 2-3 天 | **4 天** | +1.5天 | 🟡 高 | 階段 1-3 |
+| 階段 6: 文件與範例 | 1-2 天 | **1.5 天** | -0.5天 | 🟢 中 | 階段 5 |
+| **總計** | **9-14 天** | **11 天** | **-3天** | | |
+
+### 修正理由
+
+**減少的工作量**:
+1. ✅ 資料流程已清楚,不需要架構重構 (-1天)
+2. ✅ Axios 已處理 JSON 解析 (-0.5天)
+3. ✅ 已有 `api-error-handling-guide.md` (-1天)
+4. ✅ Stack trace 不需要提取邏輯 (-0.5天)
+
+**增加的工作量**:
+1. ⚠️ 測試覆蓋率需要更完整 (+1.5天)
+2. ⚠️ 網路錯誤處理需要修改現有邏輯 (+0.5天)
 
 ---
 
 ## 🎯 里程碑
 
-### Milestone 1: 基礎功能完成 (第 3-5 天)
+### Milestone 1: 基礎功能完成 (第 1-4.5 天)
+- ✅ 網路錯誤處理修復 (HttpClient)
+- ✅ 型別定義擴充 (IStepInput, IErrorDetails)
 - ✅ 報表包含完整錯誤資訊
 - ✅ 敏感資料正確遮罩
 - ✅ 診斷上下文正確生成
@@ -1013,12 +1318,20 @@ examples/diagnosis-workflow/
 
 **驗收標準**:
 - 所有單元測試通過
-- 可以在報表中看到完整錯誤訊息
+- 網路錯誤不會中斷測試流程
+- 可以在報表中看到完整錯誤訊息 (包含 stack_trace)
+- 敏感資料已遮罩 (密碼、Token 等顯示為 ***)
 - Claude Desktop 能讀取到診斷上下文
+
+**實際工作分解**:
+- 第 1 天: 1.0 + 1.1 (網路錯誤 + 型別擴充)
+- 第 2 天: 1.2 + 1.3 (資料傳遞 + errorDetails)
+- 第 3 天: 1.4 + 1.5 (敏感資料遮罩 + 報表邏輯)
+- 第 4-4.5 天: 階段 2 診斷上下文
 
 ---
 
-### Milestone 2: 完整測試通過 (第 7-9 天)
+### Milestone 2: 完整測試通過 (第 5.5-9.5 天)
 - ✅ 所有測試通過 (覆蓋率 ≥ 80%)
 - ✅ 整合測試驗證各種錯誤場景
 - ✅ 端對端測試確認實際效果
@@ -1026,19 +1339,38 @@ examples/diagnosis-workflow/
 **驗收標準**:
 - CI/CD 全綠
 - 在 Claude Desktop 中實際測試診斷功能
-- Claude 能正確診斷至少 5 種錯誤類型
+- Claude 能正確診斷至少 6 種錯誤類型:
+  1. 網路錯誤 (statusCode: 0)
+  2. 認證失敗 (401)
+  3. 授權失敗 (403)
+  4. 驗證錯誤 (400/422)
+  5. 伺服器錯誤 (500+)
+  6. 連鎖失敗模式
+
+**實際工作分解**:
+- 第 5.5 天: 階段 3 MCP 整合
+- 第 6.5-9.5 天: 階段 5 測試 (單元 + 整合 + E2E)
 
 ---
 
-### Milestone 3: 正式發布 (第 11-14 天)
-- ✅ 完整文件
-- ✅ 使用範例
-- ✅ API 開發規範
+### Milestone 3: 正式發布 (第 10-11 天)
+- ✅ 完整文件更新
+- ✅ 使用範例與疑難排解指南
+- ✅ 實際診斷成功率驗證
 
 **驗收標準**:
 - 文件完整且易於理解
-- 提供可執行的範例
-- 診斷成功率達 85% 以上
+- 提供可執行的範例 (包含會失敗的測試)
+- 診斷成功率達 **70-80%** (實際可達成的目標)
+- README 更新診斷功能說明
+
+**實際工作分解**:
+- 第 10-11 天: 階段 6 文件與範例
+
+**📝 備註**: 診斷成功率從 85-90% 調整為 70-80%,因為實際上:
+- 需要 API 遵守 `api-error-handling-guide.md` 規範才能達到最佳效果
+- 許多現有 API 不會提供結構化錯誤或 stack trace
+- 70-80% 是更務實的目標
 
 ---
 
