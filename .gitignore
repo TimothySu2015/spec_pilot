@@ -53,3 +53,6 @@ reports/*.json
 # Temporary files
 *.tmp
 *.temp
+# BMAD (local only)
+.bmad-core/
+.bmad-*/

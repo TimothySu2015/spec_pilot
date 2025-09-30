@@ -91,7 +91,8 @@
       "Bash(mcp__specpilot__runFlow:*)",
       "mcp__specpilot__listFlows",
       "mcp__specpilot__getReport",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(pnpm -w run test packages/flow-parser/__tests__/ --run)"
     ],
     "deny": [],
     "ask": []

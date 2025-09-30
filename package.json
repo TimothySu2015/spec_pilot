@@ -24,7 +24,10 @@
     "test": "pnpm exec vitest run --coverage",
     "lint": "pnpm exec eslint . --ext .ts",
     "format": "pnpm exec prettier --check .",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "bmad:refresh": "bmad-method install -f -i codex",
+    "bmad:list": "bmad-method list:agents",
+    "bmad:validate": "bmad-method validate"
   },
   "engines": {
     "node": ">=20.11.1",
