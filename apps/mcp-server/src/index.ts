@@ -7,7 +7,7 @@ import path from 'path';
 import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
-import { type IExecutionConfig } from '@specpilot/reporting';
+import { type IExecutionConfig, DiagnosticContextBuilder } from '@specpilot/reporting';
 import { overrideConfig } from '@specpilot/config';
 
 // 為 MCP Server 建立靜默日誌記錄器（避免干擾 stdio transport）
@@ -319,13 +319,75 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
       success: flowResult.results.every(r => r.status !== 'failed')
     };
 
+    // ✨ 建立診斷上下文（如果有失敗步驟）
+    let diagnosticContext = null;
+    let diagnosticSummary = '';
+
+    if (!result.success) {
+      // 讀取剛產生的報表檔案
+      const reportsDir = path.resolve(process.cwd(), 'reports');
+      const reportFile = path.join(reportsDir, 'result.json');
+
+      logger.info('嘗試讀取報表以建立診斷上下文', {
+        executionId,
+        method: 'runFlow',
+        event: 'reading_report_for_diagnosis',
+        reportFile
+      });
+
+      if (existsSync(reportFile)) {
+        try {
+          const reportContent = readFileSync(reportFile, 'utf-8');
+          const report = JSON.parse(reportContent);
+
+          const diagnosticBuilder = new DiagnosticContextBuilder();
+          diagnosticContext = diagnosticBuilder.build(report);
+
+          if (diagnosticContext) {
+            logger.info('診斷上下文已建立', {
+              executionId,
+              method: 'runFlow',
+              event: 'diagnostic_context_created',
+              details: {
+                failureCount: diagnosticContext.failureCount,
+                errorPatterns: diagnosticContext.errorPatterns.length,
+                quickDiagnosis: diagnosticContext.diagnosticHints.quickDiagnosis
+              }
+            });
+
+            // 產生診斷摘要文字
+            diagnosticSummary = `\n📊 診斷摘要：\n` +
+                              `   ${diagnosticContext.diagnosticHints.quickDiagnosis}\n\n` +
+                              `💡 可能原因：\n` +
+                              diagnosticContext.diagnosticHints.likelyCauses.map(c => `   • ${c}`).join('\n') + '\n\n' +
+                              `🔧 建議動作：\n` +
+                              diagnosticContext.diagnosticHints.suggestedActions.map(a => `   • ${a}`).join('\n');
+          }
+        } catch (error) {
+          logger.error('讀取報表或建立診斷上下文失敗', {
+            executionId,
+            method: 'runFlow',
+            event: 'diagnostic_context_error',
+            error: error instanceof Error ? error.message : '未知錯誤'
+          });
+        }
+      } else {
+        logger.warn('報表檔案不存在，無法建立診斷上下文', {
+          executionId,
+          method: 'runFlow',
+          reportFile
+        });
+      }
+    }
+
     logger.info('runFlow 方法成功完成', {
       executionId,
       method: 'runFlow',
       event: 'run_flow_success',
       details: {
         totalSteps: result.steps?.length || 0,
-        success: result.success
+        success: result.success,
+        hasDiagnosticContext: !!diagnosticContext
       }
     });
 
@@ -334,12 +396,14 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
         type: "text",
         text: `測試執行完成（真實 HTTP 測試）！\n\n` +
               `執行 ID: ${executionId}\n` +
-              `結果: ${result.success ? '成功' : '失敗'}\n` +
+              `結果: ${result.success ? '✅ 成功' : '❌ 失敗'}\n` +
               `總步驟數: ${result.steps?.length || 0}\n` +
               `成功步驟: ${result.steps?.filter(s => s.status === 'passed')?.length || 0}\n` +
               `失敗步驟: ${result.steps?.filter(s => s.status === 'failed')?.length || 0}\n\n` +
-              `報表摘要：\n${flowResult.reportSummary || '無報表摘要'}\n\n` +
-              `執行詳情：已產生完整報表與日誌`
+              `報表摘要：\n${flowResult.reportSummary || '無報表摘要'}\n` +
+              (diagnosticSummary || '') + '\n\n' +
+              `📁 執行詳情：已產生完整報表與日誌\n` +
+              `   使用 @mcp__specpilot__getReport 查看完整診斷報表`
       }]
     };
 
