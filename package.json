@@ -15,9 +15,9 @@
   ],
   "scripts": {
     "dev": "pnpm exec tsx apps/cli/src/index.ts",
-    "start": "node apps/cli/dist/index.js",
+    "start": "node dist/apps/cli/src/index.js",
     "start:mcp": "pnpm exec tsx apps/mcp-server/src/index.ts",
-    "inspect:mcp": "pnpm exec @modelcontextprotocol/inspector apps/mcp-server/dist/index.js",
+    "inspect:mcp": "pnpm exec @modelcontextprotocol/inspector dist/apps/mcp-server/src/index.js",
     "mock": "pnpm exec tsx tests/e2e/helpers/test-server.ts",
     "mock:ci": "cross-env NODE_ENV=ci pnpm exec tsx tests/e2e/helpers/test-server.ts",
     "build": "rimraf dist && pnpm exec tsup --config tsup.config.ts",

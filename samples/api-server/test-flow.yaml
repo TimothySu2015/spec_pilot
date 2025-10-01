@@ -1,0 +1,305 @@
+id: sample-api-complete-flow
+name: Sample API 完整測試流程 (含 JWT 認證與錯誤處理)
+description: 測試 Sample API 的完整功能,包含登入、Token 驗證、CRUD 操作及各種錯誤情境
+
+auth:
+  type: bearer
+  token: "{{access_token}}"
+
+steps:
+  # ===== 認證流程測試 =====
+  - name: "健康檢查"
+    request:
+      method: GET
+      path: /health
+    expectations:
+      status: 200
+    custom:
+      - path: $.status
+        equals: "ok"
+
+  - name: "使用者登入 - 成功"
+    request:
+      method: POST
+      path: /api/auth/login
+      body:
+        username: "admin"
+        password: "admin123"
+    expectations:
+      status: 200
+    custom:
+      - path: $.message
+        equals: "登入成功"
+      - path: $.accessToken
+        notNull: true
+      - path: $.refreshToken
+        notNull: true
+      - path: $.user.username
+        equals: "admin"
+    capture:
+      access_token:
+        path: $.accessToken
+      refresh_token:
+        path: $.refreshToken
+
+  - name: "使用者登入 - 密碼錯誤"
+    request:
+      method: POST
+      path: /api/auth/login
+      body:
+        username: "admin"
+        password: "wrong-password"
+    expectations:
+      status: 401
+    custom:
+      - path: $.error
+        equals: "AUTHENTICATION_FAILED"
+      - path: $.message
+        contains: "密碼錯誤"
+      - path: $.hint
+        notNull: true
+
+  - name: "使用者登入 - 缺少必填欄位"
+    request:
+      method: POST
+      path: /api/auth/login
+      body:
+        username: "admin"
+    expectations:
+      status: 400
+    custom:
+      - path: $.error
+        equals: "VALIDATION_ERROR"
+      - path: $.details.fields
+        notNull: true
+      - path: $.hint
+        notNull: true
+
+  # ===== 使用者 CRUD 測試 (需認證) =====
+  - name: "取得使用者清單 - 需認證"
+    request:
+      method: GET
+      path: /api/users
+    expectations:
+      status: 200
+    custom:
+      - path: $.message
+        equals: "取得使用者清單成功"
+      - path: $.data
+        notNull: true
+      - path: $.total
+        notNull: true
+
+  - name: "取得單一使用者 - 成功"
+    request:
+      method: GET
+      path: /api/users/1
+    expectations:
+      status: 200
+    custom:
+      - path: $.data.id
+        equals: 1
+      - path: $.data.username
+        equals: "admin"
+
+  - name: "取得不存在的使用者 - 404"
+    request:
+      method: GET
+      path: /api/users/999
+    expectations:
+      status: 404
+    custom:
+      - path: $.error
+        equals: "RESOURCE_NOT_FOUND"
+      - path: $.message
+        contains: "找不到 User 資源"
+      - path: $.hint
+        notNull: true
+      - path: $.details.resourceType
+        equals: "User"
+      - path: $.details.resourceId
+        equals: "999"
+
+  - name: "建立新使用者 - 成功"
+    request:
+      method: POST
+      path: /api/users
+      body:
+        username: "testuser"
+        email: "testuser@example.com"
+        password: "test123"
+        age: 25
+    expectations:
+      status: 201
+    custom:
+      - path: $.message
+        equals: "建立使用者成功"
+      - path: $.data.username
+        equals: "testuser"
+      - path: $.data.email
+        equals: "testuser@example.com"
+    capture:
+      new_user_id:
+        path: $.data.id
+
+  - name: "建立使用者 - Email 格式錯誤"
+    request:
+      method: POST
+      path: /api/users
+      body:
+        username: "testuser2"
+        email: "invalid-email"
+        password: "test123"
+    expectations:
+      status: 400
+    custom:
+      - path: $.error
+        equals: "VALIDATION_ERROR"
+      - path: $.message
+        contains: "驗證失敗"
+      - path: $.details.fields[0].field
+        equals: "email"
+      - path: $.details.fields[0].error
+        contains: "格式不正確"
+
+  - name: "建立使用者 - 年齡不足 18"
+    request:
+      method: POST
+      path: /api/users
+      body:
+        username: "younguser"
+        email: "young@example.com"
+        password: "test123"
+        age: 15
+    expectations:
+      status: 400
+    custom:
+      - path: $.error
+        equals: "VALIDATION_ERROR"
+      - path: $.details.fields[0].field
+        equals: "age"
+      - path: $.details.fields[0].received
+        equals: 15
+
+  - name: "更新使用者 - 成功"
+    request:
+      method: PUT
+      path: /api/users/{{new_user_id}}
+      body:
+        age: 26
+    expectations:
+      status: 200
+    custom:
+      - path: $.message
+        equals: "更新使用者成功"
+      - path: $.data.age
+        equals: 26
+
+  - name: "刪除使用者 - 成功"
+    request:
+      method: DELETE
+      path: /api/users/{{new_user_id}}
+    expectations:
+      status: 200
+    custom:
+      - path: $.message
+        equals: "刪除使用者成功"
+      - path: $.data.id
+        equals: "{{new_user_id}}"
+
+  # ===== Token 相關測試 =====
+  - name: "刷新 Token - 成功"
+    request:
+      method: POST
+      path: /api/auth/refresh
+      body:
+        refreshToken: "{{refresh_token}}"
+    expectations:
+      status: 200
+    custom:
+      - path: $.message
+        equals: "Token 刷新成功"
+      - path: $.accessToken
+        notNull: true
+      - path: $.refreshToken
+        notNull: true
+
+  - name: "刷新 Token - 無效的 Token"
+    request:
+      method: POST
+      path: /api/auth/refresh
+      body:
+        refreshToken: "invalid-token"
+    expectations:
+      status: 401
+    custom:
+      - path: $.error
+        equals: "AUTHENTICATION_FAILED"
+      - path: $.hint
+        notNull: true
+
+  - name: "未提供 Token 訪問受保護端點"
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: ""
+    expectations:
+      status: 401
+    custom:
+      - path: $.error
+        equals: "AUTHENTICATION_FAILED"
+      - path: $.message
+        contains: "缺少認證 Token"
+      - path: $.hint
+        contains: "Authorization Header"
+
+  # ===== 註冊流程測試 =====
+  - name: "使用者註冊 - 成功"
+    request:
+      method: POST
+      path: /api/auth/register
+      body:
+        username: "newuser"
+        email: "newuser@example.com"
+        password: "newpass123"
+        age: 28
+    expectations:
+      status: 201
+    custom:
+      - path: $.message
+        equals: "註冊成功"
+      - path: $.user.username
+        equals: "newuser"
+      - path: $.accessToken
+        notNull: true
+
+  - name: "使用者註冊 - 使用者名稱重複"
+    request:
+      method: POST
+      path: /api/auth/register
+      body:
+        username: "admin"
+        email: "another@example.com"
+        password: "pass123"
+    expectations:
+      status: 400
+    custom:
+      - path: $.error
+        equals: "VALIDATION_ERROR"
+      - path: $.message
+        contains: "使用者名稱已被使用"
+      - path: $.hint
+        notNull: true
+
+  - name: "404 端點測試"
+    request:
+      method: GET
+      path: /api/nonexistent
+    expectations:
+      status: 404
+    custom:
+      - path: $.error
+        equals: "NOT_FOUND"
+      - path: $.message
+        contains: "找不到路徑"
