@@ -1,5 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import { IFlowDefinition, HTTPMethod } from '@specpilot/schemas';
+import HeadersEditor from './HeadersEditor';
 
 interface RequestEditorProps {
   stepIndex: number;
@@ -47,6 +48,9 @@ export default function RequestEditor({ stepIndex }: RequestEditorProps) {
             支援變數插值,例如: <code className="px-1 bg-gray-100 rounded">{'{{user_id}}'}</code>
           </p>
         </div>
+
+        {/* Headers */}
+        <HeadersEditor stepIndex={stepIndex} />
 
         {/* Request Body (for POST/PUT/PATCH) */}
         {(method === 'POST' || method === 'PUT' || method === 'PATCH') && (

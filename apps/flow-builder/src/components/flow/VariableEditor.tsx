@@ -1,22 +1,24 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { IFlowDefinition } from '@specpilot/schemas';
 import { useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function VariableEditor() {
   const { setValue } = useFormContext<IFlowDefinition>();
   const variables = useWatch<IFlowDefinition, 'variables'>({ name: 'variables' }) || {};
+  const { showToast } = useToast();
 
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
 
   const handleAddVariable = () => {
     if (!newKey.trim()) {
-      alert('變數名稱不可為空');
+      showToast('warning', '變數名稱不可為空');
       return;
     }
 
     if (newKey in variables) {
-      alert('變數名稱已存在');
+      showToast('warning', `變數名稱 "${newKey}" 已存在`);
       return;
     }
 
@@ -27,6 +29,7 @@ export default function VariableEditor() {
 
     setNewKey('');
     setNewValue('');
+    showToast('success', `已新增變數: ${newKey}`);
   };
 
   const handleUpdateVariable = (key: string, value: string) => {
@@ -40,6 +43,7 @@ export default function VariableEditor() {
     const newVariables = { ...variables };
     delete newVariables[key];
     setValue('variables', newVariables);
+    showToast('info', `已刪除變數: ${key}`);
   };
 
   const variableEntries = Object.entries(variables);

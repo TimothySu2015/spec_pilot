@@ -1,29 +1,70 @@
 import { useFormContext } from 'react-hook-form';
 import { IFlowDefinition } from '@specpilot/schemas';
 import { exportFlowYaml, exportBoth } from '../../utils/export-handler';
+import { useToast } from '../../contexts/ToastContext';
 import { useState } from 'react';
+import YAML from 'yaml';
 
 export default function Header() {
-  const { getValues } = useFormContext<IFlowDefinition>();
+  const { getValues, reset } = useFormContext<IFlowDefinition>();
+  const { showToast } = useToast();
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleSave = () => {
     const data = getValues();
-    // 儲存到 LocalStorage
-    localStorage.setItem('specpilot_flow', JSON.stringify(data));
-    alert('已儲存到瀏覽器 LocalStorage!');
+    try {
+      localStorage.setItem('specpilot_flow', JSON.stringify(data));
+      showToast('success', '已儲存到瀏覽器 LocalStorage!');
+    } catch (error) {
+      showToast('error', '儲存失敗，請檢查瀏覽器設定');
+    }
   };
 
   const handleExportYaml = () => {
     const data = getValues();
-    exportFlowYaml(data);
-    setShowExportMenu(false);
+    try {
+      exportFlowYaml(data);
+      showToast('success', '已匯出 YAML 檔案');
+      setShowExportMenu(false);
+    } catch (error) {
+      showToast('error', '匯出失敗');
+    }
   };
 
   const handleExportBoth = () => {
     const data = getValues();
-    exportBoth(data);
-    setShowExportMenu(false);
+    try {
+      exportBoth(data);
+      showToast('success', '已匯出 YAML + JSON Schema');
+      setShowExportMenu(false);
+    } catch (error) {
+      showToast('error', '匯出失敗');
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const flowData = YAML.parse(text);
+
+      // 驗證基本結構
+      if (!flowData.name || !flowData.baseUrl) {
+        throw new Error('無效的 Flow YAML 格式：缺少必要欄位');
+      }
+
+      // 使用 reset 更新整個表單
+      reset(flowData);
+      showToast('success', `已匯入 Flow: ${flowData.name}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'YAML 解析失敗';
+      showToast('error', message);
+    }
+
+    // 重置 input 以允許重新匯入同一個檔案
+    event.target.value = '';
   };
 
   return (
@@ -36,6 +77,18 @@ export default function Header() {
 
       {/* Action buttons */}
       <div className="flex items-center gap-3">
+        <label className="cursor-pointer">
+          <input
+            type="file"
+            accept=".yaml,.yml"
+            onChange={handleImport}
+            className="hidden"
+          />
+          <div className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+            📁 匯入
+          </div>
+        </label>
+
         <button
           onClick={handleSave}
           className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"

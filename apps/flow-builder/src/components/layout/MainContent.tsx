@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { IFlowDefinition } from '@specpilot/schemas';
 import { useStepContext } from '../../contexts/StepContext';
 import VariableEditor from '../flow/VariableEditor';
+import FlowOptionsEditor from '../flow/FlowOptionsEditor';
 import StepEditor from '../step/StepEditor';
 
 export default function MainContent() {
@@ -75,6 +76,9 @@ export default function MainContent() {
 
           {/* Variable Editor */}
           <VariableEditor />
+
+          {/* Flow Options Editor */}
+          <FlowOptionsEditor />
         </div>
       ) : (
         // Step 編輯器
