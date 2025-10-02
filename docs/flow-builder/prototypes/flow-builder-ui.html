@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpecPilot Flow Builder - UI Prototype</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Colors */
+            --primary: #3B82F6;
+            --primary-600: #2563EB;
+            --primary-700: #1D4ED8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #3B82F6;
+
+            /* Grays */
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+
+            /* Spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--gray-900);
+            background: var(--gray-50);
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            height: 64px;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--spacing-lg);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .project-name {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-600);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 240px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            overflow-y: auto;
+            padding: var(--spacing-md);
+        }
+
+        .sidebar-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .sidebar-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .openapi-upload {
+            background: var(--gray-50);
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            text-align: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .openapi-uploaded {
+            background: var(--success);
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .openapi-uploaded small {
+            opacity: 0.9;
+        }
+
+        .step-list {
+            list-style: none;
+        }
+
+        .step-item {
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-xs);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.875rem;
+            transition: background 150ms ease;
+        }
+
+        .step-item:hover {
+            background: var(--gray-50);
+        }
+
+        .step-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .step-status {
+            font-size: 1rem;
+        }
+
+        .add-step-btn {
+            width: 100%;
+            padding: var(--spacing-sm);
+            background: var(--gray-50);
+            border: 1px dashed var(--gray-300);
+            border-radius: 6px;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: var(--spacing-sm);
+        }
+
+        .add-step-btn:hover {
+            background: var(--gray-100);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 150ms ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 1rem;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .code-editor {
+            background: var(--gray-900);
+            color: #D4D4D4;
+            padding: var(--spacing-md);
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .json-key {
+            color: #9CDCFE;
+        }
+
+        .json-string {
+            color: #CE9178;
+        }
+
+        .json-number {
+            color: #B5CEA8;
+        }
+
+        .validation-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .validation-table th {
+            background: var(--gray-50);
+            padding: var(--spacing-sm);
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .validation-table td {
+            padding: var(--spacing-sm);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .validation-table input,
+        .validation-table select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            width: 320px;
+            background: white;
+            border-left: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .tab {
+            flex: 1;
+            padding: var(--spacing-sm);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            border-bottom: 2px solid transparent;
+            transition: all 150ms ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: var(--spacing-md);
+            overflow-y: auto;
+        }
+
+        .yaml-preview {
+            background: var(--gray-900);
+            color: #D4D4D4;
+            padding: var(--spacing-md);
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .validation-result {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .validation-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            border-radius: 6px;
+            margin-bottom: var(--spacing-sm);
+            font-size: 0.875rem;
+        }
+
+        .validation-status.success {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .validation-status.warning {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .validation-warning-item {
+            background: var(--gray-50);
+            border-left: 3px solid var(--warning);
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-400);
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        .api-endpoint-list {
+            list-style: none;
+        }
+
+        .api-endpoint-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .api-endpoint-group-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .api-endpoint-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-xs);
+            background: var(--gray-50);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: var(--spacing-sm);
+        }
+
+        .method-get {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .method-post {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .method-put {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .method-delete {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .help-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .help-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .help-content {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+
+        .help-content ul {
+            margin-left: var(--spacing-md);
+            margin-top: var(--spacing-xs);
+        }
+
+        /* Validation Suggestions */
+        .validation-suggestions {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .suggestions-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-700);
+        }
+
+        .suggestion-item {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+            transition: all 150ms ease;
+        }
+
+        .suggestion-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .suggestion-item.applied {
+            background: var(--gray-50);
+            border-color: var(--success);
+        }
+
+        .suggestion-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .suggestion-field {
+            font-weight: 600;
+            font-size: 0.875rem;
+            flex: 1;
+        }
+
+        .suggestion-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-applied {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .badge-apply {
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        .badge-apply:hover {
+            background: var(--primary-600);
+        }
+
+        .suggestion-rules {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-left: var(--spacing-lg);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .suggestion-source {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin-left: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .suggestions-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .info-box {
+            background: #DBEAFE;
+            border-left: 3px solid var(--info);
+            padding: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        .rule-source-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--gray-100);
+            border-radius: 3px;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-left: var(--spacing-xs);
+        }
+
+        /* Expect Body Styles */
+        .expect-body-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-sm);
+        }
+
+        .expect-body-table th {
+            background: var(--gray-50);
+            padding: var(--spacing-sm);
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .expect-body-table td {
+            padding: var(--spacing-sm);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .expect-body-table input,
+        .expect-body-table select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .expect-body-table input[disabled] {
+            background: var(--gray-50);
+            color: var(--gray-500);
+            cursor: not-allowed;
+        }
+
+        .expect-hint {
+            background: #DBEAFE;
+            border-left: 3px solid var(--info);
+            padding: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        .expect-hint ul {
+            margin: 4px 0 0 16px;
+        }
+
+        .add-field-btn {
+            width: 100%;
+            padding: var(--spacing-sm);
+            background: var(--gray-50);
+            border: 1px dashed var(--gray-300);
+            border-radius: 6px;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: var(--spacing-sm);
+            transition: all 150ms ease;
+        }
+
+        .add-field-btn:hover {
+            background: var(--gray-100);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    🚀 SpecPilot Flow Builder
+                </div>
+                <div class="project-name">
+                    目前專案: user-management-test.yaml
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary">📁 新增</button>
+                <button class="btn btn-secondary">💾 儲存</button>
+                <button class="btn btn-secondary" onclick="openExportModal()">📤 匯出</button>
+                <button class="btn btn-primary">👁️ 預覽</button>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar -->
+            <aside class="sidebar">
+                <!-- OpenAPI Upload -->
+                <div class="openapi-uploaded">
+                    <div style="font-weight: 600; margin-bottom: 8px;">✅ api.yaml</div>
+                    <small>• 12 個端點</small><br>
+                    <small>• Base URL: localhost:3000</small>
+                    <div style="margin-top: 12px;">
+                        <button class="btn btn-secondary" style="width: 100%; padding: 6px;" onclick="openApiListModal()">查看清單</button>
+                    </div>
+                </div>
+
+                <!-- Flow Info -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">📋 Flow 資訊</div>
+                    <div style="font-size: 0.875rem; color: var(--gray-600); margin-left: var(--spacing-md);">
+                        <div style="margin-bottom: 4px;">基本設定</div>
+                        <div style="margin-bottom: 4px;">變數管理</div>
+                        <div>全域設定</div>
+                    </div>
+                </div>
+
+                <!-- Steps -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">🔧 測試步驟 (12)</div>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <span class="step-status">✅</span>
+                            <span>1. 健康檢查</span>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-status">✅</span>
+                            <span>2. 登入測試</span>
+                        </li>
+                        <li class="step-item active">
+                            <span class="step-status">📝</span>
+                            <span>3. 建立用戶</span>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-status">⚠️</span>
+                            <span>4. 查詢列表</span>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-status">⏸️</span>
+                            <span>5. 更新資料</span>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-status">⏸️</span>
+                            <span>6. 刪除資料</span>
+                        </li>
+                    </ul>
+                    <button class="add-step-btn">+ 新增步驟</button>
+                </div>
+
+                <!-- Templates -->
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">📦 範本庫</div>
+                    <div style="font-size: 0.875rem; color: var(--gray-600); margin-left: var(--spacing-md);">
+                        <div style="margin-bottom: 4px;">🔐 JWT 認證流程</div>
+                        <div style="margin-bottom: 4px;">📝 CRUD 測試</div>
+                        <div style="margin-bottom: 4px;">⚠️ 錯誤處理</div>
+                        <div style="margin-bottom: 8px;">❤️ 健康檢查</div>
+                        <button class="btn btn-secondary" style="width: 100%; padding: 6px; font-size: 0.75rem;">瀏覽更多...</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Flow Info Card -->
+                <div class="card">
+                    <h2 class="card-title">📋 Flow 基本資訊</h2>
+                    <div class="form-group">
+                        <label class="form-label">Flow 名稱 *</label>
+                        <input type="text" class="form-input" value="使用者管理完整測試流程">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-textarea">完整測試 SpecPilot Mock Server 的使用者管理與認證功能,包含健康檢查、認證登入、使用者 CRUD 操作以及錯誤情境測試</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">版本</label>
+                            <input type="text" class="form-input" value="1.0.0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Schema 版本</label>
+                            <select class="form-select">
+                                <option>v1.0.0</option>
+                                <option>v0.9.0</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Base URL *</label>
+                        <input type="text" class="form-input" value="http://localhost:3000">
+                        <small style="color: var(--gray-500); font-size: 0.875rem;">ℹ️ 此 URL 將作為所有步驟的基礎 URL</small>
+                    </div>
+                </div>
+
+                <!-- Step Editor -->
+                <div class="card">
+                    <h2 class="card-title">
+                        Step 3: 建立新使用者
+                        <div style="margin-left: auto; display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.875rem;">複製</button>
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.875rem;">刪除</button>
+                        </div>
+                    </h2>
+
+                    <div class="form-group">
+                        <label class="form-label">步驟名稱 *</label>
+                        <input type="text" class="form-input" value="建立新使用者">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">描述</label>
+                        <input type="text" class="form-input" value="建立一個新的測試使用者">
+                    </div>
+
+                    <h3 style="font-size: 1rem; font-weight: 600; margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--gray-200);">Request</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Method</label>
+                            <select class="form-select">
+                                <option>GET</option>
+                                <option selected>POST</option>
+                                <option>PUT</option>
+                                <option>PATCH</option>
+                                <option>DELETE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Path</label>
+                            <input type="text" class="form-input" value="/api/users">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Body (JSON)</label>
+                        <div class="code-editor">
+<span class="json-key">{</span>
+  <span class="json-key">"name"</span>: <span class="json-string">"API 測試使用者"</span>,
+  <span class="json-key">"email"</span>: <span class="json-string">"{{test_email_pre}}@{{test_domain}}"</span>,
+  <span class="json-key">"role"</span>: <span class="json-string">"user"</span>,
+  <span class="json-key">"status"</span>: <span class="json-string">"active"</span>
+<span class="json-key">}</span>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 1rem; font-weight: 600; margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--gray-200);">Expect</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">Status Code *</label>
+                        <input type="text" class="form-input" value="201" style="width: 150px;">
+                        <span style="color: var(--success); margin-left: 8px; font-size: 0.875rem;">✅ Created</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Response Body (可選)
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; margin-left: 8px;">+ 新增欄位</button>
+                        </label>
+
+                        <table class="expect-body-table">
+                            <thead>
+                                <tr>
+                                    <th>欄位名稱</th>
+                                    <th>預期值</th>
+                                    <th>驗證模式</th>
+                                    <th width="60">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" value="id" placeholder="欄位名稱"></td>
+                                    <td><input type="text" value="(任意值)" disabled placeholder="預期值"></td>
+                                    <td>
+                                        <select>
+                                            <option selected>存在即可</option>
+                                            <option>精確匹配</option>
+                                        </select>
+                                    </td>
+                                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="name" placeholder="欄位名稱"></td>
+                                    <td><input type="text" value="API 測試使用者" placeholder="預期值"></td>
+                                    <td>
+                                        <select>
+                                            <option>存在即可</option>
+                                            <option selected>精確匹配</option>
+                                        </select>
+                                    </td>
+                                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="email" placeholder="欄位名稱"></td>
+                                    <td><input type="text" value="test@example.com" placeholder="預期值"></td>
+                                    <td>
+                                        <select>
+                                            <option>存在即可</option>
+                                            <option selected>精確匹配</option>
+                                        </select>
+                                    </td>
+                                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="status" placeholder="欄位名稱"></td>
+                                    <td><input type="text" value="active" placeholder="預期值"></td>
+                                    <td>
+                                        <select>
+                                            <option>存在即可</option>
+                                            <option selected>精確匹配</option>
+                                        </select>
+                                    </td>
+                                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" value="createdAt" placeholder="欄位名稱"></td>
+                                    <td><input type="text" value="(任意值)" disabled placeholder="預期值"></td>
+                                    <td>
+                                        <select>
+                                            <option selected>存在即可</option>
+                                            <option>精確匹配</option>
+                                        </select>
+                                    </td>
+                                    <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="expect-hint">
+                            💡 <strong>驗證模式說明:</strong>
+                            <ul>
+                                <li><strong>存在即可:</strong> 欄位存在即通過,值不限 (YAML: <code>null</code>)</li>
+                                <li><strong>精確匹配:</strong> 必須完全相同 (YAML: <code>"具體值"</code>)</li>
+                                <li>需要模糊匹配或正則驗證時,使用下方 Validation 規則</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 1rem; font-weight: 600; margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--gray-200);">
+                        Validation
+                        <button class="btn btn-secondary" style="margin-left: auto; padding: 6px 12px; font-size: 0.875rem;">+ 新增規則</button>
+                    </h3>
+
+                    <table class="validation-table">
+                        <thead>
+                            <tr>
+                                <th>規則類型</th>
+                                <th>Path</th>
+                                <th>Value</th>
+                                <th width="60">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <select>
+                                        <option selected>notNull</option>
+                                        <option>contains</option>
+                                        <option>regex</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" value="id"></td>
+                                <td><input type="text" disabled></td>
+                                <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select>
+                                        <option>notNull</option>
+                                        <option selected>contains</option>
+                                        <option>regex</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" value="name"></td>
+                                <td>
+                                    <input type="text" value="API 測試">
+                                    <span class="rule-source-tag">手動新增</span>
+                                </td>
+                                <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Validation Suggestions Panel -->
+                    <div class="validation-suggestions">
+                        <div class="suggestions-title">💡 根據 OpenAPI Response Schema 建議 (來源: POST /api/users)</div>
+
+                        <!-- Suggestion Item 1 - Applied -->
+                        <div class="suggestion-item applied">
+                            <div class="suggestion-header">
+                                <input type="checkbox" checked disabled style="cursor: not-allowed;">
+                                <span class="suggestion-field">id (必填欄位)</span>
+                                <span class="suggestion-badge badge-applied">已套用</span>
+                            </div>
+                            <div class="suggestion-rules">• notNull: id</div>
+                            <div class="suggestion-source">📌 來源: OpenAPI required 欄位</div>
+                        </div>
+
+                        <!-- Suggestion Item 2 -->
+                        <div class="suggestion-item" id="suggestion-username">
+                            <div class="suggestion-header">
+                                <input type="checkbox" id="check-username">
+                                <span class="suggestion-field">username (必填欄位)</span>
+                                <span class="suggestion-badge badge-apply" onclick="applySuggestion('username')">套用</span>
+                            </div>
+                            <div class="suggestion-rules">• notNull: username</div>
+                            <div class="suggestion-source">📌 來源: OpenAPI required 欄位</div>
+                        </div>
+
+                        <!-- Suggestion Item 3 -->
+                        <div class="suggestion-item" id="suggestion-email">
+                            <div class="suggestion-header">
+                                <input type="checkbox" id="check-email">
+                                <span class="suggestion-field">email (必填 + 格式驗證)</span>
+                                <span class="suggestion-badge badge-apply" onclick="applySuggestion('email')">套用</span>
+                            </div>
+                            <div class="suggestion-rules">
+                                • notNull: email<br>
+                                • regex: ^.+@.+\..+$
+                            </div>
+                            <div class="suggestion-source">📌 來源: OpenAPI required + format: email</div>
+                        </div>
+
+                        <!-- Suggestion Item 4 -->
+                        <div class="suggestion-item" id="suggestion-createdAt">
+                            <div class="suggestion-header">
+                                <input type="checkbox" id="check-createdAt">
+                                <span class="suggestion-field">createdAt (日期時間格式)</span>
+                                <span class="suggestion-badge badge-apply" onclick="applySuggestion('createdAt')">套用</span>
+                            </div>
+                            <div class="suggestion-rules">• regex: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}</div>
+                            <div class="suggestion-source">📌 來源: OpenAPI format: date-time</div>
+                        </div>
+
+                        <!-- Suggestion Item 5 - Warning -->
+                        <div class="suggestion-item" style="background: #FEF3C7; border-color: var(--warning);">
+                            <div class="suggestion-header">
+                                <span style="font-size: 1rem;">⚠️</span>
+                                <span class="suggestion-field">age (數值範圍限制)</span>
+                            </div>
+                            <div class="suggestion-rules" style="color: var(--warning);">
+                                ⚠️ minLength/maxLength 暫不支援自動驗證<br>
+                                💡 建議: 在 Request Body 階段檢查
+                            </div>
+                        </div>
+
+                        <div class="suggestions-actions">
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="selectAllSuggestions()">全選</button>
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="deselectAllSuggestions()">全不選</button>
+                            <button class="btn btn-primary" style="flex: 2;" onclick="applySelectedSuggestions()">套用選取的規則</button>
+                            <button class="btn btn-secondary" onclick="reanalyzeSchema()">🔄 重新分析</button>
+                        </div>
+
+                        <div class="info-box">
+                            ℹ️ 提示: 已套用的規則會自動加入上方列表,並標示「已套用」
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 1rem; font-weight: 600; margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--gray-200);">
+                        Capture
+                        <button class="btn btn-secondary" style="margin-left: auto; padding: 6px 12px; font-size: 0.875rem;">+ 新增變數</button>
+                    </h3>
+
+                    <table class="validation-table">
+                        <thead>
+                            <tr>
+                                <th>變數名稱</th>
+                                <th>從 Response 擷取路徑</th>
+                                <th width="60">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" value="new_user_id"></td>
+                                <td><input type="text" value="id"></td>
+                                <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" value="new_user_email"></td>
+                                <td><input type="text" value="email"></td>
+                                <td><button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">🗑️</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <small style="color: var(--gray-500); font-size: 0.875rem; margin-top: 8px; display: block;">
+                        💡 擷取的變數可在後續步驟中使用 {{new_user_id}}
+                    </small>
+                </div>
+            </main>
+
+            <!-- Right Panel -->
+            <aside class="right-panel">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab(0)">YAML 預覽</button>
+                    <button class="tab" onclick="switchTab(1)">驗證</button>
+                    <button class="tab" onclick="switchTab(2)">說明</button>
+                </div>
+
+                <div class="tab-content" id="tab-0">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <strong style="font-size: 0.875rem;">YAML 預覽</strong>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">複製</button>
+                    </div>
+                    <div class="yaml-preview">
+name: 使用者管理完整測試流程
+description: |
+  完整測試 SpecPilot Mock Server...
+version: 1.0.0
+baseUrl: http://localhost:3000
+
+variables:
+  admin_username: admin
+  admin_password: '1234562'
+  test_email_prefix: newtestuser99
+
+steps:
+  - name: 建立新使用者
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: API 測試使用者
+        email: '{{test_email_pre}}...'
+    expect:
+      statusCode: 201
+    validation:
+      - rule: notNull
+        path: id
+      - rule: contains
+        path: name
+        value: API 測試
+    capture:
+      new_user_id: id
+      new_user_email: email
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-1" style="display: none;">
+                    <div class="validation-result">
+                        <div class="validation-status success">
+                            ✅ Zod Schema 驗證通過
+                        </div>
+
+                        <div class="validation-status warning">
+                            ⚠️ 發現 1 個警告
+                        </div>
+
+                        <div class="validation-warning-item">
+                            <strong style="display: block; margin-bottom: 4px;">⚠️ Step 3: 建立新使用者</strong>
+                            <div style="margin-bottom: 8px; color: var(--gray-600); font-size: 0.875rem;">
+                                OpenAPI 衝突:<br>
+                                • 欄位 'email' 長度不足<br>
+                                &nbsp;&nbsp;要求: 最少 5 字元
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; margin-right: 4px;">查看詳情</button>
+                            <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;">前往修正</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-2" style="display: none;">
+                    <div class="help-section">
+                        <div class="help-title">📖 變數使用</div>
+                        <div class="help-content">
+                            <ul>
+                                <li>定義變數: 在「變數管理」中新增</li>
+                                <li>使用變數: {{變數名稱}}</li>
+                                <li>範例: username: '{{admin_user}}'</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-title">📖 驗證規則</div>
+                        <div class="help-content">
+                            <ul>
+                                <li>notNull: 檢查欄位不為 null</li>
+                                <li>regex: 正則表達式驗證</li>
+                                <li>contains: 包含指定文字</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-title">📖 快捷鍵</div>
+                        <div class="help-content">
+                            <ul>
+                                <li>Ctrl+S: 儲存</li>
+                                <li>Ctrl+E: 匯出</li>
+                                <li>Ctrl+P: 預覽</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- API List Modal -->
+    <div class="modal" id="apiListModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">API 端點清單</h2>
+                <button class="modal-close" onclick="closeApiListModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-input" placeholder="🔍 搜尋 API..." style="margin-bottom: 16px;">
+
+                <ul class="api-endpoint-list">
+                    <li class="api-endpoint-group">
+                        <div class="api-endpoint-group-title">🔐 Auth (2)</div>
+                        <div class="api-endpoint-item">
+                            <div>
+                                <span class="method-badge method-post">POST</span>
+                                /api/auth/login
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">+ 新增測試</button>
+                        </div>
+                        <div class="api-endpoint-item">
+                            <div>
+                                <span class="method-badge method-post">POST</span>
+                                /api/auth/register
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">+ 新增測試</button>
+                        </div>
+                    </li>
+
+                    <li class="api-endpoint-group">
+                        <div class="api-endpoint-group-title">👤 Users (5)</div>
+                        <div class="api-endpoint-item">
+                            <div>
+                                <span class="method-badge method-get">GET</span>
+                                /api/users
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">+ 新增測試</button>
+                        </div>
+                        <div class="api-endpoint-item">
+                            <div>
+                                <span class="method-badge method-post">POST</span>
+                                /api/users
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">+ 新增測試</button>
+                        </div>
+                        <div class="api-endpoint-item">
+                            <div>
+                                <span class="method-badge method-get">GET</span>
+                                /api/users/{'{id}'}
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">+ 新增測試</button>
+                        </div>
+                        <div class="api-endpoint-item">
+                            <div>
+                                <span class="method-badge method-put">PUT</span>
+                                /api/users/{'{id}'}
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">+ 新增測試</button>
+                        </div>
+                        <div class="api-endpoint-item">
+                            <div>
+                                <span class="method-badge method-delete">DELETE</span>
+                                /api/users/{'{id}'}
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">+ 新增測試</button>
+                        </div>
+                    </li>
+                </ul>
+
+                <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">批次生成全部</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📤 匯出 Flow</h2>
+                <button class="modal-close" onclick="closeExportModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 16px;">
+                    <strong>Flow 名稱:</strong> user-management-test
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <strong style="display: block; margin-bottom: 8px;">選擇匯出格式:</strong>
+                    <label style="display: block; margin-bottom: 8px;">
+                        <input type="checkbox" checked> YAML 檔案 (user-management-test.yaml)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px;">
+                        <input type="checkbox" checked> JSON Schema (user-management-test.schema.json)
+                    </label>
+                    <label style="display: block;">
+                        <input type="checkbox"> OpenAPI 規格 (user-management-api.yaml)
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <strong style="display: block; margin-bottom: 8px;">匯出方式:</strong>
+                    <label style="display: block; margin-bottom: 8px;">
+                        <input type="radio" name="export-mode" checked> 下載為 ZIP 壓縮檔
+                    </label>
+                    <label style="display: block; margin-bottom: 8px;">
+                        <input type="radio" name="export-mode"> 下載為個別檔案
+                    </label>
+                    <label style="display: block;">
+                        <input type="radio" name="export-mode"> 複製 YAML 到剪貼簿
+                    </label>
+                </div>
+
+                <div style="background: var(--gray-50); padding: 12px; border-radius: 6px; font-size: 0.875rem; color: var(--gray-600); margin-bottom: 16px;">
+                    💡 建議: 將檔案放到 SpecPilot 的 flows/ 目錄
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="closeExportModal()">取消</button>
+                    <button class="btn btn-primary" style="flex: 1;">匯出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.style.display = 'none');
+
+            tabs[index].classList.add('active');
+            contents[index].style.display = 'block';
+        }
+
+        // Modal functions
+        function openApiListModal() {
+            document.getElementById('apiListModal').classList.add('active');
+        }
+
+        function closeApiListModal() {
+            document.getElementById('apiListModal').classList.remove('active');
+        }
+
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        // Close modal on backdrop click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Validation Suggestions Functions
+        function applySuggestion(fieldName) {
+            const suggestionItem = document.getElementById(`suggestion-${fieldName}`);
+            const checkbox = document.getElementById(`check-${fieldName}`);
+
+            // Mark as applied
+            suggestionItem.classList.add('applied');
+            checkbox.checked = true;
+            checkbox.disabled = true;
+
+            // Update badge
+            const badge = suggestionItem.querySelector('.suggestion-badge');
+            badge.textContent = '已套用';
+            badge.classList.remove('badge-apply');
+            badge.classList.add('badge-applied');
+            badge.onclick = null;
+            badge.style.cursor = 'default';
+
+            // Show toast notification
+            showToast(`✅ 已套用 ${fieldName} 的驗證規則`);
+        }
+
+        function selectAllSuggestions() {
+            document.querySelectorAll('.suggestion-item:not(.applied) input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+
+        function deselectAllSuggestions() {
+            document.querySelectorAll('.suggestion-item:not(.applied) input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+
+        function applySelectedSuggestions() {
+            const checkboxes = document.querySelectorAll('.suggestion-item:not(.applied) input[type="checkbox"]:checked');
+            const count = checkboxes.length;
+
+            if (count === 0) {
+                showToast('⚠️ 請先勾選要套用的規則', 'warning');
+                return;
+            }
+
+            checkboxes.forEach(checkbox => {
+                const suggestionItem = checkbox.closest('.suggestion-item');
+                const fieldName = suggestionItem.id.replace('suggestion-', '');
+
+                // Mark as applied
+                suggestionItem.classList.add('applied');
+                checkbox.disabled = true;
+
+                // Update badge
+                const badge = suggestionItem.querySelector('.suggestion-badge');
+                badge.textContent = '已套用';
+                badge.classList.remove('badge-apply');
+                badge.classList.add('badge-applied');
+                badge.onclick = null;
+                badge.style.cursor = 'default';
+            });
+
+            showToast(`✅ 已新增 ${count} 個驗證規則`, 'success');
+        }
+
+        function reanalyzeSchema() {
+            showToast('🔄 正在重新分析 OpenAPI Schema...', 'info');
+
+            // Simulate reanalysis
+            setTimeout(() => {
+                showToast('✅ Schema 分析完成,建議已更新', 'success');
+            }, 1000);
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            // Remove existing toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            // Create toast
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+
+            const colors = {
+                success: '#10B981',
+                warning: '#F59E0B',
+                info: '#3B82F6',
+                error: '#EF4444'
+            };
+
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 24px;
+                background: white;
+                color: var(--gray-900);
+                padding: 12px 20px;
+                border-radius: 8px;
+                border-left: 4px solid ${colors[type] || colors.success};
+                box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+                font-size: 0.875rem;
+                font-weight: 500;
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out;
+            `;
+
+            document.body.appendChild(toast);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Expect Body validation mode handler
+        document.addEventListener('DOMContentLoaded', () => {
+            // Handle validation mode changes
+            const expectBodyTable = document.querySelector('.expect-body-table');
+            if (expectBodyTable) {
+                expectBodyTable.addEventListener('change', (e) => {
+                    if (e.target.tagName === 'SELECT') {
+                        const row = e.target.closest('tr');
+                        const valueInput = row.querySelector('td:nth-child(2) input');
+
+                        if (e.target.value === '存在即可') {
+                            // Disable value input and set placeholder
+                            valueInput.disabled = true;
+                            valueInput.value = '(任意值)';
+                            valueInput.style.background = 'var(--gray-50)';
+                            valueInput.style.color = 'var(--gray-500)';
+                        } else if (e.target.value === '精確匹配') {
+                            // Enable value input
+                            valueInput.disabled = false;
+                            valueInput.value = '';
+                            valueInput.style.background = 'white';
+                            valueInput.style.color = 'var(--gray-900)';
+                            valueInput.focus();
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
