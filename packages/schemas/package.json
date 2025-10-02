@@ -1,0 +1,21 @@
+{
+  "name": "@specpilot/schemas",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "zod": "~3.25.76",
+    "zod-to-json-schema": "^3.23.5",
+    "yaml": "^2.4.3"
+  },
+  "devDependencies": {
+    "typescript": "5.4.5",
+    "vitest": "1.6.0",
+    "tsup": "8.0.1"
+  }
+}

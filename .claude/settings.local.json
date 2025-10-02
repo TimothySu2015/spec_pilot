@@ -99,7 +99,8 @@
       "Bash(pnpm -w run test packages/reporting/__tests__/ --run)",
       "Bash(pnpm -w run test packages/reporting/__tests__/diagnostic-context-builder.test.ts packages/reporting/__tests__/enhanced-report-generator.test.ts apps/mcp-server/__tests__/handlers/get-report-simple.test.ts --run)",
       "Bash(rm:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(pnpm -w run test packages/schemas/__tests__/ --run)"
     ],
     "deny": [],
     "ask": []
