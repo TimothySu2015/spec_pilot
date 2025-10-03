@@ -1,24 +1,46 @@
 /**
  * @specpilot/schemas
  *
- * SpecPilot 共用 Zod Schema 定義套件
- * 提供 Flow YAML 結構驗證與型別定義
+ * SpecPilot 統一 Zod Schema 定義與工具
+ * 提供 Flow YAML 建模與驗證能力
  */
+
+// Auth Schema
+export {
+  TokenExtractionSchema,
+  LoginAuthSchema,
+  BearerAuthSchema,
+  StaticAuthItemSchema,
+  StepAuthSchema,
+  GlobalAuthSchema,
+  type ITokenExtraction,
+  type IStepAuth,
+  type IGlobalAuth,
+  type IStaticAuthItem,
+} from './auth-schema';
+
+// Globals Schema
+export {
+  HeadersSchema,
+  RetryPolicySchema,
+  GlobalsSchema,
+  type IRetryPolicy,
+  type IGlobals,
+} from './globals-schema';
 
 // Flow Schema
 export {
-  HTTPMethodSchema,
   VariablesSchema,
   FlowOptionsSchema,
   ReportingOptionsSchema,
   FlowDefinitionSchema,
+  HTTPMethodSchema,
   type IFlowDefinition,
   type HTTPMethod,
 } from './flow-schema';
 
 // Step Schema
 export {
-  HeadersSchema,
   RequestBodySchema,
   FlowRequestSchema,
   ExpectBodyFieldSchema,
@@ -30,6 +52,7 @@ export {
   type IFlowExpect,
   type IExpectBodyField,
   type ICapture,
+  type ICaptureVariable,
 } from './step-schema';
 
 // Validation Schema
@@ -44,7 +67,7 @@ export {
   type IContainsRule,
 } from './validation-schema';
 
-// 工具函式
+// 實用函式
 export { exportToYaml } from './utils/export-yaml';
 export { exportToJsonSchema } from './utils/export-json-schema';
 export { VariableResolver } from './utils/variable-resolver';

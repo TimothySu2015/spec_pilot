@@ -1,20 +1,22 @@
 {
   "name": "@specpilot/mcp-server",
   "version": "0.1.0",
+  "type": "module",
   "description": "SpecPilot MCP Server 基於官方 TypeScript SDK",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "bin": {
-    "specpilot-mcp": "./dist/index.js"
+    "specpilot-mcp": "./dist/index.cjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "node build.js",
     "dev": "tsx src/index.ts",
-    "prepare": "npm run build",
+    "prepare": "pnpm run build",
     "watch": "tsup --watch",
-    "inspector": "npx @modelcontextprotocol/inspector dist/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector dist/index.cjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",
@@ -22,6 +24,7 @@
     "@specpilot/core-flow": "workspace:*",
     "@specpilot/flow-parser": "workspace:*",
     "@specpilot/reporting": "workspace:*",
+    "@specpilot/schemas": "workspace:*",
     "@specpilot/shared": "workspace:*",
     "@specpilot/spec-loader": "workspace:*",
     "ajv": "^8.17.1",

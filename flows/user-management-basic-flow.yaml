@@ -1,7 +1,7 @@
-name: 使用者管理基本測試流程
+name: 使用者管理基礎流程
 description: |
-  簡化版的使用者管理 API 測試流程
-  包含核心功能：登入、查詢、建立、更新、刪除使用者
+  透過 SpecPilot Mock Server 的使用者管理 API 進行驗證
+  包含健康檢查、登入、查詢、建立、更新與刪除使用者
 version: 1.0.0
 baseUrl: http://localhost:3000
 
@@ -17,9 +17,9 @@ steps:
       body:
         status: ok
 
-  # 2. 管理者登入
-  - name: 管理者登入
-    description: 使用管理者帳號登入
+  # 2. 管理員登入
+  - name: 管理員登入
+    description: 以管理員帳號登入取得 token
     request:
       method: POST
       path: /auth/login
@@ -34,11 +34,12 @@ steps:
       - rule: notNull
         path: token
     capture:
-      admin_token: token
+      - variableName: admin_token
+        path: token
 
   # 3. 查詢使用者列表
   - name: 取得使用者列表
-    description: 取得所有使用者
+    description: 取得所有使用者清單
     request:
       method: GET
       path: /api/users
@@ -52,7 +53,7 @@ steps:
 
   # 4. 建立新使用者
   - name: 建立測試使用者
-    description: 建立一個新使用者
+    description: 建立一筆新的測試使用者
     request:
       method: POST
       path: /api/users
@@ -60,7 +61,7 @@ steps:
         Authorization: Bearer {{admin_token}}
         Content-Type: application/json
       body:
-        name: 快速測試使用者
+        name: 測試流程使用者
         email: quicktest@example.com
         role: user
         status: active
@@ -70,11 +71,12 @@ steps:
       - rule: notNull
         path: id
     capture:
-      test_user_id: id
+      - variableName: test_user_id
+        path: id
 
-  # 5. 取得使用者詳情
-  - name: 取得使用者詳情
-    description: 取得剛建立的使用者資料
+  # 5. 查詢使用者詳細
+  - name: 取得使用者詳細
+    description: 取得剛建立的使用者詳細資料
     request:
       method: GET
       path: /api/users/{{test_user_id}}
@@ -85,7 +87,7 @@ steps:
     validation:
       - rule: contains
         path: name
-        value: 快速測試使用者
+        value: 測試流程使用者
 
   # 6. 更新使用者
   - name: 更新使用者狀態
@@ -107,7 +109,7 @@ steps:
 
   # 7. 刪除使用者
   - name: 刪除測試使用者
-    description: 清理測試資料
+    description: 清除測試資料
     request:
       method: DELETE
       path: /api/users/{{test_user_id}}

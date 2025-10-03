@@ -21,6 +21,7 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
+    "@specpilot/schemas": "workspace:*",
     "@specpilot/shared": "workspace:*",
     "yaml": "^2.4.3"
   },

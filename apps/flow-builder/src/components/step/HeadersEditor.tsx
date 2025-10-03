@@ -1,4 +1,4 @@
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { IFlowDefinition } from '@specpilot/schemas';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -7,7 +7,7 @@ interface HeadersEditorProps {
 }
 
 export default function HeadersEditor({ stepIndex }: HeadersEditorProps) {
-  const { control, register, watch, setValue, getValues } = useFormContext<IFlowDefinition>();
+  const { register, watch, setValue, getValues } = useFormContext<IFlowDefinition>();
   const { showToast } = useToast();
 
   // Headers 是一個 object，我們需要將它轉換為 array 來使用 useFieldArray
@@ -76,7 +76,7 @@ export default function HeadersEditor({ stepIndex }: HeadersEditorProps) {
         </div>
       ) : (
         <div className="space-y-2">
-          {headerEntries.map(([key, value]) => (
+          {headerEntries.map(([key]) => (
             <div key={key} className="flex items-center gap-2">
               <input
                 type="text"

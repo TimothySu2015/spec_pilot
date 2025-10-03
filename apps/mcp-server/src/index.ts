@@ -8,7 +8,7 @@ import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
 import { type IExecutionConfig, DiagnosticContextBuilder } from '@specpilot/reporting';
-import { overrideConfig } from '@specpilot/config';
+import { overrideConfig, getConfig } from '@specpilot/config';
 
 // 為 MCP Server 建立靜默日誌記錄器（避免干擾 stdio transport）
 const logger = {
@@ -294,6 +294,7 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
     }
 
     // 執行流程（使用增強版）
+    const config = getConfig();
     const finalBaseUrl = baseUrl || config.baseUrl || 'http://localhost:3000';
     const orchestrator = new EnhancedFlowOrchestrator(undefined, { baseUrl: finalBaseUrl });
 

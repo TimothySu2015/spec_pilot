@@ -54,7 +54,9 @@ export default defineConfig({
       '@specpilot/flow-parser': path.resolve(__dirname, 'packages/flow-parser/src'),
       '@specpilot/http-runner': path.resolve(__dirname, 'packages/http-runner/src'),
       '@specpilot/validation': path.resolve(__dirname, 'packages/validation/src'),
+      '@specpilot/schemas': path.resolve(__dirname, 'packages/schemas/src'),
       '@specpilot/reporting': path.resolve(__dirname, 'packages/reporting/src'),
     },
   },
 });
+

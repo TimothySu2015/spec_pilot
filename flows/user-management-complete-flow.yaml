@@ -55,8 +55,10 @@ steps:
       - rule: notNull
         path: user.name
     capture:
-      admin_token: token
-      admin_user_name: user.name
+      - variableName: admin_token
+        path: token
+      - variableName: admin_user_name
+        path: user.name
 
   - name: 錯誤登入測試
     description: 測試錯誤的登入資訊
@@ -108,9 +110,12 @@ steps:
       - rule: notNull
         path: total
     capture:
-      initial_user_count: total
-      first_user_id: users[0].id
-      first_user_name: users[0].name
+      - variableName: initial_user_count
+        path: total
+      - variableName: first_user_id
+        path: users[0].id
+      - variableName: first_user_name
+        path: users[0].name
 
   # ====== 建立新使用者 ======
   - name: 建立新使用者
@@ -144,8 +149,10 @@ steps:
         path: status
         value: active
     capture:
-      new_user_id: id
-      new_user_email: email
+      - variableName: new_user_id
+        path: id
+      - variableName: new_user_email
+        path: email
 
   - name: 驗證使用者數量增加
     description: 確認使用者總數增加了 1
@@ -216,7 +223,8 @@ steps:
         path: email
         value: '{{new_user_email}}'
     capture:
-      updated_timestamp: updatedAt
+      - variableName: updated_timestamp
+        path: updatedAt
 
   - name: 完整更新使用者
     description: 使用 PUT 完整更新使用者資料
@@ -289,7 +297,8 @@ steps:
       - rule: notNull
         path: id
     capture:
-      delete_user_id: id
+      - variableName: delete_user_id
+        path: id
 
   # ====== 刪除使用者 ======
   - name: 刪除測試使用者
@@ -384,7 +393,8 @@ steps:
       - rule: notNull
         path: total
     capture:
-      final_user_count: total
+      - variableName: final_user_count
+        path: total
 
   # ====== 清理測試資料 ======
   - name: 清理建立的測試使用者

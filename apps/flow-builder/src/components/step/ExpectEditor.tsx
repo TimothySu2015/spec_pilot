@@ -3,6 +3,7 @@ import { IFlowDefinition } from '@specpilot/schemas';
 import { useOpenAPI } from '../../contexts/OpenAPIContext';
 import { extractResponseSchema, extractFields, findEndpointInSpec, ResponseField } from '../../services/openapi-analyzer';
 import { useState, useEffect } from 'react';
+// import Editor from '@monaco-editor/react'; // 暫時註解，body 深度比對驗證目前不需要
 
 interface ExpectEditorProps {
   stepIndex: number;
@@ -19,9 +20,44 @@ export default function ExpectEditor({ stepIndex }: ExpectEditorProps) {
   const [availableFields, setAvailableFields] = useState<ResponseField[]>([]);
   const [showFieldSuggestions, setShowFieldSuggestions] = useState(false);
 
+  // 暫時註解，body 深度比對驗證目前不需要
+  // const [bodyJsonText, setBodyJsonText] = useState<string>('');
+  // const [bodyJsonError, setBodyJsonError] = useState<string>('');
+
   // 監聽當前步驟的 request 資訊
   const method = watch(`steps.${stepIndex}.request.method`);
   const path = watch(`steps.${stepIndex}.request.path`);
+  // const bodyValue = watch(`steps.${stepIndex}.expect.body`);
+
+  // 暫時註解，body 深度比對驗證目前不需要
+  // // 初始化 body JSON 編輯器內容
+  // useEffect(() => {
+  //   if (bodyValue && typeof bodyValue === 'object') {
+  //     // 如果 bodyValue 是物件，轉換為格式化的 JSON 字串
+  //     try {
+  //       const jsonString = JSON.stringify(bodyValue, null, 2);
+  //       // 只在內容真的改變時更新，避免無限迴圈
+  //       if (bodyJsonText !== jsonString) {
+  //         setBodyJsonText(jsonString);
+  //         setBodyJsonError('');
+  //       }
+  //     } catch {
+  //       setBodyJsonText('');
+  //       setBodyJsonError('');
+  //     }
+  //   } else if (typeof bodyValue === 'string') {
+  //     // 如果是字串，直接使用
+  //     if (bodyJsonText !== bodyValue) {
+  //       setBodyJsonText(bodyValue);
+  //     }
+  //   } else if (!bodyValue) {
+  //     // 如果是 undefined 或 null，清空
+  //     if (bodyJsonText !== '') {
+  //       setBodyJsonText('');
+  //       setBodyJsonError('');
+  //     }
+  //   }
+  // }, [bodyValue]); // 監聽 bodyValue 變化
 
   // 分析可用欄位
   useEffect(() => {
@@ -59,6 +95,27 @@ export default function ExpectEditor({ stepIndex }: ExpectEditorProps) {
     });
   };
 
+  // 暫時註解，body 深度比對驗證目前不需要
+  // const handleBodyJsonChange = (value: string | undefined) => {
+  //   if (!value) {
+  //     setBodyJsonText('');
+  //     setValue(`steps.${stepIndex}.expect.body`, undefined);
+  //     setBodyJsonError('');
+  //     return;
+  //   }
+  //
+  //   setBodyJsonText(value);
+  //
+  //   // 嘗試解析 JSON
+  //   try {
+  //     const parsed = JSON.parse(value);
+  //     setValue(`steps.${stepIndex}.expect.body`, parsed);
+  //     setBodyJsonError('');
+  //   } catch (error) {
+  //     setBodyJsonError(error instanceof Error ? error.message : 'JSON 格式錯誤');
+  //   }
+  // };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">預期回應 (Expect)</h3>
@@ -78,6 +135,56 @@ export default function ExpectEditor({ stepIndex }: ExpectEditorProps) {
             max="599"
           />
         </div>
+
+        {/* Body JSON 深度比對驗證 - 暫時註解，目前不需要 */}
+        {/* <div className="border border-gray-200 rounded-lg">
+          <div className="p-4 border-b bg-gray-50">
+            <h4 className="font-medium text-gray-900">Response Body 深度比對驗證</h4>
+            <p className="text-xs text-gray-600 mt-1">
+              定義預期的完整回應 JSON 結構（選填）。系統會進行深度比對驗證，預期欄位必須存在且值相符。
+            </p>
+          </div>
+          <div className="p-4">
+            <div className="border border-gray-300 rounded-lg overflow-hidden">
+              <Editor
+                height="200px"
+                defaultLanguage="json"
+                value={bodyJsonText}
+                onChange={handleBodyJsonChange}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  tabSize: 2,
+                  formatOnPaste: true,
+                  formatOnType: true,
+                }}
+                theme="vs-light"
+              />
+            </div>
+            {bodyJsonError && (
+              <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded">
+                ❌ {bodyJsonError}
+              </div>
+            )}
+            {!bodyJsonError && bodyJsonText && (
+              <div className="mt-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded">
+                ✅ JSON 格式正確
+              </div>
+            )}
+          </div>
+          <div className="p-4 bg-gray-50 border-t text-sm text-gray-600">
+            <p className="font-medium mb-2">💡 深度比對說明:</p>
+            <ul className="space-y-1 text-xs">
+              <li>• 預期欄位必須存在於實際回應中（巢狀物件遞迴驗證）</li>
+              <li>• 實際回應可以有額外欄位（部分比對）</li>
+              <li>• 陣列必須長度相同且元素一一對應</li>
+              <li>• 如不需深度比對，請使用下方的「欄位驗證」功能</li>
+            </ul>
+          </div>
+        </div> */}
 
         {/* 可用欄位建議 */}
         {openApiSpec && availableFields.length > 0 && (

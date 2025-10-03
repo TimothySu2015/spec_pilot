@@ -9,6 +9,8 @@ cd apps/mcp-server
 pnpm run build
 ```
 
+這會在 `apps/mcp-server/dist/index.cjs` 產生完整打包的 MCP Server（包含所有內部依賴）。
+
 ### 2. 設定 Claude Desktop
 
 將以下配置加入您的 Claude Desktop 設定檔：
@@ -22,12 +24,17 @@ pnpm run build
   "mcpServers": {
     "specpilot": {
       "command": "node",
-      "args": ["完整路徑/SpecPilot/apps/mcp-server/dist/index.js"],
-      "cwd": "完整路徑/SpecPilot"
+      "args": ["D:\\codes\\spec_pilot\\apps\\mcp-server\\dist\\index.cjs"],
+      "cwd": "D:\\codes\\spec_pilot"
     }
   }
 }
 ```
+
+**重要**：
+- 請將路徑 `D:\\codes\\spec_pilot` 替換為您的實際專案路徑
+- Windows 路徑需使用雙反斜線 `\\`
+- macOS/Linux 範例：`"/Users/username/spec_pilot/apps/mcp-server/dist/index.cjs"`
 
 ### 3. 重新啟動 Claude Desktop
 

@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { IFlowDefinition, HTTPMethod } from '@specpilot/schemas';
+import { HTTPMethod } from '@specpilot/schemas';
 import { useOpenAPI } from '../../contexts/OpenAPIContext';
 import { useStepContext } from '../../contexts/StepContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -14,7 +13,7 @@ interface APIEndpointListModalProps {
 
 export default function APIEndpointListModal({ isOpen, onClose }: APIEndpointListModalProps) {
   const { openApiSpec } = useOpenAPI();
-  const { getValues } = useFormContext<IFlowDefinition>();
+  // const { getValues } = useFormContext<IFlowDefinition>();
   const { append } = useStepContext();
   const { showToast } = useToast();
 
@@ -57,7 +56,7 @@ export default function APIEndpointListModal({ isOpen, onClose }: APIEndpointLis
       return;
     }
 
-    const baseUrl = getValues('baseUrl') || 'http://localhost:3000';
+    // const baseUrl = getValues('baseUrl') || 'http://localhost:3000';
     let generatedCount = 0;
 
     for (const key of selectedEndpoints) {

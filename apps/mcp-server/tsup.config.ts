@@ -13,9 +13,14 @@ export default defineConfig({
   treeshake: false,
   minify: false,
   bundle: true,
-  skipNodeModulesBundle: false,
+
+  // 強制打包所有 workspace 內部套件
+  noExternal: [
+    /@specpilot\/.*/,  // 所有 @specpilot/* 套件
+  ],
+
+  // 只保留 Node.js 內建模組與外部 npm 套件為外部依賴
   external: [
-    // 只保留 Node.js 內建模組為外部依賴
     'fs',
     'path',
     'url',

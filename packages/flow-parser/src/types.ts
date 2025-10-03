@@ -1,9 +1,9 @@
 /**
- * Flow Parser 類型定義
+ * Flow Parser 專用型別定義
  */
 
 /**
- * HTTP 方法枚舉
+ * HTTP 方法列舉
  */
 export enum HttpMethod {
   GET = 'GET',
@@ -16,16 +16,16 @@ export enum HttpMethod {
 }
 
 /**
- * Flow 載入選項介面
+ * Flow 載入選項
  */
 export interface IFlowLoadOptions {
-  /** 檔案路徑（與 content 二選一） */
+  /** 檔案路徑（與 content 擇一） */
   filePath?: string;
-  /** 直接內容（與 filePath 二選一） */
+  /** 直接給定內容（與 filePath 擇一） */
   content?: string;
-  /** 內容格式，預設為 yaml */
+  /** 內容格式，預設 yaml */
   format?: 'yaml';
-  /** 執行 ID，用於日誌關聯 */
+  /** 執行 ID，方便追蹤流程 */
   executionId?: string;
 }
 
@@ -37,75 +37,95 @@ export interface IFlowRequest {
   method: HttpMethod;
   /** 請求路徑 */
   path?: string;
-  /** 請求 URL（與 path 二擇一） */
+  /** 完整請求 URL（與 path 擇一） */
   url?: string;
   /** 請求標頭 */
   headers?: Record<string, string>;
-  /** 請求主體 */
+  /** 請求本文 */
   body?: unknown;
-  /** 查詢參數 */
+  /** Query 參數 */
   query?: Record<string, string>;
 }
 
 /**
- * 重試政策設定
+ * 重試策略
  */
 export interface IRetryPolicy {
   /** 最大重試次數 */
   maxRetries?: number;
-  /** 重試間隔（毫秒） */
+  /** 初始延遲毫秒數 */
   delayMs?: number;
-  /** 指數退避倍數 */
+  /** 指數退避倍率 */
   backoffMultiplier?: number;
 }
 
 /**
- * 期望驗證設定
+ * Flow 執行選項
+ */
+export interface IFlowOptions {
+  timeout?: number;
+  retryCount?: number;
+  failFast?: boolean;
+}
+
+/**
+ * Flow 報告設定
+ */
+export interface IReportingOptions {
+  outputPath?: string;
+  format?: 'json' | 'html' | 'markdown';
+  verbose?: boolean;
+}
+
+/**
+ * 回應驗證設定
  */
 export interface IFlowExpectations {
-  /** 期望的 HTTP 狀態碼 */
+  /** 預期的 HTTP 狀態碼 */
   status?: number;
-  /** JSON Schema 驗證 */
+  /** JSON Schema 名稱 */
   schema?: string;
+  /** 預期的回應 body (JSON 深度比對驗證) */
+  body?: unknown;
   /** 自訂驗證規則 */
   custom?: Array<{
     /** 驗證類型 */
-    type: 'notNull' | 'regex' | 'contains';
-    /** 目標欄位路徑 */
+    type: 'notNull' | 'regex' | 'contains' | 'unknown';
+    /** 檢查欄位 */
     field: string;
-    /** 驗證值 */
+    /** 期望值 */
     value?: string | number | boolean;
-    /** 錯誤訊息 */
+    /** 覆寫錯誤訊息 */
     message?: string;
   }>;
 }
 
 /**
- * Token 提取設定介面
+ * Token 擷取設定
  */
 export interface ITokenExtraction {
-  /** Token 提取路徑（如 "data.token"） */
+  /** Token 擷取路徑，例如 data.token */
   path: string;
-  /** Token 有效期（秒） */
+  /** Token 逾時秒數 */
   expiresIn?: number;
   /** Token 命名空間 */
   namespace?: string;
 }
 
 /**
- * 認證設定介面
+ * 步驟層級認證設定
  */
 export interface IFlowAuth {
   /** 認證類型 */
   type: 'login' | 'static';
-  /** Token 提取設定（登入類型使用） */
+  /** 登入型別所需的 token 擷取設定 */
   tokenExtraction?: ITokenExtraction;
-  /** 命名空間（靜態 Token 使用） */
+  /** 命名空間（靜態 token 用） */
   namespace?: string;
 }
 
 /**
- * Flow 步驟介面
+ * Flow 步驟定義
  */
 export interface IFlowStep {
   /** 步驟名稱 */
@@ -114,25 +134,25 @@ export interface IFlowStep {
   description?: string;
   /** HTTP 請求設定 */
   request: IFlowRequest;
-  /** 期望驗證設定 */
+  /** 回應驗證設定 */
   expectations: IFlowExpectations;
-  /** 重試政策 */
+  /** 重試策略 */
   retryPolicy?: IRetryPolicy;
-  /** 認證設定 */
+  /** 步驟認證 */
   auth?: IFlowAuth;
-  /** Capture 設定：從回應中提取變數 */
+  /** Capture 設定：變數名稱 -> JSON Path */
   capture?: Record<string, string>;
 }
 
 /**
- * 靜態認證設定介面
+ * 靜態認證設定
  */
 export interface IStaticAuth {
   /** 命名空間 */
   namespace: string;
-  /** Token 值 */
+  /** Token */
   token: string;
-  /** Token 有效期（秒） */
+  /** Token 逾時秒數 */
   expiresInSeconds?: number;
 }
 
@@ -142,48 +162,49 @@ export interface IStaticAuth {
 export interface IFlowGlobals {
   /** 基礎 URL */
   baseUrl?: string;
-  /** 全域標頭 */
+  /** 共用標頭 */
   headers?: Record<string, string>;
-  /** 認證憑證（舊版相容） */
+  /** 認證設定 */
   auth?: {
-    /** 認證類型 */
-    type: 'bearer' | 'basic';
-    /** 憑證值 */
+    type: 'bearer';
     token: string;
   } | {
-    /** 靜態 Token 設定 */
     static?: IStaticAuth[];
   };
-  /** 全域重試政策 */
+  /** 共用重試策略 */
   retryPolicy?: IRetryPolicy;
 }
 
 /**
- * Flow 定義介面
+ * Flow 定義
  */
 export interface IFlowDefinition {
   /** Flow ID */
   id: string;
   /** 原始內容 */
   rawContent: string;
-  /** Flow 步驟列表 */
+  /** 步驟列表 */
   steps: IFlowStep[];
   /** 全域設定 */
   globals?: IFlowGlobals;
-  /** 全域變數定義 */
+  /** 流程變數 */
   variables?: Record<string, unknown>;
+  /** 執行選項 */
+  options?: IFlowOptions;
+  /** 報告設定 */
+  reporting?: IReportingOptions;
 }
 
 /**
- * Flow 載入結果（安全版本，不拋出錯誤）
+ * Flow 載入結果
  */
 export interface IFlowLoadResult {
   /** 是否成功 */
   success: boolean;
-  /** Flow 定義（成功時） */
+  /** 成功時的 Flow 定義 */
   flow?: IFlowDefinition;
-  /** 錯誤訊息（失敗時） */
+  /** 失敗訊息 */
   error?: string;
-  /** 錯誤詳細資訊（失敗時） */
+  /** 失敗詳情 */
   details?: Record<string, unknown>;
 }

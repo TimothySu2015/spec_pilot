@@ -2,6 +2,7 @@ import { ERROR_CODES } from '@specpilot/shared';
 import { StatusValidator } from './status-validator.js';
 import { SchemaValidator } from './schema-validator.js';
 import { CustomValidator } from './custom-validator.js';
+import { BodyValidator } from './body-validator.js';
 import type {
   ValidationInput,
   ValidationOutcome,
@@ -32,11 +33,13 @@ export class ValidationEngine {
   private readonly statusValidator: StatusValidator;
   private readonly schemaValidator: SchemaValidator;
   private readonly customValidator: CustomValidator;
+  private readonly bodyValidator: BodyValidator;
 
   constructor() {
     this.statusValidator = new StatusValidator();
     this.schemaValidator = new SchemaValidator();
     this.customValidator = new CustomValidator();
+    this.bodyValidator = new BodyValidator();
   }
 
   /**
@@ -52,6 +55,7 @@ export class ValidationEngine {
       stepName: step.name,
       hasStatusCheck: expectations.status !== undefined,
       hasSchemaCheck: !!expectations.schema,
+      hasBodyCheck: expectations.body !== undefined,
       hasCustomChecks: !!(expectations.custom && expectations.custom.length > 0),
     });
 
@@ -111,7 +115,28 @@ export class ValidationEngine {
         });
       }
 
-      // 3. 自訂規則驗證
+      // 3. Body 深度比對驗證
+      if (expectations.body !== undefined) {
+        const bodyResult = await this.bodyValidator.validate(validationContext);
+        if (!bodyResult.isValid) {
+          if (overallStatus === 'success') {
+            overallStatus = 'failed';
+          }
+          allIssues.push(...bodyResult.issues);
+        }
+        logs.push({
+          executionId,
+          component: 'validation-engine',
+          stepName: step.name,
+          validator: 'body',
+          status: bodyResult.isValid ? 'success' : 'failure',
+          message: bodyResult.isValid ? 'Body 深度比對驗證通過' : 'Body 深度比對驗證失敗',
+          durationMs: bodyResult.telemetry.durationMs,
+          details: bodyResult.telemetry.details,
+        });
+      }
+
+      // 4. 自訂規則驗證
       if (expectations.custom && expectations.custom.length > 0) {
         const customResult = await this.customValidator.validate(validationContext);
         if (!customResult.isValid) {
@@ -209,6 +234,19 @@ export class ValidationEngine {
         message: schemaIssues.length > 0 ?
           `Schema 驗證失敗 (${schemaIssues.length} 個問題)` :
           'Schema 驗證通過',
+      });
+    }
+
+    // Body 深度比對檢查
+    if (expectations.body !== undefined) {
+      const bodyIssues = issues.filter(i => i.ruleName?.startsWith('body-'));
+      customChecks.push({
+        rule: 'body',
+        field: 'response.data',
+        success: bodyIssues.length === 0,
+        message: bodyIssues.length > 0 ?
+          `Body 驗證失敗 (${bodyIssues.length} 個問題)` :
+          'Body 深度比對驗證通過',
       });
     }
 

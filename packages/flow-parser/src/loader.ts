@@ -1,20 +1,31 @@
 /**
- * Flow YAML 檔案載入邏輯
+ * Flow YAML 載入與轉換器
  */
 
 import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { createStructuredLogger, IStructuredLogger } from '@specpilot/shared';
+import {
+  FlowDefinitionSchema as UnifiedFlowDefinitionSchema,
+  type IFlowDefinition as UnifiedFlowDefinition,
+  type IFlowStep as UnifiedFlowStep,
+  type ICaptureVariable,
+  type IExpectBodyField,
+  type IValidationRule,
+} from '@specpilot/schemas';
 import { FlowParseError, FlowValidationError } from './errors.js';
 import {
   IFlowDefinition,
-  HttpMethod
+  IFlowStep,
+  IFlowExpectations,
+  IFlowGlobals,
+  HttpMethod,
 } from './types.js';
 import { AuthParser, AuthConfigValidationError } from './auth-parser.js';
-import { resolve } from 'path';
 
 /**
- * Flow YAML 載入器類別
+ * Flow YAML 載入器
  */
 export class FlowLoader {
   private logger: IStructuredLogger;
@@ -24,7 +35,7 @@ export class FlowLoader {
   }
 
   /**
-   * 從檔案載入 Flow
+   * 從檔案載入 Flow 定義
    */
   async loadFlowFromFile(filePath: string, executionId?: string): Promise<IFlowDefinition> {
     this.logger.info('FLOW_LOAD_START', '開始載入 Flow 檔案', {
@@ -34,7 +45,6 @@ export class FlowLoader {
     });
 
     try {
-      // 檢查檔案存在
       let content: string;
       try {
         const resolvedPath = resolve(filePath);
@@ -43,7 +53,6 @@ export class FlowLoader {
         throw FlowParseError.fileNotFound(filePath, executionId);
       }
 
-      // 檢查內容是否為空
       if (!content.trim()) {
         throw FlowParseError.emptyContent(executionId);
       }
@@ -61,17 +70,16 @@ export class FlowLoader {
   }
 
   /**
-   * 從內容載入 Flow
+   * 從字串內容載入 Flow 定義
    */
   async loadFlowFromContent(content: string, executionId?: string): Promise<IFlowDefinition> {
-    this.logger.info('FLOW_LOAD_START', '開始載入 Flow 內容', {
+    this.logger.info('FLOW_LOAD_START', '開始解析 Flow 內容', {
       contentLength: content.length,
       executionId,
       component: 'flow-parser'
     });
 
     try {
-      // 解析 YAML
       let flowData: unknown;
       try {
         flowData = parseYaml(content);
@@ -79,22 +87,25 @@ export class FlowLoader {
         throw FlowParseError.yamlFormatError(error as Error, executionId);
       }
 
-      // 驗證結構
-      const validatedFlow = this.validateFlowStructure(flowData, executionId);
+      const validationResult = UnifiedFlowDefinitionSchema.safeParse(flowData);
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map(err => ({
+          path: err.path.join('.') || '<root>',
+          message: err.message,
+          code: err.code,
+        }));
 
-      // 規範化欄位名稱（expect -> expectations, validation -> expectations.custom）
-      this.normalizeFlowStructure(validatedFlow, executionId);
+        throw new FlowValidationError(
+          'Flow YAML 結構不符合 Schema 定義',
+          { errors, raw: this.maskSensitiveData(flowData) },
+          '請檢查 Flow YAML 是否符合 @specpilot/schemas 的定義',
+          { executionId, component: 'flow-parser' }
+        );
+      }
 
-      // 建立 Flow 定義
-      const flowDefinition: IFlowDefinition = {
-        id: validatedFlow.id || validatedFlow.name || 'unnamed-flow',
-        rawContent: content,
-        steps: validatedFlow.steps,
-        globals: validatedFlow.globals,
-        variables: validatedFlow.variables
-      };
+      const flowDefinition = this.convertToInternalFormat(validationResult.data, content, executionId);
 
-      this.logger.info('FLOW_LOAD_SUCCESS', 'Flow 載入成功', {
+      this.logger.info('FLOW_LOAD_SUCCESS', 'Flow 解析完成', {
         flowId: flowDefinition.id,
         stepCount: flowDefinition.steps.length,
         hasGlobals: !!flowDefinition.globals,
@@ -115,341 +126,209 @@ export class FlowLoader {
   }
 
   /**
-   * 驗證 Flow 結構
+   * 將 Schema 結構轉換為核心流程結構
    */
-  private validateFlowStructure(flowData: unknown, executionId?: string): Record<string, unknown> {
-    if (!flowData || typeof flowData !== 'object') {
-      throw new FlowValidationError(
-        'Flow 內容必須為有效的物件',
-        { type: typeof flowData },
-        '請確保 YAML 檔案包含有效的物件結構',
-        { executionId, component: 'flow-parser' }
-      );
+  private convertToInternalFormat(
+    schemaData: UnifiedFlowDefinition,
+    rawContent: string,
+    executionId?: string
+  ): IFlowDefinition {
+    const globals = this.convertGlobals(schemaData, executionId);
+
+    return {
+      id: schemaData.name || 'unnamed-flow',
+      rawContent,
+      steps: schemaData.steps.map(step => this.convertStep(step, executionId)),
+      globals,
+      variables: schemaData.variables,
+      options: schemaData.options,
+      reporting: schemaData.reporting,
+    };
+  }
+
+  /**
+   * 轉換單一 Step
+   */
+  private convertStep(schemaStep: UnifiedFlowStep, executionId?: string): IFlowStep {
+    const method = this.normalizeHttpMethod(schemaStep.request.method, schemaStep.name, executionId);
+
+    const expectations = this.convertExpectations(schemaStep.expect, schemaStep.validation);
+    const capture = this.convertCapture(schemaStep.capture);
+
+    return {
+      name: schemaStep.name,
+      description: schemaStep.description,
+      request: {
+        method,
+        path: schemaStep.request.path,
+        url: schemaStep.request.url,
+        headers: schemaStep.request.headers ?? undefined,
+        body: schemaStep.request.body,
+        query: schemaStep.request.query,
+      },
+      expectations,
+      capture,
+      auth: schemaStep.auth,
+      retryPolicy: schemaStep.retryPolicy,
+    };
+  }
+
+  /**
+   * 轉換 expectations 結構
+   */
+  private convertExpectations(
+    expect: UnifiedFlowStep['expect'],
+    validationRules?: IValidationRule[]
+  ): IFlowExpectations {
+    const expectations: IFlowExpectations = {};
+
+    if (expect.statusCode !== undefined) {
+      expectations.status = expect.statusCode;
     }
 
-    const flow = flowData as Record<string, unknown>;
-
-    // 檢查步驟列表
-    if (!flow.steps || !Array.isArray(flow.steps)) {
-      throw FlowValidationError.missingRequiredField('steps', executionId);
+    if (expect.body !== undefined) {
+      expectations.body = expect.body;
     }
 
-    if (flow.steps.length === 0) {
-      throw FlowValidationError.emptySteps(executionId);
-    }
+    const customRules: IFlowExpectations['custom'] = [];
 
-    // 驗證每個步驟
-    (flow.steps as unknown[]).forEach((step: unknown, index: number) => {
-      this.validateStep(step, index, executionId);
-    });
-
-    // 驗證全域認證設定（可選）
-    if (flow.globals && typeof flow.globals === 'object') {
-      const globals = flow.globals as Record<string, unknown>;
-      if (globals.auth && typeof globals.auth === 'object') {
-        const authConfig = globals.auth as Record<string, unknown>;
-        if (authConfig.static) {
-          try {
-            AuthParser.parseGlobalStaticAuth(authConfig.static);
-          } catch (error) {
-            if (error instanceof AuthConfigValidationError) {
-              throw new FlowValidationError(
-                `全域認證設定錯誤：${error.message}`,
-                error.details,
-                '請檢查 globals.auth.static 設定格式是否正確',
-                { executionId, component: 'flow-parser' }
-              );
-            }
-            throw error;
-          }
+    if (expect.bodyFields) {
+      for (const field of expect.bodyFields) {
+        const rule = this.buildCustomRuleFromBodyField(field);
+        if (rule) {
+          customRules.push(rule);
         }
       }
     }
 
-    return flow;
+    if (validationRules) {
+      for (const rule of validationRules) {
+        const converted = this.buildCustomRuleFromValidation(rule);
+        if (converted) {
+          customRules.push(converted);
+        }
+      }
+    }
+
+    if (customRules.length > 0) {
+      expectations.custom = customRules;
+    }
+
+    return expectations;
   }
 
   /**
-   * 驗證單個步驟
+   * 將 bodyFields 轉為自訂驗證
    */
-  private validateStep(step: unknown, index: number, executionId?: string): void {
-    if (!step || typeof step !== 'object') {
-      throw new FlowValidationError(
-        `步驟 ${index + 1} 必須為有效的物件`,
-        { step, index },
-        '請確保每個步驟都是有效的物件格式',
-        { executionId, component: 'flow-parser' }
-      );
+  private buildCustomRuleFromBodyField(field: IExpectBodyField): IFlowExpectations['custom'][number] | null {
+    if (!field.fieldName) {
+      return null;
     }
 
-    const stepData = step as Record<string, unknown>;
-
-    // 驗證步驟名稱
-    if (!stepData.name || typeof stepData.name !== 'string') {
-      throw FlowValidationError.missingRequiredField(
-        `steps[${index}].name`,
-        executionId
-      );
+    if (field.validationMode === 'exact' && field.expectedValue !== undefined) {
+      return {
+        type: 'contains',
+        field: field.fieldName,
+        value: field.expectedValue,
+      };
     }
 
-    // 驗證請求設定
-    if (!stepData.request || typeof stepData.request !== 'object') {
-      throw FlowValidationError.missingRequiredField(
-        `steps[${index}].request`,
-        executionId
-      );
+    if (field.expectedValue !== undefined) {
+      return {
+        type: 'contains',
+        field: field.fieldName,
+        value: field.expectedValue,
+      };
     }
 
-    const requestData = stepData.request as Record<string, unknown>;
+    return {
+      type: 'notNull',
+      field: field.fieldName,
+    };
+  }
 
-    // 驗證 HTTP 方法
-    if (!requestData.method || typeof requestData.method !== 'string') {
-      throw FlowValidationError.missingRequiredField(
-        `steps[${index}].request.method`,
-        executionId
-      );
+  /**
+   * 將 validation 規則轉為自訂驗證
+   */
+  private buildCustomRuleFromValidation(rule: IValidationRule): IFlowExpectations['custom'][number] | null {
+    if (!rule || typeof rule !== 'object') {
+      return null;
     }
 
-    const method = requestData.method.toUpperCase();
-    const validMethods = Object.values(HttpMethod);
-    if (!validMethods.includes(method as HttpMethod)) {
-      throw FlowValidationError.invalidHttpMethod(
-        requestData.method as string,
-        stepData.name as string,
-        executionId
-      );
+    return {
+      type: (rule.rule as 'notNull' | 'regex' | 'contains') || 'unknown',
+      field: (rule.path as string) || '',
+      value: rule.value as string | number | boolean | undefined,
+      message: rule.message as string | undefined,
+    };
+  }
+
+  /**
+   * 轉換 capture 陣列為對應表
+   */
+  private convertCapture(capture?: ICaptureVariable[] | null): Record<string, string> | undefined {
+    if (!capture || capture.length === 0) {
+      return undefined;
     }
 
-    // 驗證請求路徑或 URL（至少需要一個）
-    if ((!requestData.path || typeof requestData.path !== 'string') &&
-        (!requestData.url || typeof requestData.url !== 'string')) {
-      throw FlowValidationError.missingRequiredField(
-        `steps[${index}].request.path 或 request.url`,
-        executionId
-      );
+    return capture.reduce<Record<string, string>>((acc, item) => {
+      if (item.variableName && item.path) {
+        acc[item.variableName] = item.path;
+      }
+      return acc;
+    }, {});
+  }
+
+  /**
+   * 轉換 Globals，並確保靜態認證設定有效
+   */
+  private convertGlobals(schemaData: UnifiedFlowDefinition, executionId?: string): IFlowGlobals | undefined {
+    const baseUrl = schemaData.globals?.baseUrl ?? schemaData.baseUrl;
+    const headers = schemaData.globals?.headers;
+    const auth = schemaData.globals?.auth;
+    const retryPolicy = schemaData.globals?.retryPolicy;
+
+    if (!baseUrl && !headers && !auth && !retryPolicy) {
+      return undefined;
     }
 
-    // 驗證期望設定（可選但如果存在必須格式正確）
-    if (stepData.expectations) {
-      this.validateExpectations(stepData.expectations, stepData.name as string, executionId);
-    }
-
-    // 驗證認證設定（可選但如果存在必須格式正確）
-    if (stepData.auth) {
+    if (auth && 'static' in auth && auth.static) {
       try {
-        AuthParser.parseStepAuth(stepData.auth, stepData.name as string);
+        AuthParser.parseGlobalStaticAuth(auth.static);
       } catch (error) {
         if (error instanceof AuthConfigValidationError) {
           throw new FlowValidationError(
-            error.message,
+            `全域認證設定錯誤：${error.message}`,
             error.details,
-            '請檢查認證設定格式是否正確',
+            '請檢查 globals.auth.static 設定是否符合規範',
             { executionId, component: 'flow-parser' }
           );
         }
         throw error;
       }
     }
+
+    return {
+      baseUrl,
+      headers,
+      auth,
+      retryPolicy,
+    };
   }
 
   /**
-   * 驗證期望設定
+   * 驗證並轉換 HTTP 方法
    */
-  private validateExpectations(expectations: unknown, stepName: string, executionId?: string): void {
-    if (!expectations || typeof expectations !== 'object') {
-      throw FlowValidationError.invalidExpectation(
-        '期望設定必須為物件',
-        stepName,
-        executionId
-      );
+  private normalizeHttpMethod(method: string, stepName?: string, executionId?: string): HttpMethod {
+    const upperMethod = method.toUpperCase();
+    if (!Object.values(HttpMethod).includes(upperMethod as HttpMethod)) {
+      throw FlowValidationError.invalidHttpMethod(method, stepName, executionId);
     }
-
-    const expectationData = expectations as Record<string, unknown>;
-
-    // 驗證狀態碼
-    if (expectationData.status !== undefined) {
-      if (typeof expectationData.status !== 'number' || 
-          expectationData.status < 100 || expectationData.status > 599) {
-        throw FlowValidationError.invalidExpectation(
-          '狀態碼必須為 100-599 之間的數字',
-          stepName,
-          executionId
-        );
-      }
-    }
-
-    // 驗證自訂規則
-    if (expectationData.custom && Array.isArray(expectationData.custom)) {
-      (expectationData.custom as unknown[]).forEach((rule: unknown, index: number) => {
-        this.validateCustomRule(rule, index, stepName, executionId);
-      });
-    }
+    return upperMethod as HttpMethod;
   }
 
   /**
-   * 驗證自訂規則
-   */
-  private validateCustomRule(
-    rule: unknown, 
-    index: number, 
-    stepName: string, 
-    executionId?: string
-  ): void {
-    if (!rule || typeof rule !== 'object') {
-      throw FlowValidationError.invalidExpectation(
-        `自訂規則 ${index + 1} 必須為有效的物件`,
-        stepName,
-        executionId
-      );
-    }
-
-    const ruleData = rule as Record<string, unknown>;
-    const validTypes = ['notNull', 'regex', 'contains'];
-    
-    if (!ruleData.type || !validTypes.includes(ruleData.type as string)) {
-      throw FlowValidationError.invalidExpectation(
-        `自訂規則 ${index + 1} 的類型無效，必須為: ${validTypes.join(', ')}`,
-        stepName,
-        executionId
-      );
-    }
-
-    if (!ruleData.field || typeof ruleData.field !== 'string') {
-      throw FlowValidationError.invalidExpectation(
-        `自訂規則 ${index + 1} 缺少 field 欄位`,
-        stepName,
-        executionId
-      );
-    }
-
-    // regex 和 contains 類型需要 value
-    if ((ruleData.type === 'regex' || ruleData.type === 'contains') && ruleData.value === undefined) {
-      throw FlowValidationError.invalidExpectation(
-        `自訂規則 ${index + 1} (${ruleData.type}) 需要 value 欄位`,
-        stepName,
-        executionId
-      );
-    }
-  }
-
-  /**
-   * 規範化 Flow 結構
-   * 將 YAML 的欄位名稱映射到內部標準格式
-   */
-  private normalizeFlowStructure(flow: Record<string, unknown>, executionId?: string): void {
-    if (!flow.steps || !Array.isArray(flow.steps)) {
-      return;
-    }
-
-    (flow.steps as unknown[]).forEach((step: unknown, index: number) => {
-      this.normalizeStep(step, index, executionId);
-    });
-  }
-
-  /**
-   * 規範化單個步驟
-   */
-  private normalizeStep(step: unknown, index: number, executionId?: string): void {
-    if (!step || typeof step !== 'object') {
-      return;
-    }
-
-    const stepData = step as Record<string, unknown>;
-
-    // 1. 規範化 expect -> expectations
-    if (stepData.expect) {
-      const expect = stepData.expect as Record<string, unknown>;
-
-      if (!stepData.expectations) {
-        stepData.expectations = {};
-      }
-
-      const expectations = stepData.expectations as Record<string, unknown>;
-
-      // 映射 statusCode -> status
-      if (expect.statusCode !== undefined) {
-        expectations.status = expect.statusCode;
-        this.logger.debug('規範化欄位', {
-          executionId,
-          component: 'flow-parser',
-          stepIndex: index,
-          stepName: stepData.name,
-          mapping: 'expect.statusCode -> expectations.status',
-          value: expect.statusCode
-        });
-      }
-
-      // 映射 body
-      if (expect.body !== undefined) {
-        expectations.body = expect.body;
-      }
-
-      // 映射其他可能的 expect 欄位
-      if (expect.headers !== undefined) {
-        expectations.headers = expect.headers;
-      }
-    }
-
-    // 2. 規範化 validation -> expectations.custom
-    if (stepData.validation && Array.isArray(stepData.validation)) {
-      if (!stepData.expectations) {
-        stepData.expectations = {};
-      }
-
-      const expectations = stepData.expectations as Record<string, unknown>;
-      expectations.custom = this.convertValidationToCustomRules(stepData.validation);
-
-      this.logger.debug('規範化欄位', {
-        executionId,
-        component: 'flow-parser',
-        stepIndex: index,
-        stepName: stepData.name,
-        mapping: 'validation -> expectations.custom',
-        ruleCount: (stepData.validation as unknown[]).length
-      });
-    }
-
-    // 3. 確保 request.path 或 request.url 存在
-    if (stepData.request && typeof stepData.request === 'object') {
-      const request = stepData.request as Record<string, unknown>;
-      if (!request.url && !request.path) {
-        this.logger.warn('請求缺少 path 或 url', {
-          executionId,
-          component: 'flow-parser',
-          stepIndex: index,
-          stepName: stepData.name
-        });
-      }
-    }
-  }
-
-  /**
-   * 轉換 validation 規則為 custom 規則格式
-   */
-  private convertValidationToCustomRules(validation: unknown[]): Array<{
-    type: string;
-    field: string;
-    value?: unknown;
-    message?: string;
-  }> {
-    return validation.map((rule: unknown) => {
-      if (!rule || typeof rule !== 'object') {
-        return { type: 'unknown', field: '' };
-      }
-
-      const ruleData = rule as Record<string, unknown>;
-
-      return {
-        type: ruleData.rule as string || ruleData.type as string || 'unknown',
-        field: ruleData.path as string || ruleData.field as string || '',
-        value: ruleData.value,
-        message: ruleData.message as string
-      };
-    });
-  }
-
-  /**
-   * 遮罩敏感資訊
+   * 遮罩敏感資訊（避免在錯誤紀錄中洩露）
    */
   private maskSensitiveData(obj: unknown): unknown {
     if (!obj || typeof obj !== 'object') {
@@ -461,9 +340,7 @@ export class FlowLoader {
     const masked = { ...objData };
 
     Object.keys(masked).forEach(key => {
-      if (sensitiveKeys.some(sensitive => 
-        key.toLowerCase().includes(sensitive.toLowerCase())
-      )) {
+      if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
         masked[key] = '***';
       } else if (typeof masked[key] === 'object') {
         masked[key] = this.maskSensitiveData(masked[key]);
@@ -473,3 +350,4 @@ export class FlowLoader {
     return masked;
   }
 }
+

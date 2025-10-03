@@ -26,17 +26,19 @@ steps:
         name: "張三"
         email: "zhang.san@example.com"
         age: 30
-    expectations:
-      status: 201
-      schema: "User"
-      custom:
-        - type: "notNull"
-          field: "id"
-          message: "使用者 ID 不能為空"
-        - type: "regex"
-          field: "email"
-          value: "^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$"
-          message: "電子郵件格式不正確"
+    expect:
+      statusCode: 201
+      bodyFields:
+        - fieldName: "id"
+          validationMode: "exists"
+    validation:
+      - rule: "notNull"
+        path: "id"
+        message: "使用者 ID 不能為空"
+      - rule: "regex"
+        path: "email"
+        value: "^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$"
+        message: "電子郵件格式不正確"
 
   - name: "讀取使用者資訊"
     request:
@@ -44,13 +46,12 @@ steps:
       path: "/api/users/{userId}"
       query:
         include: "profile"
-    expectations:
-      status: 200
-      schema: "UserDetail"
-      custom:
-        - type: "contains"
-          field: "name"
-          value: "張三"
+    expect:
+      statusCode: 200
+    validation:
+      - rule: "contains"
+        path: "name"
+        value: "張三"
 
   - name: "更新使用者資訊"
     request:
@@ -59,17 +60,17 @@ steps:
       body:
         name: "張三豐"
         age: 31
-    expectations:
-      status: 200
-      custom:
-        - type: "notNull"
-          field: "updatedAt"
+    expect:
+      statusCode: 200
+    validation:
+      - rule: "notNull"
+        path: "updatedAt"
 
   - name: "刪除使用者"
     request:
       method: "DELETE"
       path: "/api/users/{userId}"
-    expectations:
-      status: 204
+    expect:
+      statusCode: 204
     retryPolicy:
       maxRetries: 1
