@@ -1,7 +1,9 @@
 import { useStepContext } from '../../contexts/StepContext';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function StepList() {
   const { fields, append, remove, move, activeStepIndex, setActiveStepIndex } = useStepContext();
+  const { showToast } = useToast();
 
   const handleAddStep = () => {
     append({
@@ -24,14 +26,17 @@ export default function StepList() {
   };
 
   const handleDeleteStep = (index: number) => {
-    if (confirm('確定要刪除這個步驟嗎?')) {
-      remove(index);
-      if (activeStepIndex === index) {
-        setActiveStepIndex(null);
-      } else if (activeStepIndex !== null && activeStepIndex > index) {
-        setActiveStepIndex(activeStepIndex - 1);
-      }
+    // 直接刪除並顯示 Toast 通知
+    const stepName = (fields[index] as any).name;
+    remove(index);
+
+    if (activeStepIndex === index) {
+      setActiveStepIndex(null);
+    } else if (activeStepIndex !== null && activeStepIndex > index) {
+      setActiveStepIndex(activeStepIndex - 1);
     }
+
+    showToast('info', `已刪除步驟: ${stepName}`);
   };
 
   const handleMoveUp = (index: number) => {

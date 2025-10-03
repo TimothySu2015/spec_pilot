@@ -37,7 +37,7 @@ export const FlowDefinitionSchema = z.object({
   name: z.string().min(1, '名稱不可為空'),
   description: z.string().optional(),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, '版本號必須符合 semver 格式').optional(),
-  baseUrl: z.string().url('必須是有效的 URL').or(z.string().regex(/^{{[^}]+}}$/, '必須是有效的 URL 或變數')),
+  baseUrl: z.string().url('必須是有效的 URL').or(z.string().regex(/^\{\{[^}]+\}\}$/, '必須是有效的 URL 或變數')),
   variables: VariablesSchema.optional(),
   options: FlowOptionsSchema,
   reporting: ReportingOptionsSchema,

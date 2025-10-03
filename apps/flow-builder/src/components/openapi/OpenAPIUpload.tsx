@@ -52,11 +52,9 @@ export default function OpenAPIUpload() {
   };
 
   const handleRemove = () => {
-    if (confirm('確定要移除 OpenAPI 規格嗎?')) {
-      setOpenApiSpec(null);
-      setError(null);
-      showToast('info', 'OpenAPI 規格已移除');
-    }
+    setOpenApiSpec(null);
+    setError(null);
+    showToast('info', 'OpenAPI 規格已移除');
   };
 
   return (

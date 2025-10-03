@@ -403,7 +403,7 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
               `報表摘要：\n${flowResult.reportSummary || '無報表摘要'}\n` +
               (diagnosticSummary || '') + '\n\n' +
               `📁 執行詳情：已產生完整報表與日誌\n` +
-              `   使用 @mcp__specpilot__getReport 查看完整診斷報表`
+              `   呼叫getReport 查看完整診斷報表`
       }]
     };
 

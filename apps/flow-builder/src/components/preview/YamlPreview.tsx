@@ -2,9 +2,11 @@ import { useWatch } from 'react-hook-form';
 import { exportToYaml } from '@specpilot/schemas';
 import Editor from '@monaco-editor/react';
 import { useMemo } from 'react';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function YamlPreview() {
   const flowData = useWatch();
+  const { showToast } = useToast();
 
   const yamlContent = useMemo(() => {
     try {
@@ -22,10 +24,10 @@ export default function YamlPreview() {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(yamlContent);
-      alert('已複製到剪貼簿!');
+      showToast('success', '已複製到剪貼簿!');
     } catch (error) {
       console.error('複製失敗:', error);
-      alert('複製失敗,請手動複製');
+      showToast('error', '複製失敗，請手動複製');
     }
   };
 
