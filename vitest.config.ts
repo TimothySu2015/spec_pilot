@@ -56,6 +56,9 @@ export default defineConfig({
       '@specpilot/validation': path.resolve(__dirname, 'packages/validation/src'),
       '@specpilot/schemas': path.resolve(__dirname, 'packages/schemas/src'),
       '@specpilot/reporting': path.resolve(__dirname, 'packages/reporting/src'),
+      '@specpilot/flow-generator': path.resolve(__dirname, 'packages/flow-generator/src'),
+      '@specpilot/test-suite-generator': path.resolve(__dirname, 'packages/test-suite-generator/src'),
+      '@specpilot/flow-validator': path.resolve(__dirname, 'packages/flow-validator/src'),
     },
   },
 });

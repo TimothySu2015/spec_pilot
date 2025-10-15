@@ -1,0 +1,393 @@
+name: 自動產生的測試套件
+description: 包含 8 個端點的測試案例
+version: 1.0.0
+baseUrl: http://localhost:3000
+steps:
+  - name: 健康檢查 - 成功案例
+    request:
+      method: GET
+      path: /api/health
+    expect:
+      statusCode: 200
+  - name: 使用者登入 - 成功案例
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: 測
+        password: 測
+    expect:
+      statusCode: 201
+  - name: 使用者登入 - 缺少 username
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        password: 測
+    expect:
+      statusCode: 400
+  - name: 使用者登入 - 缺少 password
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: 測
+    expect:
+      statusCode: 400
+  - name: 使用者登入 - 無效 username 格式
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: ""
+        password: 測
+    expect:
+      statusCode: 400
+  - name: 使用者登入 - 無效 password 格式
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: 測
+        password: ""
+    expect:
+      statusCode: 400
+  - name: 取得使用者列表 - 成功案例
+    request:
+      method: GET
+      path: /api/users
+    expect:
+      statusCode: 200
+  - name: 取得使用者列表 - 無認證
+    request:
+      method: GET
+      path: /api/users
+    expect:
+      statusCode: 401
+  - name: 建立新使用者 - 成功案例
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: 測
+        email: test@example.tw
+        role: user
+        status: active
+    expect:
+      statusCode: 201
+  - name: 建立新使用者 - 缺少 name
+    request:
+      method: POST
+      path: /api/users
+      body:
+        email: test@example.tw
+        role: user
+        status: active
+    expect:
+      statusCode: 400
+  - name: 建立新使用者 - 缺少 email
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: 測
+        role: user
+        status: active
+    expect:
+      statusCode: 400
+  - name: 建立新使用者 - 無效 name 格式
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: ""
+        email: test@example.tw
+        role: user
+        status: active
+    expect:
+      statusCode: 400
+  - name: 建立新使用者 - 無效 email 格式
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: 測
+        email: invalid-email
+        role: user
+        status: active
+    expect:
+      statusCode: 400
+  - name: 建立新使用者 - 無效 role 格式
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: 測
+        email: test@example.tw
+        role: 123
+        status: active
+    expect:
+      statusCode: 400
+  - name: 建立新使用者 - 無效 status 格式
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: 測
+        email: test@example.tw
+        role: user
+        status: 123
+    expect:
+      statusCode: 400
+  - name: 建立新使用者 - 無認證
+    request:
+      method: POST
+      path: /api/users
+    expect:
+      statusCode: 401
+  - name: 取得使用者詳情 - 成功案例
+    request:
+      method: GET
+      path: /api/users/{id}
+    expect:
+      statusCode: 200
+  - name: 取得使用者詳情 - 無認證
+    request:
+      method: GET
+      path: /api/users/{id}
+    expect:
+      statusCode: 401
+  - name: 完整更新使用者 - 成功案例
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: test@example.tw
+        role: admin
+        status: active
+    expect:
+      statusCode: 200
+  - name: 完整更新使用者 - 缺少 name
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        email: test@example.tw
+        role: admin
+        status: active
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 缺少 email
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: 測
+        role: admin
+        status: active
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 缺少 role
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: test@example.tw
+        status: active
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 缺少 status
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: test@example.tw
+        role: admin
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 無效 name 格式
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: ""
+        email: test@example.tw
+        role: admin
+        status: active
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 無效 email 格式
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: invalid-email
+        role: admin
+        status: active
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 無效 role 格式
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: test@example.tw
+        role: 123
+        status: active
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 無效 status 格式
+    request:
+      method: PUT
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: test@example.tw
+        role: admin
+        status: 123
+    expect:
+      statusCode: 400
+  - name: 完整更新使用者 - 無認證
+    request:
+      method: PUT
+      path: /api/users/{id}
+    expect:
+      statusCode: 401
+  - name: 部分更新使用者 - 成功案例
+    request:
+      method: PATCH
+      path: /api/users/{id}
+      body: {}
+    expect:
+      statusCode: 200
+  - name: 部分更新使用者 - 無效 name 格式
+    request:
+      method: PATCH
+      path: /api/users/{id}
+      body:
+        name: ""
+        email: test@example.tw
+        role: admin
+        status: active
+    expect:
+      statusCode: 400
+  - name: 部分更新使用者 - 無效 email 格式
+    request:
+      method: PATCH
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: invalid-email
+        role: admin
+        status: active
+    expect:
+      statusCode: 400
+  - name: 部分更新使用者 - 無效 role 格式
+    request:
+      method: PATCH
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: test@example.tw
+        role: 123
+        status: active
+    expect:
+      statusCode: 400
+  - name: 部分更新使用者 - 無效 status 格式
+    request:
+      method: PATCH
+      path: /api/users/{id}
+      body:
+        name: 測
+        email: test@example.tw
+        role: admin
+        status: 123
+    expect:
+      statusCode: 400
+  - name: 部分更新使用者 - 無認證
+    request:
+      method: PATCH
+      path: /api/users/{id}
+    expect:
+      statusCode: 401
+  - name: 刪除使用者 - 成功案例
+    request:
+      method: DELETE
+      path: /api/users/{id}
+    expect:
+      statusCode: 204
+  - name: 刪除使用者 - 無認證
+    request:
+      method: DELETE
+      path: /api/users/{id}
+    expect:
+      statusCode: 401
+  - name: 建立建立新使用者
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: 測
+        email: test@example.tw
+        role: user
+        status: active
+    capture:
+      - variableName: resourceId
+        path: id
+    expect:
+      statusCode: 201
+  - name: 取得取得使用者詳情
+    request:
+      method: GET
+      path: /api/users/{{resourceId}}
+    expect:
+      statusCode: 200
+  - name: 更新完整更新使用者
+    request:
+      method: PUT
+      path: /api/users/{{resourceId}}
+      body:
+        name: 測
+        email: test@example.tw
+        role: admin
+        status: active
+    expect:
+      statusCode: 200
+  - name: 刪除刪除使用者
+    request:
+      method: DELETE
+      path: /api/users/{{resourceId}}
+    expect:
+      statusCode: 204
+  - name: 建立使用者登入
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: 測
+        password: 測
+    capture:
+      - variableName: resourceId
+        path: id
+    expect:
+      statusCode: 201
+metadata:
+  summary:
+    totalTests: 41
+    successTests: 8
+    errorTests: 28
+    edgeTests: 0
+    endpoints:
+      - getapiHealth
+      - createauthLogin
+      - getapiUsers
+      - createapiUsers
+      - getapiUsers
+      - updateapiUsers
+      - patchapiUsers
+      - deleteapiUsers

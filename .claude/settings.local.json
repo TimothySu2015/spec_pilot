@@ -100,7 +100,20 @@
       "Bash(pnpm -w run test packages/reporting/__tests__/diagnostic-context-builder.test.ts packages/reporting/__tests__/enhanced-report-generator.test.ts apps/mcp-server/__tests__/handlers/get-report-simple.test.ts --run)",
       "Bash(rm:*)",
       "Bash(tee:*)",
-      "Bash(pnpm -w run test packages/schemas/__tests__/ --run)"
+      "Bash(pnpm -w run test packages/schemas/__tests__/ --run)",
+      "Bash(pnpm -w run test packages/test-suite-generator/__tests__/spec-analyzer.test.ts --run)",
+      "Bash(pnpm -w run test tests/e2e/flow-generation.e2e.spec.ts --run)",
+      "Bash(pnpm -w run test tests/e2e/flow-generation.e2e.spec.ts -t \"應該產生資源依賴流程\" --run)",
+      "Bash(pnpm -w run test tests/e2e/flow-generation.e2e.spec.ts -t \"產生的 Flow 應該可以被 FlowOrchestrator 執行\" --run)",
+      "Bash(pnpm -w run test tests/e2e/generate-user-management-flow.test.ts --run)",
+      "Bash(pnpm -w run test tests/e2e/generate-user-management-flow.spec.ts --run)",
+      "Bash(pnpm -w run test packages/flow-generator/__tests__/flow-builder.test.ts --run)",
+      "Bash(pnpm -w run test tests/e2e/validate-generated-flow.spec.ts --run)",
+      "Bash(pnpm -w run test tests/e2e/quality-check-generated-flow.spec.ts --run)",
+      "Bash(where node)",
+      "Bash(dir:*)",
+      "Bash(pnpm:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

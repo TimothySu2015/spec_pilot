@@ -9,6 +9,9 @@ import { loadFlow } from '@specpilot/flow-parser';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
 import { type IExecutionConfig, DiagnosticContextBuilder } from '@specpilot/reporting';
 import { overrideConfig, getConfig } from '@specpilot/config';
+import { SpecAnalyzer, TestSuiteGenerator, FlowQualityChecker } from '@specpilot/test-suite-generator';
+import { FlowValidator } from '@specpilot/flow-validator';
+import { stringify as yamlStringify } from 'yaml';
 
 // 為 MCP Server 建立靜默日誌記錄器（避免干擾 stdio transport）
 const logger = {
@@ -532,6 +535,347 @@ async function handleGetReport(executionId?: string, format: string = 'json'): P
   }
 }
 
+/**
+ * 處理 generateFlow 請求
+ */
+async function handleGenerateFlow(params: {
+  specPath: string;
+  options?: {
+    endpoints?: string[];
+    includeSuccessCases?: boolean;
+    includeErrorCases?: boolean;
+    includeEdgeCases?: boolean;
+    generateFlows?: boolean;
+  };
+}): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('generateFlow 方法開始執行', {
+    method: 'generateFlow',
+    event: 'generate_flow_start',
+    details: { specPath: params.specPath, options: params.options }
+  });
+
+  try {
+    // 1. 載入 OpenAPI 規格
+    const specPath = path.resolve(process.cwd(), params.specPath);
+    if (!existsSync(specPath)) {
+      return {
+        content: [{
+          type: "text",
+          text: `錯誤：找不到規格檔案 '${specPath}'`
+        }]
+      };
+    }
+
+    const specDoc = await loadSpec({ filePath: specPath });
+
+    // 2. 分析規格
+    const analyzer = new SpecAnalyzer(specDoc.document);
+
+    // 3. 產生測試套件
+    const generator = new TestSuiteGenerator(analyzer, params.options || {});
+    const flow = generator.generate(params.options || {});
+
+    // 4. 轉換為 YAML
+    const flowYaml = yamlStringify(flow);
+
+    logger.info('generateFlow 方法成功完成', {
+      method: 'generateFlow',
+      event: 'generate_flow_success',
+      details: { stepsCount: flow.steps.length }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `✅ 成功產生測試 Flow\n\n` +
+              `📊 統計資訊：\n` +
+              `- 總步驟數：${flow.steps.length}\n` +
+              `- 端點數：${(flow as any).metadata?.summary?.endpoints?.length || 0}\n` +
+              `- 成功案例：${(flow as any).metadata?.summary?.successTests || 0}\n` +
+              `- 錯誤案例：${(flow as any).metadata?.summary?.errorTests || 0}\n\n` +
+              `📝 生成的 Flow YAML：\n\`\`\`yaml\n${flowYaml}\n\`\`\``
+      }]
+    };
+
+  } catch (error) {
+    logger.error('generateFlow 方法執行失敗', {
+      method: 'generateFlow',
+      event: 'generate_flow_error',
+      details: { error: error instanceof Error ? error.message : '未知錯誤' }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `產生 Flow 時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`
+      }]
+    };
+  }
+}
+
+/**
+ * 處理 validateFlow 請求
+ */
+async function handleValidateFlow(params: {
+  flowContent: string;
+  specPath: string;
+}): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('validateFlow 方法開始執行', {
+    method: 'validateFlow',
+    event: 'validate_flow_start'
+  });
+
+  try {
+    const { parse: yamlParse } = await import('yaml');
+
+    // 1. 載入 OpenAPI 規格
+    const specPath = path.resolve(process.cwd(), params.specPath);
+    if (!existsSync(specPath)) {
+      return {
+        content: [{
+          type: "text",
+          text: `錯誤：找不到規格檔案 '${specPath}'`
+        }]
+      };
+    }
+
+    const specDoc = await loadSpec({ filePath: specPath });
+
+    // 2. 解析 Flow YAML
+    const flowData = yamlParse(params.flowContent);
+
+    // 3. 建立驗證器
+    const validator = new FlowValidator({
+      spec: specDoc.document,
+      schemaOptions: { strict: false },
+      semanticOptions: {
+        checkOperationIds: false,
+        checkVariableReferences: true,
+        checkAuthFlow: false,
+      },
+    });
+
+    // 4. 執行驗證
+    const result = validator.validate(flowData as any);
+
+    logger.info('validateFlow 方法成功完成', {
+      method: 'validateFlow',
+      event: 'validate_flow_success',
+      details: {
+        valid: result.valid,
+        errorCount: result.errors.length,
+        warningCount: result.warnings.length
+      }
+    });
+
+    if (result.valid) {
+      return {
+        content: [{
+          type: "text",
+          text: `✅ Flow 驗證通過！\n\n` +
+                `📊 驗證結果：\n` +
+                `- 總錯誤數：0\n` +
+                `- 警告數：${result.warnings.length}\n` +
+                (result.warnings.length > 0 ? `\n⚠️ 警告：\n${result.warnings.map((w, i) => `${i + 1}. ${w.message}`).join('\n')}` : '')
+        }]
+      };
+    } else {
+      return {
+        content: [{
+          type: "text",
+          text: `❌ Flow 驗證失敗\n\n` +
+                `📊 驗證結果：\n` +
+                `- 總錯誤數：${result.errors.length}\n` +
+                `- 警告數：${result.warnings.length}\n\n` +
+                `🔴 錯誤清單：\n${result.errors.map((e, i) => `${i + 1}. [${e.path || 'flow'}] ${e.message}`).join('\n')}\n\n` +
+                (result.warnings.length > 0 ? `⚠️ 警告清單：\n${result.warnings.map((w, i) => `${i + 1}. ${w.message}`).join('\n')}` : '')
+        }]
+      };
+    }
+
+  } catch (error) {
+    logger.error('validateFlow 方法執行失敗', {
+      method: 'validateFlow',
+      event: 'validate_flow_error',
+      details: { error: error instanceof Error ? error.message : '未知錯誤' }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `驗證 Flow 時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`
+      }]
+    };
+  }
+}
+
+/**
+ * 處理 checkFlowQuality 請求
+ */
+async function handleCheckFlowQuality(params: {
+  flowContent: string;
+  specPath: string;
+}): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('checkFlowQuality 方法開始執行', {
+    method: 'checkFlowQuality',
+    event: 'check_quality_start'
+  });
+
+  try {
+    const { parse: yamlParse } = await import('yaml');
+
+    // 1. 載入 OpenAPI 規格
+    const specPath = path.resolve(process.cwd(), params.specPath);
+    if (!existsSync(specPath)) {
+      return {
+        content: [{
+          type: "text",
+          text: `錯誤：找不到規格檔案 '${specPath}'`
+        }]
+      };
+    }
+
+    const specDoc = await loadSpec({ filePath: specPath });
+
+    // 2. 解析 Flow YAML
+    const flowData = yamlParse(params.flowContent);
+
+    // 3. 執行品質檢查
+    const checker = new FlowQualityChecker(specDoc.document, flowData);
+    const report = checker.check();
+
+    // 4. 產生修正建議
+    const suggestions = checker.generateFixSuggestions(report);
+
+    logger.info('checkFlowQuality 方法成功完成', {
+      method: 'checkFlowQuality',
+      event: 'check_quality_success',
+      details: {
+        score: report.score,
+        totalIssues: report.totalIssues
+      }
+    });
+
+    let resultText = `📊 Flow 品質檢查報告\n\n` +
+                     `總評分：${report.score}/100\n` +
+                     `總問題數：${report.totalIssues}\n` +
+                     `  - 錯誤：${report.errors}\n` +
+                     `  - 警告：${report.warnings}\n` +
+                     `  - 資訊：${report.infos}\n\n`;
+
+    if (report.totalIssues === 0) {
+      resultText += `✅ 未發現任何問題！Flow 品質良好。`;
+    } else {
+      // 顯示前 10 個問題
+      resultText += `🔍 主要問題（顯示前 10 個）：\n\n`;
+      report.issues.slice(0, 10).forEach((issue, i) => {
+        const icon = issue.severity === 'error' ? '🔴' : issue.severity === 'warning' ? '⚠️' : 'ℹ️';
+        resultText += `${i + 1}. ${icon} [${issue.type}]\n`;
+        resultText += `   位置：${issue.location}\n`;
+        resultText += `   問題：${issue.message}\n`;
+        resultText += `   建議：${issue.suggestion}\n\n`;
+      });
+
+      if (report.totalIssues > 10) {
+        resultText += `... 還有 ${report.totalIssues - 10} 個問題未顯示\n\n`;
+      }
+
+      // 顯示修正建議
+      if (suggestions.length > 0) {
+        resultText += `\n💡 自動修正建議（顯示前 5 個）：\n\n`;
+        suggestions.slice(0, 5).forEach((suggestion, i) => {
+          resultText += `${i + 1}. 步驟 ${suggestion.stepIndex}：${suggestion.fieldPath}\n`;
+          resultText += `   當前值：${JSON.stringify(suggestion.currentValue)}\n`;
+          resultText += `   建議值：${JSON.stringify(suggestion.suggestedValue)}\n`;
+          resultText += `   原因：${suggestion.reason}\n\n`;
+        });
+      }
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: resultText
+      }]
+    };
+
+  } catch (error) {
+    logger.error('checkFlowQuality 方法執行失敗', {
+      method: 'checkFlowQuality',
+      event: 'check_quality_error',
+      details: { error: error instanceof Error ? error.message : '未知錯誤' }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `檢查 Flow 品質時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`
+      }]
+    };
+  }
+}
+
+/**
+ * 處理 saveFlow 請求
+ */
+async function handleSaveFlow(params: {
+  flowContent: string;
+  fileName: string;
+}): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('saveFlow 方法開始執行', {
+    method: 'saveFlow',
+    event: 'save_flow_start',
+    details: { fileName: params.fileName }
+  });
+
+  try {
+    // 1. 確保 flows 目錄存在
+    const flowsDir = path.resolve(process.cwd(), 'flows');
+    if (!existsSync(flowsDir)) {
+      mkdirSync(flowsDir, { recursive: true });
+    }
+
+    // 2. 確保檔案名稱以 .yaml 結尾
+    let fileName = params.fileName;
+    if (!fileName.endsWith('.yaml') && !fileName.endsWith('.yml')) {
+      fileName += '.yaml';
+    }
+
+    // 3. 儲存檔案
+    const filePath = path.join(flowsDir, fileName);
+    writeFileSync(filePath, params.flowContent, 'utf-8');
+
+    logger.info('saveFlow 方法成功完成', {
+      method: 'saveFlow',
+      event: 'save_flow_success',
+      details: { filePath }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `✅ Flow 已成功儲存\n\n` +
+              `📁 儲存路徑：${path.relative(process.cwd(), filePath)}\n` +
+              `📝 檔案大小：${Buffer.byteLength(params.flowContent, 'utf-8')} bytes`
+      }]
+    };
+
+  } catch (error) {
+    logger.error('saveFlow 方法執行失敗', {
+      method: 'saveFlow',
+      event: 'save_flow_error',
+      details: { error: error instanceof Error ? error.message : '未知錯誤' }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `儲存 Flow 時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`
+      }]
+    };
+  }
+}
+
 // 註冊 listSpecs 工具
 server.registerTool("listSpecs", {
   title: "列出 OpenAPI 規格檔案",
@@ -584,6 +928,60 @@ server.registerTool("getReport", {
   }
 }, async ({ executionId, format = 'json' }) => {
   return handleGetReport(executionId, format);
+});
+
+// 註冊 generateFlow 工具
+server.registerTool("generateFlow", {
+  title: "產生測試 Flow",
+  description: "根據 OpenAPI 規格自動產生測試流程 YAML",
+  inputSchema: {
+    specPath: z.string().describe("OpenAPI 規格檔案路徑（相對於專案根目錄）"),
+    options: z.object({
+      endpoints: z.array(z.string()).optional().describe("要產生測試的端點 operationId 列表（若未指定則產生所有端點）"),
+      includeSuccessCases: z.boolean().optional().describe("是否包含成功案例（預設：true）"),
+      includeErrorCases: z.boolean().optional().describe("是否包含錯誤案例（預設：false）"),
+      includeEdgeCases: z.boolean().optional().describe("是否包含邊界測試（預設：false）"),
+      generateFlows: z.boolean().optional().describe("是否產生流程串接測試（預設：false）")
+    }).optional()
+  }
+}, async (params) => {
+  return handleGenerateFlow(params);
+});
+
+// 註冊 validateFlow 工具
+server.registerTool("validateFlow", {
+  title: "驗證 Flow 格式",
+  description: "驗證測試 Flow 的格式與語義是否正確",
+  inputSchema: {
+    flowContent: z.string().describe("Flow YAML 內容"),
+    specPath: z.string().describe("OpenAPI 規格檔案路徑（用於語義驗證）")
+  }
+}, async (params) => {
+  return handleValidateFlow(params);
+});
+
+// 註冊 checkFlowQuality 工具
+server.registerTool("checkFlowQuality", {
+  title: "檢查 Flow 品質",
+  description: "檢查測試 Flow 的合理性並提供改進建議",
+  inputSchema: {
+    flowContent: z.string().describe("Flow YAML 內容"),
+    specPath: z.string().describe("OpenAPI 規格檔案路徑")
+  }
+}, async (params) => {
+  return handleCheckFlowQuality(params);
+});
+
+// 註冊 saveFlow 工具
+server.registerTool("saveFlow", {
+  title: "儲存 Flow 檔案",
+  description: "將測試 Flow YAML 儲存到 flows 目錄",
+  inputSchema: {
+    flowContent: z.string().describe("Flow YAML 內容"),
+    fileName: z.string().describe("檔案名稱（自動加上 .yaml 副檔名）")
+  }
+}, async (params) => {
+  return handleSaveFlow(params);
 });
 
 // 啟動 MCP Server（使用官方範例的方式）

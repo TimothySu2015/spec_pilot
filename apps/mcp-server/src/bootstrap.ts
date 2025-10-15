@@ -6,7 +6,9 @@ import {
   handleListSpecs,
   handleListFlows,
   handleRunFlow,
-  handleGetReport
+  handleGetReport,
+  handleGenerateFlow,
+  handleGenerateTestSuite
 } from './handlers/index.js';
 
 /**
@@ -120,6 +122,10 @@ export class McpServer {
           return await handleRunFlow(request);
         case 'getReport':
           return handleGetReport(request);
+        case 'generateFlow':
+          return await handleGenerateFlow(request);
+        case 'generateTestSuite':
+          return await handleGenerateTestSuite(request);
         default:
           // 未知方法錯誤
           this.logger.error('response_error', {
