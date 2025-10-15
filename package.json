@@ -18,7 +18,7 @@
     "dev:builder": "pnpm --filter @specpilot/schemas build && pnpm --filter @specpilot/flow-builder dev",
     "start": "node dist/apps/cli/src/index.js",
     "start:mcp": "pnpm exec tsx apps/mcp-server/src/index.ts",
-    "inspect:mcp": "pnpm exec @modelcontextprotocol/inspector dist/apps/mcp-server/src/index.js",
+    "inspect:mcp": "pnpm exec mcp-inspector apps/mcp-server/dist/index.cjs",
     "mock": "pnpm exec tsx tests/e2e/helpers/test-server.ts",
     "mock:ci": "cross-env NODE_ENV=ci pnpm exec tsx tests/e2e/helpers/test-server.ts",
     "build": "rimraf dist && pnpm exec tsup --config tsup.config.ts",
