@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FlowOrchestrator, type IFlowDefinition } from '../src/index.js';
+import { FlowOrchestrator, type FlowDefinition } from '../src/index.js';
 
 describe('FlowOrchestrator', () => {
   let orchestrator: FlowOrchestrator;
@@ -10,7 +10,7 @@ describe('FlowOrchestrator', () => {
 
   describe('validateFlow', () => {
     it('應該驗證有效的流程定義', () => {
-      const validFlow: IFlowDefinition = {
+      const validFlow: FlowDefinition = {
         name: 'Test Flow',
         description: 'Test description',
         steps: [
@@ -29,13 +29,13 @@ describe('FlowOrchestrator', () => {
       const invalidFlow = {
         name: '',
         steps: [],
-      } as IFlowDefinition;
+      } as FlowDefinition;
 
       expect(orchestrator.validateFlow(invalidFlow)).toBe(false);
     });
 
     it('應該拒絕缺少步驟的流程', () => {
-      const flowWithInvalidStep: IFlowDefinition = {
+      const flowWithInvalidStep: FlowDefinition = {
         name: 'Test Flow',
         steps: [
           {
@@ -52,7 +52,7 @@ describe('FlowOrchestrator', () => {
 
   describe('executeFlow', () => {
     it('應該執行有效的流程', async () => {
-      const flow: IFlowDefinition = {
+      const flow: FlowDefinition = {
         name: 'Test Flow',
         steps: [
           {
@@ -71,7 +71,7 @@ describe('FlowOrchestrator', () => {
     });
 
     it('應該處理多個步驟', async () => {
-      const flow: IFlowDefinition = {
+      const flow: FlowDefinition = {
         name: 'Multi Step Flow',
         steps: [
           { name: 'Step 1', method: 'GET', url: '/api/step1' },

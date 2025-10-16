@@ -3,7 +3,7 @@
 /**
  * 驗證設定介面
  */
-export interface IValidationConfig {
+export interface ValidationConfig {
   strict: boolean;
   allErrors: boolean;
   verbose: boolean;
@@ -14,7 +14,7 @@ export interface IValidationConfig {
 /**
  * 預設驗證設定
  */
-export const DEFAULT_VALIDATION_CONFIG: IValidationConfig = {
+export const DEFAULT_VALIDATION_CONFIG: ValidationConfig = {
   strict: false,
   allErrors: true,
   verbose: true,
@@ -25,11 +25,11 @@ export const DEFAULT_VALIDATION_CONFIG: IValidationConfig = {
 /**
  * 取得驗證設定
  */
-export function getValidationConfig(): IValidationConfig {
+export function getValidationConfig(): ValidationConfig {
   // const globalConfig = getConfig(); // 暫時未使用
 
   // 從環境變數或設定檔中讀取驗證相關設定
-  const validationConfig: Partial<IValidationConfig> = {
+  const validationConfig: Partial<ValidationConfig> = {
     strict: process.env.SPEC_PILOT_VALIDATION_STRICT === 'true',
     allErrors: process.env.SPEC_PILOT_VALIDATION_ALL_ERRORS !== 'false',
     verbose: process.env.SPEC_PILOT_VALIDATION_VERBOSE !== 'false',
@@ -51,8 +51,8 @@ export function getValidationConfig(): IValidationConfig {
 /**
  * 驗證工廠設定
  */
-export interface IValidationFactoryConfig {
-  validation: IValidationConfig;
+export interface ValidationFactoryConfig {
+  validation: ValidationConfig;
   enableSchemaCache: boolean;
   enableCustomRules: boolean;
 }
@@ -60,7 +60,7 @@ export interface IValidationFactoryConfig {
 /**
  * 取得驗證工廠設定
  */
-export function getValidationFactoryConfig(): IValidationFactoryConfig {
+export function getValidationFactoryConfig(): ValidationFactoryConfig {
   return {
     validation: getValidationConfig(),
     enableSchemaCache: process.env.SPEC_PILOT_VALIDATION_SCHEMA_CACHE !== 'false',

@@ -4,13 +4,13 @@
 
 import { describe, test, expect } from 'vitest';
 import { CRUDGenerator } from '../src/crud-generator.js';
-import type { EndpointInfo } from '../src/types.js';
+import type { IEndpointInfo } from '../src/types.js';
 
 describe('CRUDGenerator', () => {
   test('應該為 POST 端點產生 201 成功案例', () => {
     const generator = new CRUDGenerator();
 
-    const endpoint: EndpointInfo = {
+    const endpoint: IEndpointInfo = {
       path: '/users',
       method: 'POST',
       operationId: 'createUser',
@@ -29,15 +29,15 @@ describe('CRUDGenerator', () => {
     const steps = generator.generateSuccessCases(endpoint);
 
     expect(steps).toHaveLength(1);
-    expect(steps[0].operationId).toBe('createUser');
-    expect(steps[0].expect?.status).toBe(201);
+    expect(steps[0].name).toContain('建立使用者');
+    expect(steps[0].expectations.status).toBe(201);
     expect(steps[0].request.body).toBeDefined();
   });
 
   test('應該根據 schema 產生測試資料', () => {
     const generator = new CRUDGenerator();
 
-    const endpoint: EndpointInfo = {
+    const endpoint: IEndpointInfo = {
       path: '/users',
       method: 'POST',
       operationId: 'createUser',

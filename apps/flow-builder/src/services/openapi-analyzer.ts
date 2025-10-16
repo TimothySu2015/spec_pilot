@@ -3,7 +3,7 @@
  * 用於從 OpenAPI Spec 提取 Response Schema 並生成驗證建議
  */
 
-export interface ValidationSuggestion {
+export interface IValidationSuggestion {
   path: string;
   rule: 'notNull' | 'regex' | 'contains';
   value?: string;
@@ -11,7 +11,7 @@ export interface ValidationSuggestion {
   priority: 'high' | 'medium' | 'low';
 }
 
-export interface ResponseField {
+export interface IResponseField {
   path: string;
   type: string;
   required: boolean;
@@ -111,13 +111,13 @@ export function extractFields(
   parentPath: string = '',
   maxDepth: number = 3,
   currentDepth: number = 0
-): ResponseField[] {
+): IResponseField[] {
   if (!schema || currentDepth >= maxDepth) return [];
 
   const resolvedSchema = resolveSchema(schema, openApiSpec);
   if (!resolvedSchema) return [];
 
-  const fields: ResponseField[] = [];
+  const fields: IResponseField[] = [];
   const required = resolvedSchema.required || [];
 
   if (resolvedSchema.type === 'object' && resolvedSchema.properties) {
@@ -164,9 +164,9 @@ export function extractFields(
 export function generateValidationSuggestions(
   schema: any,
   openApiSpec: any
-): ValidationSuggestion[] {
+): IValidationSuggestion[] {
   const fields = extractFields(schema, openApiSpec);
-  const suggestions: ValidationSuggestion[] = [];
+  const suggestions: IValidationSuggestion[] = [];
 
   for (const field of fields) {
     // 必填欄位 → notNull (高優先級)
@@ -251,7 +251,7 @@ export function analyzeStep(
   method: string,
   path: string,
   openApiSpec: any
-): ValidationSuggestion[] {
+): IValidationSuggestion[] {
   if (!openApiSpec) return [];
 
   const endpoint = findEndpointInSpec(openApiSpec, method, path);

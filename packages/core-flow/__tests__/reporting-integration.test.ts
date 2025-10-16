@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { ReportingIntegration } from '../src/reporting-integration.js';
-import type { IFlowDefinition as FlowParserDefinition, IFlowStep as FlowParserStep } from '@specpilot/flow-parser';
+import type { FlowDefinition as FlowParserDefinition, FlowStep as FlowParserStep } from '@specpilot/flow-parser';
 import type { ExecutionConfig } from '@specpilot/reporting';
-import type { ITestResult } from '../src/index.js';
+import type { TestResult } from '../src/index.js';
 
 describe('ReportingIntegration', () => {
   let reportingIntegration: ReportingIntegration;
@@ -74,7 +74,7 @@ describe('ReportingIntegration', () => {
         }
       };
 
-      const testResult: ITestResult = {
+      const testResult: TestResult = {
         status: 'passed',
         duration: 1500,
         response: { data: 'test' }
@@ -112,7 +112,7 @@ describe('ReportingIntegration', () => {
         }
       };
 
-      const testResult: ITestResult = {
+      const testResult: TestResult = {
         status: 'failed',
         duration: 800,
         error: 'Network timeout',
@@ -174,7 +174,7 @@ describe('ReportingIntegration', () => {
         }
       };
 
-      const testResult: ITestResult = {
+      const testResult: TestResult = {
         status: 'passed',
         duration: 1000
       };

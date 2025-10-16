@@ -1,23 +1,23 @@
 import {
   createEnhancedStructuredLogger,
-  type IEnhancedStructuredLogger,
+  type EnhancedStructuredLogger,
   EVENT_CODES
 } from '@specpilot/shared';
 import {
   EnhancedReportGenerator,
-  type IStepInput,
-  type IExecutionConfig
+  type StepInput,
+  type ExecutionConfig
 } from '@specpilot/reporting';
-import type { IFlowDefinition as FlowParserDefinition, IFlowStep as FlowParserStep } from '@specpilot/flow-parser';
-import type { ITestResult } from './index.js';
+import type { FlowDefinition as FlowParserDefinition, FlowStep as FlowParserStep } from '@specpilot/flow-parser';
+import type { TestResult } from './index.js';
 
 /**
  * 報表整合管理器
  */
 export class ReportingIntegration {
-  private logger: IEnhancedStructuredLogger;
+  private logger: EnhancedStructuredLogger;
   private reportGenerator: EnhancedReportGenerator;
-  private stepInputs: IStepInput[] = [];
+  private stepInputs: StepInput[] = [];
   private flowStartTime: string = '';
 
   constructor(executionId: string, component: string = 'reporting-integration') {
@@ -28,7 +28,7 @@ export class ReportingIntegration {
   /**
    * 記錄流程開始
    */
-  recordFlowStart(flowDefinition: FlowParserDefinition, config: IExecutionConfig): void {
+  recordFlowStart(flowDefinition: FlowParserDefinition, config: ExecutionConfig): void {
     this.flowStartTime = new Date().toISOString();
     this.stepInputs = [];
 
@@ -56,7 +56,7 @@ export class ReportingIntegration {
    */
   recordStepComplete(
     step: FlowParserStep,
-    testResult: ITestResult,
+    testResult: TestResult,
     request: {
       method: string;
       url: string;
@@ -96,7 +96,7 @@ export class ReportingIntegration {
     }
 
     // 收集步驟資料用於報表
-    const stepInput: IStepInput = {
+    const stepInput: StepInput = {
       name: step.name,
       status: testResult.status === 'passed' ? 'success' :
               testResult.status === 'failed' ? 'failure' : 'skipped',
@@ -124,7 +124,7 @@ export class ReportingIntegration {
   async recordFlowComplete(
     executionId: string,
     flowId: string,
-    config: IExecutionConfig,
+    config: ExecutionConfig,
     reportPath: string = 'reports/result.json'
   ): Promise<string> {
     const endTime = new Date().toISOString();
@@ -204,7 +204,7 @@ export class ReportingIntegration {
   async recordFlowFailure(
     executionId: string,
     flowId: string,
-    config: IExecutionConfig,
+    config: ExecutionConfig,
     error: string
   ): Promise<void> {
     this.logger.error('流程執行失敗', {
@@ -272,7 +272,7 @@ export class ReportingIntegration {
   /**
    * 取得當前收集的步驟資料
    */
-  getCollectedSteps(): IStepInput[] {
+  getCollectedSteps(): StepInput[] {
     return [...this.stepInputs];
   }
 

@@ -1,7 +1,7 @@
 import { readFile, access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
-import type { ISpecDocument, OpenApiDocument } from './types.js';
+import type { SpecDocument, OpenApiDocument } from './types.js';
 import { SpecParseError, SpecFileNotFoundError, UnsupportedFormatError } from './errors.js';
 import { 
   getFormatFromExtension, 
@@ -13,7 +13,7 @@ import {
 /**
  * 從檔案路徑載入 OpenAPI 規格
  */
-export async function loadSpecFromFile(filePath: string, executionId?: string): Promise<ISpecDocument> {
+export async function loadSpecFromFile(filePath: string, executionId?: string): Promise<SpecDocument> {
   try {
     // 檢查檔案是否存在
     await access(filePath, constants.F_OK);
@@ -90,10 +90,10 @@ export async function loadSpecFromFile(filePath: string, executionId?: string): 
  * 從內容字串載入 OpenAPI 規格
  */
 export async function loadSpecFromContent(
-  content: string, 
+  content: string,
   format?: 'json' | 'yaml',
   executionId?: string
-): Promise<ISpecDocument> {
+): Promise<SpecDocument> {
   if (!content.trim()) {
     throw new SpecParseError(
       '規格內容為空',

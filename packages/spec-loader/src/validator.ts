@@ -1,5 +1,5 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
-import type { ISpecDocument, OpenApiDocument } from './types.js';
+import type { SpecDocument, OpenApiDocument } from './types.js';
 import { SpecValidationError } from './errors.js';
 
 /**
@@ -52,9 +52,9 @@ export async function validateAndDereferenceSpec(
  * 完整驗證並處理 SpecDocument
  */
 export async function validateSpecDocument(
-  document: ISpecDocument,
+  document: SpecDocument,
   context?: { executionId?: string }
-): Promise<ISpecDocument> {
+): Promise<SpecDocument> {
   try {
     // 驗證並展開規格
     const validatedDocument = await validateAndDereferenceSpec(
@@ -110,19 +110,19 @@ function extractSchemas(document: OpenApiDocument): Record<string, unknown> {
 /**
  * 檢查是否為 swagger-parser 錯誤
  */
-function isSwaggerParserError(error: unknown): error is ISwaggerParserError {
+function isSwaggerParserError(error: unknown): error is SwaggerParserError {
   return (
     error !== null &&
     typeof error === 'object' &&
     'message' in error &&
-    typeof (error as unknown as ISwaggerParserError).message === 'string'
+    typeof (error as unknown as SwaggerParserError).message === 'string'
   );
 }
 
 /**
  * swagger-parser 錯誤介面
  */
-interface ISwaggerParserError {
+interface SwaggerParserError {
   message: string;
   path?: string;
   errors?: unknown[];

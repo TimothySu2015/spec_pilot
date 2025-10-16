@@ -8,7 +8,7 @@ export type OpenApiDocument = OpenAPIV3.Document | OpenAPIV3_1.Document;
 /**
  * 規格文件載入選項
  */
-export interface ISpecLoadOptions {
+export interface SpecLoadOptions {
   /** 檔案路徑（用於從檔案系統載入） */
   filePath?: string;
   /** 直接內容（用於從字串載入） */
@@ -22,7 +22,7 @@ export interface ISpecLoadOptions {
 /**
  * 規格文件
  */
-export interface ISpecDocument {
+export interface SpecDocument {
   /** 唯一標識符，使用檔案路徑或內容 SHA-256 雜湊 */
   id: string;
   /** 原始內容（JSON 或 YAML 字串） */
@@ -38,11 +38,11 @@ export interface ISpecDocument {
 /**
  * 規格載入結果
  */
-export interface ISpecLoadResult {
+export interface SpecLoadResult {
   /** 是否成功 */
   success: boolean;
   /** 規格文件（成功時） */
-  document?: ISpecDocument;
+  document?: SpecDocument;
   /** 錯誤訊息（失敗時） */
   error?: {
     code: number;
@@ -65,7 +65,8 @@ export type FileFormat = 'json' | 'yaml';
 /**
  * 內容類型檢測結果
  */
-export interface IContentTypeDetection {
+export interface ContentTypeDetection {
   format: FileFormat;
   confidence: number;
 }
+

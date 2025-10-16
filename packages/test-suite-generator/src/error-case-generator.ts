@@ -3,7 +3,7 @@
  * 產生參數驗證失敗、認證錯誤等錯誤測試案例
  */
 
-import type { FlowStep } from '@specpilot/flow-parser';
+import type { FlowStep, HttpMethod } from '@specpilot/flow-parser';
 import type { EndpointInfo, ErrorCaseGeneratorConfig, JSONSchema } from './types.js';
 import { DataSynthesizer } from './data-synthesizer.js';
 
@@ -38,7 +38,7 @@ export class ErrorCaseGenerator {
       steps.push({
         name: `${endpoint.summary || endpoint.operationId} - 缺少 ${field}`,
         request: {
-          method: endpoint.method.toUpperCase() as any,
+          method: endpoint.method.toUpperCase() as HttpMethod,
           path: endpoint.path,
           body: testData,
         },
@@ -75,7 +75,7 @@ export class ErrorCaseGenerator {
         steps.push({
           name: `${endpoint.summary || endpoint.operationId} - 無效 ${field} 格式`,
           request: {
-            method: endpoint.method.toUpperCase() as any,
+            method: endpoint.method.toUpperCase() as HttpMethod,
             path: endpoint.path,
             body: testData,
           },
@@ -101,7 +101,7 @@ export class ErrorCaseGenerator {
       {
         name: `${endpoint.summary || endpoint.operationId} - 無認證`,
         request: {
-          method: endpoint.method.toUpperCase() as any,
+          method: endpoint.method.toUpperCase() as HttpMethod,
           path: endpoint.path,
         },
         expect: {

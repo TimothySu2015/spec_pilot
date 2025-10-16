@@ -9,7 +9,7 @@ export * from './errors/auth-errors.js';
 /**
  * 共用類型定義
  */
-export interface IApiResponse<T = unknown> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

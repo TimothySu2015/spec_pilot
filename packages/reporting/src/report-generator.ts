@@ -15,7 +15,7 @@ const logger = createStructuredLogger('report-generator');
 /**
  * 輸入步驟資料介面
  */
-export interface IStepInput {
+export interface StepInput {
   name: string;
   status: 'success' | 'failure' | 'skipped';
   startTime: string;

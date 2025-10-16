@@ -1,4 +1,4 @@
-import type { ISpecDocument, ISpecLoadOptions, ISpecLoadResult } from './types.js';
+import type { SpecDocument, SpecLoadOptions, SpecLoadResult } from './types.js';
 import { loadSpecFromFile, loadSpecFromContent } from './loader.js';
 import { validateSpecDocument } from './validator.js';
 import { 
@@ -17,7 +17,7 @@ import { SpecParseError, SpecValidationError } from './errors.js';
  * @param options - 載入選項，可以是檔案路徑或直接內容
  * @returns 處理後的規格文件
  */
-export async function loadSpec(options: ISpecLoadOptions): Promise<ISpecDocument> {
+export async function loadSpec(options: SpecLoadOptions): Promise<SpecDocument> {
   const { filePath, content, format, executionId } = options;
 
   // 檢查輸入參數
@@ -39,7 +39,7 @@ export async function loadSpec(options: ISpecLoadOptions): Promise<ISpecDocument
     );
   }
 
-  let document: ISpecDocument;
+  let document: SpecDocument;
 
   try {
     // 第一階段：載入規格
@@ -103,7 +103,7 @@ export async function loadSpec(options: ISpecLoadOptions): Promise<ISpecDocument
  * @param options - 載入選項
  * @returns 包含成功狀態和結果的物件
  */
-export async function loadSpecSafe(options: ISpecLoadOptions): Promise<ISpecLoadResult> {
+export async function loadSpecSafe(options: SpecLoadOptions): Promise<SpecLoadResult> {
   try {
     const document = await loadSpec(options);
     return {

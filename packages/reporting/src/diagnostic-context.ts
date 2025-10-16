@@ -8,7 +8,7 @@ export type ErrorType = 'auth' | 'network' | 'validation' | 'server' | 'unknown'
 /**
  * 錯誤分類
  */
-export interface IErrorClassification {
+export interface ErrorClassification {
   /** 主要錯誤類型 */
   primaryType: ErrorType;
   /** 信心度 (0-100) */
@@ -22,7 +22,7 @@ export interface IErrorClassification {
 /**
  * 失敗步驟診斷資訊
  */
-export interface IFailedStepDiagnostic {
+export interface FailedStepDiagnostic {
   /** 步驟名稱 */
   stepName: string;
   /** 步驟索引 */
@@ -30,7 +30,7 @@ export interface IFailedStepDiagnostic {
   /** HTTP 狀態碼 */
   statusCode: number;
   /** 錯誤分類 */
-  classification: IErrorClassification;
+  classification: ErrorClassification;
   /** 錯誤訊息 */
   errorMessage: string | null;
   /** 是否有完整錯誤詳情 */
@@ -42,7 +42,7 @@ export interface IFailedStepDiagnostic {
 /**
  * 環境診斷資訊
  */
-export interface IEnvironmentDiagnostic {
+export interface EnvironmentDiagnostic {
   /** 基礎 URL */
   baseUrl: string;
   /** 是否使用備援 */
@@ -54,7 +54,7 @@ export interface IEnvironmentDiagnostic {
 /**
  * 錯誤模式
  */
-export interface IErrorPattern {
+export interface ErrorPattern {
   /** 模式類型 */
   pattern: 'consecutive_auth_failures' | 'cascading_failures' | 'all_network_errors' | 'same_resource_failures';
   /** 模式描述 */
@@ -68,7 +68,7 @@ export interface IErrorPattern {
 /**
  * 診斷提示
  */
-export interface IDiagnosticHints {
+export interface DiagnosticHints {
   /** 快速診斷摘要 */
   quickDiagnosis: string;
   /** 可能原因列表 */
@@ -82,7 +82,7 @@ export interface IDiagnosticHints {
 /**
  * 相關步驟資訊
  */
-export interface IRelatedStepInfo {
+export interface RelatedStepInfo {
   /** 步驟索引 */
   stepIndex: number;
   /** 步驟名稱 */
@@ -96,30 +96,20 @@ export interface IRelatedStepInfo {
 /**
  * 完整診斷上下文
  */
-export interface IDiagnosticContext {
+export interface DiagnosticContext {
   /** 是否有失敗 */
   hasFailed: boolean;
   /** 失敗步驟數量 */
   failureCount: number;
   /** 失敗步驟診斷列表 */
-  failedSteps: IFailedStepDiagnostic[];
+  failedSteps: FailedStepDiagnostic[];
   /** 環境診斷資訊 */
-  environment: IEnvironmentDiagnostic;
+  environment: EnvironmentDiagnostic;
   /** 偵測到的錯誤模式 */
-  errorPatterns: IErrorPattern[];
+  errorPatterns: ErrorPattern[];
   /** 診斷提示 */
-  diagnosticHints: IDiagnosticHints;
+  diagnosticHints: DiagnosticHints;
   /** 相關步驟資訊 */
-  relatedSteps?: IRelatedStepInfo[];
+  relatedSteps?: RelatedStepInfo[];
 }
 
-/**
- * 類型別名，用於向後相容
- */
-export type DiagnosticContext = IDiagnosticContext;
-export type FailedStepDiagnostic = IFailedStepDiagnostic;
-export type ErrorClassification = IErrorClassification;
-export type ErrorPattern = IErrorPattern;
-export type DiagnosticHints = IDiagnosticHints;
-export type EnvironmentDiagnostic = IEnvironmentDiagnostic;
-export type RelatedStepInfo = IRelatedStepInfo;

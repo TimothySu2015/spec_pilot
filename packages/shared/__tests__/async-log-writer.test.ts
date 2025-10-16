@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AsyncLogWriter } from '../src/async-log-writer.js';
-import type { IStructuredLogEntry } from '../src/structured-log-types.js';
+import type { StructuredLogEntry } from '../src/structured-log-types.js';
 
 describe('AsyncLogWriter', () => {
   let logWriter: AsyncLogWriter;
-  let mockEntry: IStructuredLogEntry;
+  let mockEntry: StructuredLogEntry;
 
   beforeEach(() => {
     logWriter = new AsyncLogWriter({

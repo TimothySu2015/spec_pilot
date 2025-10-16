@@ -1,12 +1,12 @@
 import { createStructuredLogger, randomUUID, type HttpMethod } from '@specpilot/shared';
-import type { IFlowDefinition as FlowParserDefinition, IFlowStep as FlowParserStep } from '@specpilot/flow-parser';
+import type { FlowDefinition as FlowParserDefinition, FlowStep as FlowParserStep } from '@specpilot/flow-parser';
 import { VariableResolver } from '@specpilot/flow-parser';
-import { AuthHandler, type IAuthHandleResult } from './auth-handler.js';
+import { AuthHandler, type AuthHandleResult } from './auth-handler.js';
 import { ReportingIntegration } from './reporting-integration.js';
-import type { IExecutionConfig } from '@specpilot/reporting';
-import type { ITestResult, IRunContext } from './index.js';
-import { HttpRunner, type IHttpRequest } from '@specpilot/http-runner';
-import { ValidationEngine, type IValidationInput } from '@specpilot/validation';
+import type { ExecutionConfig } from '@specpilot/reporting';
+import type { TestResult, RunContext } from './index.js';
+import { HttpRunner, type HttpRequest } from '@specpilot/http-runner';
+import { ValidationEngine, type ValidationInput } from '@specpilot/validation';
 
 const logger = createStructuredLogger('enhanced-orchestrator');
 
@@ -32,14 +32,14 @@ export class EnhancedFlowOrchestrator {
    */
   async executeFlowWithReporting(
     flowDefinition: FlowParserDefinition,
-    config: IExecutionConfig,
+    config: ExecutionConfig,
     options: {
       executionId?: string;
       reportPath?: string;
       enableReporting?: boolean;
     } = {}
   ): Promise<{
-    results: ITestResult[];
+    results: TestResult[];
     reportSummary: string;
     executionId: string;
   }> {
@@ -53,7 +53,7 @@ export class EnhancedFlowOrchestrator {
       this.reportingIntegration.recordFlowStart(flowDefinition, config);
     }
 
-    const context: IRunContext = {
+    const context: RunContext = {
       executionId,
       flow: flowDefinition,
       authHandler: this.authHandler,
@@ -109,7 +109,7 @@ export class EnhancedFlowOrchestrator {
         }
       }
 
-      const results: ITestResult[] = [];
+      const results: TestResult[] = [];
 
       // 執行每個步驟
       for (const step of flowDefinition.steps) {
@@ -192,7 +192,7 @@ export class EnhancedFlowOrchestrator {
    * 執行單個步驟（增強版，支援報表記錄）
    * @param step - 已解析變數的步驟（從 executeFlowWithReporting 傳入）
    */
-  private async executeStepWithReporting(step: FlowParserStep, context: IRunContext): Promise<ITestResult> {
+  private async executeStepWithReporting(step: FlowParserStep, context: RunContext): Promise<TestResult> {
     const startTime = Date.now();
 
     logger.info('執行測試步驟（增強版）', {
@@ -203,11 +203,11 @@ export class EnhancedFlowOrchestrator {
     });
 
     try {
-      let authResult: IAuthHandleResult | undefined;
+      let authResult: AuthHandleResult | undefined;
 
       // 注意：step 參數已經是解析過變數的步驟（在 executeFlowWithReporting 中解析）
       // 建立 HTTP 請求
-      const httpRequest: IHttpRequest = {
+      const httpRequest: HttpRequest = {
         method: step.request.method.toUpperCase() as HttpMethod,
         url: step.request.url || step.request.path || '/',
         headers: { ...step.request.headers } || {},
@@ -256,7 +256,7 @@ export class EnhancedFlowOrchestrator {
       const validationResults: string[] = [];
 
       if (step.expectations) {
-        const validationInput: IValidationInput = {
+        const validationInput: ValidationInput = {
           step: step,
           response: httpResponse,
           expectations: step.expectations,
@@ -288,7 +288,7 @@ export class EnhancedFlowOrchestrator {
         errorMessage: validationSuccess ? undefined : 'Validation failed'
       };
 
-      const result: ITestResult = {
+      const result: TestResult = {
         status: validationSuccess ? 'passed' : 'failed',
         duration: Date.now() - startTime,
         response: httpResponse,
@@ -346,7 +346,7 @@ export class EnhancedFlowOrchestrator {
         errorMessage
       };
 
-      const result: ITestResult = {
+      const result: TestResult = {
         status: 'failed',
         duration: Date.now() - startTime,
         error: errorMessage,

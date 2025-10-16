@@ -1,6 +1,6 @@
 import { config } from 'dotenv-flow';
 import { z } from 'zod';
-import { AuthConfigManager, type IAuthConfig } from './auth-config.js';
+import { AuthConfigManager, type AuthConfig } from './auth-config.js';
 
 // 初始化環境變數載入
 config({
@@ -21,14 +21,14 @@ const SpecPilotConfigSchema = z.object({
   auth: z.any().optional(),
 });
 
-export type ISpecPilotConfig = z.infer<typeof SpecPilotConfigSchema> & {
-  auth?: IAuthConfig;
+export type SpecPilotConfig = z.infer<typeof SpecPilotConfigSchema> & {
+  auth?: AuthConfig;
 };
 
 /**
  * 從環境變數載入並驗證設定
  */
-function loadConfigFromEnv(): ISpecPilotConfig {
+function loadConfigFromEnv(): SpecPilotConfig {
   const rawConfig = {
     baseUrl: process.env.SPEC_PILOT_BASE_URL,
     port: process.env.SPEC_PILOT_PORT ? parseInt(process.env.SPEC_PILOT_PORT, 10) : undefined,
@@ -39,13 +39,13 @@ function loadConfigFromEnv(): ISpecPilotConfig {
   return SpecPilotConfigSchema.parse(rawConfig);
 }
 
-let cachedConfig: ISpecPilotConfig | null = null;
+let cachedConfig: SpecPilotConfig | null = null;
 let authConfigManager: AuthConfigManager | null = null;
 
 /**
  * 取得完整設定物件
  */
-export function getConfig(): ISpecPilotConfig {
+export function getConfig(): SpecPilotConfig {
   if (!cachedConfig) {
     cachedConfig = loadConfigFromEnv();
     // 載入認證設定
@@ -86,7 +86,7 @@ export function resetConfigCache(): void {
 /**
  * 覆寫設定值（主要用於 CLI/MCP 參數覆寫）
  */
-export function overrideConfig(overrides: Partial<ISpecPilotConfig>): void {
+export function overrideConfig(overrides: Partial<SpecPilotConfig>): void {
   const currentConfig = getConfig();
   cachedConfig = SpecPilotConfigSchema.parse({
     ...currentConfig,
@@ -107,7 +107,7 @@ export function getAuthConfigManager(): AuthConfigManager {
 /**
  * 取得認證設定
  */
-export function getAuthConfig(): IAuthConfig {
+export function getAuthConfig(): AuthConfig {
   return getAuthConfigManager().getConfig();
 }
 
@@ -140,4 +140,4 @@ export function getDefaultExpirySeconds(): number {
 }
 
 // 匯出認證設定相關類型和類別
-export { AuthConfigManager, type IAuthConfig, type IStaticToken, type INamespaceConfig } from './auth-config.js';
+export { AuthConfigManager, type AuthConfig, type StaticToken, type NamespaceConfig } from './auth-config.js';

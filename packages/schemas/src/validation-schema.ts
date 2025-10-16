@@ -39,7 +39,7 @@ export const ValidationRuleSchema = z.discriminatedUnion('rule', [
   ContainsRuleSchema,
 ]);
 
-export type IValidationRule = z.infer<typeof ValidationRuleSchema>;
-export type INotNullRule = z.infer<typeof NotNullRuleSchema>;
-export type IRegexRule = z.infer<typeof RegexRuleSchema>;
-export type IContainsRule = z.infer<typeof ContainsRuleSchema>;
+export type ValidationRule = z.infer<typeof ValidationRuleSchema>;
+export type NotNullRule = z.infer<typeof NotNullRuleSchema>;
+export type RegexRule = z.infer<typeof RegexRuleSchema>;
+export type ContainsRule = z.infer<typeof ContainsRuleSchema>;

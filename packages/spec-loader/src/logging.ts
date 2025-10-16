@@ -1,5 +1,5 @@
 import { createStructuredLogger, setExecutionId } from '@specpilot/shared';
-import type { ISpecDocument } from './types.js';
+import type { SpecDocument } from './types.js';
 import { getSpecInfo } from './validator.js';
 
 /**
@@ -45,7 +45,7 @@ export function logSpecLoadStart(
 /**
  * 記錄規格載入成功事件
  */
-export function logSpecLoadSuccess(document: ISpecDocument): void {
+export function logSpecLoadSuccess(document: SpecDocument): void {
   const specInfo = getSpecInfo(document.document);
   // const maskedDocument = maskSensitiveFields(document.document as Record<string, unknown>);
   
@@ -110,7 +110,7 @@ export function logSpecValidationStart(specId: string): void {
  * 記錄規格驗證成功事件
  */
 export function logSpecValidationSuccess(
-  document: ISpecDocument,
+  document: SpecDocument,
   validationInfo?: {
     dereferenced: boolean;
     originalSchemaCount: number;

@@ -1,6 +1,6 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import axios, { type AxiosInstance, type AxiosRequestConfig, isAxiosError } from 'axios';
 import { createStructuredLogger, EVENT_CODES } from '@specpilot/shared';
-import type { IHttpRequest, IHttpResponse, IHttpClientConfig } from './types.js';
+import type { HttpRequest, HttpResponse, HttpClientConfig } from './types.js';
 
 const logger = createStructuredLogger('http-client');
 
@@ -9,9 +9,9 @@ const logger = createStructuredLogger('http-client');
  */
 export class HttpClient {
   private readonly axiosInstance: AxiosInstance;
-  private readonly config: IHttpClientConfig;
+  private readonly config: HttpClientConfig;
 
-  constructor(config: IHttpClientConfig = {}) {
+  constructor(config: HttpClientConfig = {}) {
     this.config = {
       timeout: 30000,
       retries: 3,
@@ -30,7 +30,7 @@ export class HttpClient {
   /**
    * 執行 HTTP 請求
    */
-  async request(request: IHttpRequest): Promise<IHttpResponse> {
+  async request(request: HttpRequest): Promise<HttpResponse> {
     const startTime = Date.now();
     const executionId = crypto.randomUUID();
 
@@ -54,7 +54,7 @@ export class HttpClient {
       const response = await this.axiosInstance.request(axiosConfig);
       const duration = Date.now() - startTime;
 
-      const httpResponse: IHttpResponse = {
+      const httpResponse: HttpResponse = {
         status: response.status,
         headers: response.headers as Record<string, string>,
         data: response.data,
@@ -73,35 +73,80 @@ export class HttpClient {
       return httpResponse;
     } catch (error) {
       const duration = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-      const errorCode = error && typeof error === 'object' && 'code' in error
-        ? (error as { code?: string }).code
-        : undefined;
 
+      // ✨ 使用 Axios 官方建議的錯誤分類方式
+      if (isAxiosError(error)) {
+        if (error.response) {
+          // 伺服器回應了狀態碼在 2xx 範圍外的回應
+          logger.warn(EVENT_CODES.STEP_FAILURE, {
+            executionId,
+            component: 'http-client',
+            method: request.method,
+            url: request.url,
+            error: 'HTTP_ERROR',
+            status: error.response.status,
+            statusText: error.response.statusText,
+            duration,
+          });
+
+          return {
+            status: error.response.status,
+            headers: error.response.headers as Record<string, string>,
+            data: error.response.data,
+            duration,
+          };
+        } else if (error.request) {
+          // 請求已發送但沒有收到回應（網路錯誤）
+          logger.error(EVENT_CODES.STEP_FAILURE, {
+            executionId,
+            component: 'http-client',
+            method: request.method,
+            url: request.url,
+            error: 'NO_RESPONSE',
+            message: error.message,
+            code: error.code,
+            duration,
+          });
+
+          return {
+            status: 0,
+            headers: {},
+            data: {
+              _network_error: true,
+              error: 'NO_RESPONSE',
+              message: error.message,
+              error_code: error.code,
+              url: request.url,
+              method: request.method,
+            },
+            duration,
+          };
+        }
+      }
+
+      // 請求設定時發生錯誤
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       logger.error(EVENT_CODES.STEP_FAILURE, {
         executionId,
         component: 'http-client',
         method: request.method,
         url: request.url,
-        error: errorMessage,
-        errorCode,
+        error: 'REQUEST_SETUP_ERROR',
+        message: errorMessage,
         duration,
       });
 
-      // ✨ 回傳虛擬 response 而不是拋出錯誤
-      // status: 0 表示網路層級錯誤（非 HTTP 錯誤）
       return {
         status: 0,
         headers: {},
         data: {
           _network_error: true,
-          error: 'NETWORK_ERROR',
+          error: 'REQUEST_SETUP_ERROR',
           message: errorMessage,
-          error_code: errorCode,
           url: request.url,
-          method: request.method
+          method: request.method,
         },
-        duration
+        duration,
       };
     }
   }
@@ -109,7 +154,7 @@ export class HttpClient {
   /**
    * GET 請求
    */
-  async get(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
+  async get(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
     return this.request({
       method: 'GET',
       url,
@@ -120,7 +165,7 @@ export class HttpClient {
   /**
    * POST 請求
    */
-  async post(url: string, body?: unknown, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
+  async post(url: string, body?: unknown, config?: Partial<HttpRequest>): Promise<HttpResponse> {
     return this.request({
       method: 'POST',
       url,
@@ -132,7 +177,7 @@ export class HttpClient {
   /**
    * PUT 請求
    */
-  async put(url: string, body?: unknown, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
+  async put(url: string, body?: unknown, config?: Partial<HttpRequest>): Promise<HttpResponse> {
     return this.request({
       method: 'PUT',
       url,
@@ -144,7 +189,7 @@ export class HttpClient {
   /**
    * PATCH 請求
    */
-  async patch(url: string, body?: unknown, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
+  async patch(url: string, body?: unknown, config?: Partial<HttpRequest>): Promise<HttpResponse> {
     return this.request({
       method: 'PATCH',
       url,
@@ -156,7 +201,7 @@ export class HttpClient {
   /**
    * DELETE 請求
    */
-  async delete(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
+  async delete(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
     return this.request({
       method: 'DELETE',
       url,
@@ -167,7 +212,7 @@ export class HttpClient {
   /**
    * HEAD 請求
    */
-  async head(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
+  async head(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
     return this.request({
       method: 'HEAD',
       url,
@@ -178,7 +223,7 @@ export class HttpClient {
   /**
    * OPTIONS 請求
    */
-  async options(url: string, config?: Partial<IHttpRequest>): Promise<IHttpResponse> {
+  async options(url: string, config?: Partial<HttpRequest>): Promise<HttpResponse> {
     return this.request({
       method: 'OPTIONS',
       url,
@@ -256,7 +301,7 @@ export class HttpClient {
   /**
    * 更新設定
    */
-  updateConfig(newConfig: Partial<IHttpClientConfig>): void {
+  updateConfig(newConfig: Partial<HttpClientConfig>): void {
     Object.assign(this.config, newConfig);
 
     // 更新 axios 實例的逾時設定
@@ -268,7 +313,7 @@ export class HttpClient {
   /**
    * 取得當前設定
    */
-  getConfig(): Readonly<IHttpClientConfig> {
+  getConfig(): Readonly<HttpClientConfig> {
     return { ...this.config };
   }
 }

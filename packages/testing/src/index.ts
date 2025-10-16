@@ -5,7 +5,7 @@
 /**
  * 模擬 HTTP 回應
  */
-export interface IMockHttpResponse {
+export interface MockHttpResponse {
   status: number;
   headers: Record<string, string>;
   data: unknown;
@@ -14,7 +14,7 @@ export interface IMockHttpResponse {
 /**
  * 建立模擬的成功回應
  */
-export function createSuccessResponse<T>(data: T, status = 200): IMockHttpResponse {
+export function createSuccessResponse<T>(data: T, status = 200): MockHttpResponse {
   return {
     status,
     headers: {
@@ -27,7 +27,7 @@ export function createSuccessResponse<T>(data: T, status = 200): IMockHttpRespon
 /**
  * 建立模擬的錯誤回應
  */
-export function createErrorResponse(message: string, status = 400): IMockHttpResponse {
+export function createErrorResponse(message: string, status = 400): MockHttpResponse {
   return {
     status,
     headers: {

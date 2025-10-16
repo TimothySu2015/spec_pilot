@@ -1,5 +1,5 @@
 import { createStructuredLogger } from '@specpilot/shared';
-import type { IUrlBuilderOptions } from './types.js';
+import type { UrlBuilderOptions } from './types.js';
 
 const logger = createStructuredLogger('url-builder');
 
@@ -10,7 +10,7 @@ export class UrlBuilder {
   /**
    * 建構完整的 URL
    */
-  static build(options: IUrlBuilderOptions): string {
+  static build(options: UrlBuilderOptions): string {
     const { baseUrl, path, pathParams = {}, queryParams = {} } = options;
 
     try {

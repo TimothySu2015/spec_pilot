@@ -43,6 +43,6 @@ export const FlowDefinitionSchema = z.object({
   steps: z.array(FlowStepSchema).min(1, '至少需要一個流程步驟'),
 });
 
-export type IFlowDefinition = z.infer<typeof FlowDefinitionSchema>;
+export type FlowDefinition = z.infer<typeof FlowDefinitionSchema>;
 export type { HTTPMethod };
 export { HTTPMethodSchema };

@@ -4,14 +4,14 @@
 
 import { createStructuredLogger } from '@specpilot/shared';
 import { TokenManager } from '@specpilot/http-runner';
-import type { IFlowStep, IFlowAuth, IStaticAuth } from '@specpilot/flow-parser';
+import type { FlowStep, FlowAuth, StaticAuth } from '@specpilot/flow-parser';
 
 const logger = createStructuredLogger('auth-handler');
 
 /**
  * 認證處理結果
  */
-export interface IAuthHandleResult {
+export interface AuthHandleResult {
   /** 是否成功 */
   success: boolean;
   /** 錯誤訊息（失敗時） */
@@ -34,10 +34,10 @@ export class AuthHandler {
    * 處理步驟層級的認證
    */
   async handleStepAuth(
-    step: IFlowStep,
+    step: FlowStep,
     response?: unknown,
     executionId?: string
-  ): Promise<IAuthHandleResult> {
+  ): Promise<AuthHandleResult> {
     if (!step.auth) {
       return { success: true };
     }
@@ -80,11 +80,11 @@ export class AuthHandler {
    * 處理登入類型認證
    */
   private async handleLoginAuth(
-    step: IFlowStep,
-    authConfig: IFlowAuth,
+    step: FlowStep,
+    authConfig: FlowAuth,
     response: unknown,
     executionId?: string
-  ): Promise<IAuthHandleResult> {
+  ): Promise<AuthHandleResult> {
     if (!authConfig.tokenExtraction) {
       return {
         success: false,
@@ -141,10 +141,10 @@ export class AuthHandler {
    * 處理靜態類型認證
    */
   private async handleStaticAuth(
-    step: IFlowStep,
-    authConfig: IFlowAuth,
+    step: FlowStep,
+    authConfig: FlowAuth,
     executionId?: string
-  ): Promise<IAuthHandleResult> {
+  ): Promise<AuthHandleResult> {
     const namespace = authConfig.namespace || 'default';
 
     // 檢查是否已有有效的 Token
@@ -178,10 +178,10 @@ export class AuthHandler {
    * 載入全域靜態認證設定
    */
   async loadGlobalStaticAuth(
-    staticAuthConfigs: IStaticAuth[],
+    staticAuthConfigs: StaticAuth[],
     executionId?: string
-  ): Promise<IAuthHandleResult[]> {
-    const results: IAuthHandleResult[] = [];
+  ): Promise<AuthHandleResult[]> {
+    const results: AuthHandleResult[] = [];
 
     for (const config of staticAuthConfigs) {
       try {

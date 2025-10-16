@@ -1,16 +1,16 @@
 import { createStructuredLogger, type TestStatus } from '@specpilot/shared';
-import type { IFlowDefinition as FlowParserDefinition, IFlowStep as FlowParserStep } from '@specpilot/flow-parser';
-import { AuthHandler, type IAuthHandleResult } from './auth-handler.js';
+import type { FlowDefinition as FlowParserDefinition, FlowStep as FlowParserStep } from '@specpilot/flow-parser';
+import { AuthHandler, type AuthHandleResult } from './auth-handler.js';
 
 // 匯出認證相關功能
-export { AuthHandler, type IAuthHandleResult } from './auth-handler.js';
+export { AuthHandler, type AuthHandleResult } from './auth-handler.js';
 
 const logger = createStructuredLogger('core-flow');
 
 /**
  * 測試執行結果
  */
-export interface ITestResult {
+export interface TestResult {
   status: TestStatus;
   duration: number;
   error?: string;
@@ -31,7 +31,7 @@ export interface ITestResult {
 /**
  * 流程步驟定義
  */
-export interface IFlowStep {
+export interface FlowStep {
   name: string;
   method: string;
   url: string;
@@ -44,16 +44,16 @@ export interface IFlowStep {
 /**
  * 流程定義
  */
-export interface IFlowDefinition {
+export interface FlowDefinition {
   name: string;
   description?: string;
-  steps: IFlowStep[];
+  steps: FlowStep[];
 }
 
 /**
  * 執行運行上下文
  */
-export interface IRunContext {
+export interface RunContext {
   /** 執行 ID */
   executionId: string;
   /** Flow 定義 */
@@ -80,8 +80,8 @@ export class FlowOrchestrator {
   async executeFlowDefinition(
     flowDefinition: FlowParserDefinition,
     executionId?: string
-  ): Promise<ITestResult[]> {
-    const context: IRunContext = {
+  ): Promise<TestResult[]> {
+    const context: RunContext = {
       executionId: executionId || this.generateExecutionId(),
       flow: flowDefinition,
       authHandler: this.authHandler,
@@ -113,7 +113,7 @@ export class FlowOrchestrator {
       }
     }
 
-    const results: ITestResult[] = [];
+    const results: TestResult[] = [];
 
     // 執行每個步驟
     for (const step of flowDefinition.steps) {
@@ -146,10 +146,10 @@ export class FlowOrchestrator {
   /**
    * 執行測試流程（舊版相容介面）
    */
-  async executeFlow(flow: IFlowDefinition): Promise<ITestResult[]> {
+  async executeFlow(flow: FlowDefinition): Promise<TestResult[]> {
     logger.info('開始執行測試流程', { flowName: flow.name });
 
-    const results: ITestResult[] = [];
+    const results: TestResult[] = [];
 
     for (const step of flow.steps) {
       const startTime = Date.now();
@@ -160,7 +160,7 @@ export class FlowOrchestrator {
         await new Promise(resolve => setTimeout(resolve, 10));
         
         // TODO: 實際的 HTTP 執行邏輯需要 http-runner 模組
-        const result: ITestResult = {
+        const result: TestResult = {
           status: 'pending',
           duration: Date.now() - startTime,
           error: '需要 http-runner 模組來執行實際 HTTP 請求',
@@ -170,7 +170,7 @@ export class FlowOrchestrator {
         logger.warn('步驟模擬執行', { stepName: step.name, result });
 
       } catch (error) {
-        const result: ITestResult = {
+        const result: TestResult = {
           status: 'failed',
           duration: Date.now() - startTime,
           error: error instanceof Error ? error.message : '未知錯誤',
@@ -193,7 +193,7 @@ export class FlowOrchestrator {
   /**
    * 驗證流程定義
    */
-  validateFlow(flow: IFlowDefinition): boolean {
+  validateFlow(flow: FlowDefinition): boolean {
     if (!flow.name || !flow.steps || flow.steps.length === 0) {
       logger.error('無效的流程定義', { flowName: flow.name });
       return false;
@@ -213,7 +213,7 @@ export class FlowOrchestrator {
   /**
    * 執行單個步驟
    */
-  private async executeStep(step: FlowParserStep, context: IRunContext): Promise<ITestResult> {
+  private async executeStep(step: FlowParserStep, context: RunContext): Promise<TestResult> {
     const startTime = Date.now();
 
     logger.info('執行測試步驟', {
@@ -224,7 +224,7 @@ export class FlowOrchestrator {
     });
 
     try {
-      let authResult: IAuthHandleResult | undefined;
+      let authResult: AuthHandleResult | undefined;
 
       // 處理靜態認證（檢查 Token 並注入 Authorization header）
       if (step.auth?.type === 'static') {
@@ -269,7 +269,7 @@ export class FlowOrchestrator {
         );
       }
 
-      const result: ITestResult = {
+      const result: TestResult = {
         status: 'passed',
         duration: Date.now() - startTime,
         response: mockResponse,
@@ -297,7 +297,7 @@ export class FlowOrchestrator {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
 
-      const result: ITestResult = {
+      const result: TestResult = {
         status: 'failed',
         duration: Date.now() - startTime,
         error: errorMessage,

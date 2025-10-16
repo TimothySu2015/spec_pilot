@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ReportGenerator, type ITestReport } from '../src/index.js';
-import { type ITestResult } from '@specpilot/core-flow';
+import { type TestResult } from '@specpilot/core-flow';
 
 describe('ReportGenerator', () => {
   let generator: ReportGenerator;
@@ -11,7 +11,7 @@ describe('ReportGenerator', () => {
 
   describe('generateReport', () => {
     it('應該產生完整的測試報表', () => {
-      const results: ITestResult[] = [
+      const results: TestResult[] = [
         { status: 'passed', duration: 100 },
         { status: 'failed', duration: 200, error: 'Test error' },
         { status: 'skipped', duration: 0 },
@@ -35,7 +35,7 @@ describe('ReportGenerator', () => {
     });
 
     it('應該處理空的結果', () => {
-      const results: ITestResult[] = [];
+      const results: TestResult[] = [];
 
       const report = generator.generateReport('Empty Flow', results);
 

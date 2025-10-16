@@ -3,7 +3,7 @@
  */
 
 import { createStructuredLogger } from '@specpilot/shared';
-import type { IFlowAuth, ITokenExtraction, IStaticAuth } from './types.js';
+import type { FlowAuth, TokenExtraction, StaticAuth } from './types.js';
 
 const logger = createStructuredLogger('auth-parser');
 
@@ -24,7 +24,7 @@ export class AuthParser {
   /**
    * 解析步驟層級的認證設定
    */
-  static parseStepAuth(authConfig: unknown, stepName: string): IFlowAuth | undefined {
+  static parseStepAuth(authConfig: unknown, stepName: string): FlowAuth | undefined {
     if (!authConfig) {
       return undefined;
     }
@@ -54,7 +54,7 @@ export class AuthParser {
       );
     }
 
-    const result: IFlowAuth = {
+    const result: FlowAuth = {
       type: authType as 'login' | 'static',
     };
 
@@ -92,7 +92,7 @@ export class AuthParser {
   private static parseTokenExtraction(
     extractionConfig: unknown,
     stepName: string
-  ): ITokenExtraction {
+  ): TokenExtraction {
     if (typeof extractionConfig !== 'object' || extractionConfig === null) {
       throw new AuthConfigValidationError(
         `步驟 "${stepName}" 的 tokenExtraction 設定必須是物件`,
@@ -110,7 +110,7 @@ export class AuthParser {
       );
     }
 
-    const result: ITokenExtraction = {
+    const result: TokenExtraction = {
       path: config.path,
     };
 
@@ -142,7 +142,7 @@ export class AuthParser {
   /**
    * 解析全域靜態認證設定
    */
-  static parseGlobalStaticAuth(staticConfig: unknown): IStaticAuth[] {
+  static parseGlobalStaticAuth(staticConfig: unknown): StaticAuth[] {
     if (!staticConfig) {
       return [];
     }
@@ -180,7 +180,7 @@ export class AuthParser {
         );
       }
 
-      const result: IStaticAuth = {
+      const result: StaticAuth = {
         namespace: config.namespace.trim(),
         token: config.token,
       };

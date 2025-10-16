@@ -3,7 +3,7 @@
  * 分析資源依賴關係並產生流程串接
  */
 
-import type { FlowStep } from '@specpilot/flow-parser';
+import type { FlowStep, HttpMethod } from '@specpilot/flow-parser';
 import type { EndpointInfo, DependencyGraph, DependencyNode, DependencyEdge } from './types.js';
 import { DataSynthesizer } from './data-synthesizer.js';
 
@@ -139,7 +139,7 @@ export class DependencyResolver {
     return {
       name: stepName,
       request: {
-        method: node.endpoint.method.toUpperCase() as any,
+        method: node.endpoint.method.toUpperCase() as HttpMethod,
         path: node.endpoint.path,
         body: this.dataSynthesizer.synthesize(node.endpoint.requestSchema || {}),
       },
@@ -190,7 +190,7 @@ export class DependencyResolver {
     const step: FlowStep = {
       name: stepName,
       request: {
-        method: node.endpoint.method.toUpperCase() as any,
+        method: node.endpoint.method.toUpperCase() as HttpMethod,
         path,
         ...additionalRequest,
       },

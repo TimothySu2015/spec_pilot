@@ -3,7 +3,7 @@ import type { HttpMethod } from '@specpilot/shared';
 /**
  * HTTP 請求設定
  */
-export interface IHttpRequest {
+export interface HttpRequest {
   method: HttpMethod;
   url: string;
   headers?: Record<string, string>;
@@ -14,7 +14,7 @@ export interface IHttpRequest {
 /**
  * HTTP 回應
  */
-export interface IHttpResponse {
+export interface HttpResponse {
   status: number;
   headers: Record<string, string>;
   data: unknown;
@@ -24,7 +24,7 @@ export interface IHttpResponse {
 /**
  * HTTP 客戶端設定
  */
-export interface IHttpClientConfig {
+export interface HttpClientConfig {
   timeout?: number;
   retries?: number;
   retryDelay?: number;
@@ -34,7 +34,7 @@ export interface IHttpClientConfig {
 /**
  * 重試策略設定
  */
-export interface IRetryConfig {
+export interface RetryConfig {
   retries: number;
   delay: number;
   factor: number;
@@ -45,7 +45,7 @@ export interface IRetryConfig {
 /**
  * Token 管理介面
  */
-export interface ITokenInfo {
+export interface TokenInfo {
   token: string;
   namespace?: string;
   expiresAt?: Date;
@@ -54,7 +54,7 @@ export interface ITokenInfo {
 /**
  * URL 建構選項
  */
-export interface IUrlBuilderOptions {
+export interface UrlBuilderOptions {
   baseUrl: string;
   path: string;
   pathParams?: Record<string, string>;
@@ -69,7 +69,7 @@ export type CircuitBreakerState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 /**
  * 斷路器設定
  */
-export interface ICircuitBreakerConfig {
+export interface CircuitBreakerConfig {
   failureThreshold: number;
   recoveryTimeout: number;
   monitoringPeriod: number;

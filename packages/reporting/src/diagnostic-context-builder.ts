@@ -1,8 +1,8 @@
 import { createStructuredLogger } from '@specpilot/shared';
-import type { IExecutionReport, IStepResult } from './execution-report.js';
+import type { ExecutionReport, StepResult } from './execution-report.js';
 import type {
-  IDiagnosticContext,
-  IFailedStepDiagnostic,
+  DiagnosticContext,
+  FailedStepDiagnostic,
   IErrorClassification,
   IErrorPattern,
   IDiagnosticHints,
@@ -20,7 +20,7 @@ export class DiagnosticContextBuilder {
   /**
    * 建立診斷上下文
    */
-  build(report: IExecutionReport): IDiagnosticContext | null {
+  build(report: ExecutionReport): DiagnosticContext | null {
     // 如果沒有失敗，不需要診斷上下文
     const failedSteps = report.steps.filter(s => s.status === 'failure');
     if (failedSteps.length === 0) {
@@ -56,7 +56,7 @@ export class DiagnosticContextBuilder {
     // 生成診斷提示
     const diagnosticHints = this.generateDiagnosticHints(failedSteps, failedStepDiagnostics, errorPatterns);
 
-    const diagnosticContext: IDiagnosticContext = {
+    const diagnosticContext: DiagnosticContext = {
       hasFailed: true,
       failureCount: failedSteps.length,
       failedSteps: failedStepDiagnostics,
@@ -78,7 +78,7 @@ export class DiagnosticContextBuilder {
   /**
    * 建立失敗步驟診斷
    */
-  private buildFailedStepDiagnostic(step: IStepResult, stepIndex: number): IFailedStepDiagnostic {
+  private buildFailedStepDiagnostic(step: StepResult, stepIndex: number): FailedStepDiagnostic {
     const classification = this.classifyError(step);
 
     return {
@@ -95,7 +95,7 @@ export class DiagnosticContextBuilder {
   /**
    * 錯誤分類
    */
-  private classifyError(step: IStepResult): IErrorClassification {
+  private classifyError(step: StepResult): IErrorClassification {
     const code = step.response.statusCode;
     const body = step.response.errorDetails?.body;
     const errorCode = this.extractErrorCode(body);
@@ -199,7 +199,7 @@ export class DiagnosticContextBuilder {
   /**
    * 偵測錯誤模式
    */
-  private detectErrorPatterns(report: IExecutionReport, failedSteps: IStepResult[]): IErrorPattern[] {
+  private detectErrorPatterns(report: ExecutionReport, failedSteps: StepResult[]): IErrorPattern[] {
     const patterns: IErrorPattern[] = [];
     const steps = report.steps;
 
@@ -257,7 +257,7 @@ export class DiagnosticContextBuilder {
   /**
    * 尋找同一資源的失敗模式
    */
-  private findSameResourceFailures(failedSteps: IStepResult[], allSteps: IStepResult[]): IErrorPattern | null {
+  private findSameResourceFailures(failedSteps: StepResult[], allSteps: StepResult[]): IErrorPattern | null {
     // 簡化版：檢查 URL 是否有共同的資源路徑
     const urlPaths = failedSteps.map(s => {
       const url = s.request.url;
@@ -300,8 +300,8 @@ export class DiagnosticContextBuilder {
    * 生成診斷提示
    */
   private generateDiagnosticHints(
-    failedSteps: IStepResult[],
-    diagnostics: IFailedStepDiagnostic[],
+    failedSteps: StepResult[],
+    diagnostics: FailedStepDiagnostic[],
     patterns: IErrorPattern[]
   ): IDiagnosticHints {
     const errorTypes = diagnostics.map(d => d.classification.primaryType);
@@ -360,7 +360,7 @@ export class DiagnosticContextBuilder {
   /**
    * 生成可能原因列表
    */
-  private generateLikelyCauses(errorTypes: ErrorType[], patterns: IErrorPattern[], _diagnostics: IFailedStepDiagnostic[]): string[] {
+  private generateLikelyCauses(errorTypes: ErrorType[], patterns: IErrorPattern[], _diagnostics: FailedStepDiagnostic[]): string[] {
     const causes: string[] = [];
 
     // 根據錯誤類型生成原因

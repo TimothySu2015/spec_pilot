@@ -49,7 +49,7 @@ export const GlobalAuthSchema = z.union([
   }),
 ]);
 
-export type ITokenExtraction = z.infer<typeof TokenExtractionSchema>;
-export type IStepAuth = z.infer<typeof StepAuthSchema>;
-export type IGlobalAuth = z.infer<typeof GlobalAuthSchema>;
-export type IStaticAuthItem = z.infer<typeof StaticAuthItemSchema>;
+export type TokenExtraction = z.infer<typeof TokenExtractionSchema>;
+export type StepAuth = z.infer<typeof StepAuthSchema>;
+export type GlobalAuth = z.infer<typeof GlobalAuthSchema>;
+export type StaticAuthItem = z.infer<typeof StaticAuthItemSchema>;

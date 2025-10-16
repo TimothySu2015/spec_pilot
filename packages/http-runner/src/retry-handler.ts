@@ -1,5 +1,5 @@
 import { createStructuredLogger } from '@specpilot/shared';
-import type { IRetryConfig, ICircuitBreakerConfig, CircuitBreakerState } from './types.js';
+import type { RetryConfig, CircuitBreakerConfig, CircuitBreakerState } from './types.js';
 
 const logger = createStructuredLogger('retry-handler');
 
@@ -7,12 +7,12 @@ const logger = createStructuredLogger('retry-handler');
  * 重試處理器，實作指數退避策略與斷路器機制
  */
 export class RetryHandler {
-  private readonly config: Required<IRetryConfig>;
+  private readonly config: Required<RetryConfig>;
   private circuitBreaker: CircuitBreaker;
 
   constructor(
-    retryConfig: Partial<IRetryConfig> = {},
-    circuitBreakerConfig: Partial<ICircuitBreakerConfig> = {}
+    retryConfig: Partial<RetryConfig> = {},
+    circuitBreakerConfig: Partial<CircuitBreakerConfig> = {}
   ) {
     this.config = {
       retries: 3,
@@ -199,7 +199,7 @@ export class RetryHandler {
   /**
    * 取得重試設定
    */
-  getConfig(): Readonly<Required<IRetryConfig>> {
+  getConfig(): Readonly<Required<RetryConfig>> {
     return { ...this.config };
   }
 
@@ -233,9 +233,9 @@ class CircuitBreaker {
   private state: CircuitBreakerState = 'CLOSED';
   private failureCount = 0;
   private lastFailureTime?: Date;
-  private readonly config: ICircuitBreakerConfig;
+  private readonly config: CircuitBreakerConfig;
 
-  constructor(config: ICircuitBreakerConfig) {
+  constructor(config: CircuitBreakerConfig) {
     this.config = config;
   }
 

@@ -1,4 +1,4 @@
-import Ajv from 'ajv';
+import Ajv, { type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import type {
   Validator,
@@ -14,6 +14,7 @@ import type {
 export class SchemaValidator implements Validator {
   private readonly ajv: Ajv;
   private readonly schemaCache = new Map<string, object>();
+  private readonly compiledValidators = new Map<string, ValidateFunction>();
 
   constructor() {
     this.ajv = new Ajv({
@@ -24,6 +25,50 @@ export class SchemaValidator implements Validator {
 
     // 添加格式支援（如 email, date, uri 等）
     addFormats(this.ajv);
+
+    // 添加自訂關鍵字
+    this.registerCustomKeywords();
+  }
+
+  /**
+   * 註冊自訂 Ajv 關鍵字
+   */
+  private registerCustomKeywords(): void {
+    // 自訂關鍵字: notNull - 驗證值不為 null
+    this.ajv.addKeyword({
+      keyword: 'notNull',
+      validate: (schema: boolean, data: unknown) => {
+        if (!schema) return true; // 如果 notNull: false，則不驗證
+        return data !== null;
+       },
+      errors: false,
+    });
+
+    // 自訂關鍵字: stringContains - 驗證字串包含指定子字串
+    // 注意: 'contains' 是 Ajv 內建關鍵字用於陣列，所以使用 'stringContains'
+    this.ajv.addKeyword({
+      keyword: 'stringContains',
+      type: 'string',
+      validate: (schema: string, data: string) => {
+        return data.includes(schema);
+      },
+      errors: false,
+    });
+
+    // 自訂關鍵字: regex - 驗證字串符合正規表示式（比 pattern 更靈活）
+    this.ajv.addKeyword({
+      keyword: 'regex',
+      type: 'string',
+      validate: (schema: string, data: string) => {
+        try {
+          const regex = new RegExp(schema);
+          return regex.test(data);
+        } catch {
+          return false; // 如果正規表示式無效，回傳 false
+        }
+      },
+      errors: false,
+    });
   }
 
   async validate(ctx: ValidationContext): Promise<ValidatorResult> {
@@ -53,7 +98,7 @@ export class SchemaValidator implements Validator {
           });
           isValid = false;
         } else {
-          const validationResult = this.validateData(response.data, schema);
+          const validationResult = this.validateData(response.data, schema, expectations.schema);
           if (!validationResult.isValid) {
             isValid = false;
             issues.push(...validationResult.issues);
@@ -129,12 +174,20 @@ export class SchemaValidator implements Validator {
   /**
    * 驗證資料
    */
-  private validateData(data: unknown, schema: object): {
+  private validateData(data: unknown, schema: object, schemaName: string): {
     isValid: boolean;
     issues: ValidationIssue[];
   } {
     try {
-      const validate = this.ajv.compile(schema);
+      // 檢查快取中是否有編譯後的驗證函式
+      let validate = this.compiledValidators.get(schemaName);
+
+      if (!validate) {
+        // 編譯 schema 並快取驗證函式
+        validate = this.ajv.compile(schema);
+        this.compiledValidators.set(schemaName, validate);
+      }
+
       const isValid = validate(data);
 
       if (!isValid && validate.errors) {
@@ -203,15 +256,17 @@ export class SchemaValidator implements Validator {
    */
   clearCache(): void {
     this.schemaCache.clear();
+    this.compiledValidators.clear();
   }
 
   /**
    * 取得快取統計
    */
-  getCacheStats(): { size: number; schemas: string[] } {
+  getCacheStats(): { size: number; schemas: string[]; compiledValidators: number } {
     return {
       size: this.schemaCache.size,
       schemas: Array.from(this.schemaCache.keys()),
+      compiledValidators: this.compiledValidators.size,
     };
   }
 }

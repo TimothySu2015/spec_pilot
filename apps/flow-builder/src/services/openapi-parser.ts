@@ -1,7 +1,7 @@
 /**
  * OpenAPI 端點資訊
  */
-export interface APIEndpoint {
+export interface IAPIEndpoint {
   path: string;
   method: string;
   operationId?: string;
@@ -16,8 +16,8 @@ export interface APIEndpoint {
 /**
  * 從 OpenAPI 規格中提取所有 API 端點
  */
-export function extractEndpoints(openApiSpec: any): APIEndpoint[] {
-  const endpoints: APIEndpoint[] = [];
+export function extractEndpoints(openApiSpec: any): IAPIEndpoint[] {
+  const endpoints: IAPIEndpoint[] = [];
   const paths = openApiSpec.paths || {};
 
   for (const [path, pathItem] of Object.entries<any>(paths)) {
@@ -57,8 +57,8 @@ export function extractEndpoints(openApiSpec: any): APIEndpoint[] {
 /**
  * 依 Tag 分組端點
  */
-export function groupEndpointsByTag(endpoints: APIEndpoint[]): Record<string, APIEndpoint[]> {
-  const grouped: Record<string, APIEndpoint[]> = {};
+export function groupEndpointsByTag(endpoints: IAPIEndpoint[]): Record<string, IAPIEndpoint[]> {
+  const grouped: Record<string, IAPIEndpoint[]> = {};
 
   for (const endpoint of endpoints) {
     const tag = endpoint.tags?.[0] || 'default';

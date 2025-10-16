@@ -1,10 +1,10 @@
 import { createStructuredLogger, type TestStatus, getExecutionId } from '@specpilot/shared';
-import { type ITestResult } from '@specpilot/core-flow';
+import { type TestResult } from '@specpilot/core-flow';
 import { writeFileSync } from 'fs';
 
 // 匯出新的類型與功能
 export * from './execution-report.js';
-export { ReportGenerator as EnhancedReportGenerator, type IStepInput } from './report-generator.js';
+export { ReportGenerator as EnhancedReportGenerator, type StepInput } from './report-generator.js';
 export * from './report-validator.js';
 
 // ✨ 匯出診斷相關功能
@@ -16,7 +16,7 @@ const logger = createStructuredLogger('reporting');
 /**
  * 測試報表
  */
-export interface ITestReport {
+export interface TestReport {
   executionId: string;
   timestamp: string;
   flowName: string;
@@ -55,13 +55,13 @@ export class ReportGenerator {
    */
   generateReport(
     flowName: string,
-    results: ITestResult[],
+    results: TestResult[],
     environment: {
       baseUrl?: string;
       port?: number;
     } = {},
     metadata: Record<string, unknown> = {},
-  ): ITestReport {
+  ): TestReport {
     logger.info('產生測試報表', { flowName, resultCount: results.length });
 
     const passed = results.filter(r => r.status === 'passed').length;
@@ -69,7 +69,7 @@ export class ReportGenerator {
     const skipped = results.filter(r => r.status === 'skipped').length;
     const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
 
-    const report: ITestReport = {
+    const report: TestReport = {
       executionId: getExecutionId(),
       timestamp: new Date().toISOString(),
       flowName,
@@ -111,7 +111,7 @@ export class ReportGenerator {
   /**
    * 儲存報表至檔案
    */
-  saveReport(report: ITestReport, filePath: string = 'reports/result.json'): void {
+  saveReport(report: TestReport, filePath: string = 'reports/result.json'): void {
     logger.info('儲存測試報表', { filePath, executionId: report.executionId });
 
     try {
@@ -138,7 +138,7 @@ export class ReportGenerator {
   /**
    * 產生摘要報告
    */
-  generateSummary(report: ITestReport): string {
+  generateSummary(report: TestReport): string {
     const { summary } = report;
     const successRate = summary.total > 0 ? (summary.passed / summary.total * 100).toFixed(1) : '0.0';
 
@@ -165,7 +165,7 @@ export class ReportGenerator {
   /**
    * 產生 JUnit XML 報表（用於 CI/CD）
    */
-  generateJUnitXml(report: ITestReport): string {
+  generateJUnitXml(report: TestReport): string {
     logger.info('產生 JUnit XML 報表', { executionId: report.executionId });
 
     const { summary } = report;

@@ -6,8 +6,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FlowOrchestrator, AuthHandler } from '@specpilot/core-flow';
 import { AuthParser } from '@specpilot/flow-parser';
 import { AuthConfigManager } from '@specpilot/config';
-import type { IFlowDefinition, IFlowStep } from '@specpilot/flow-parser';
-import type { ITestResult } from '@specpilot/core-flow';
+import type { FlowDefinition, FlowStep } from '@specpilot/flow-parser';
+import type { TestResult } from '@specpilot/core-flow';
 
 describe('認證流程整合測試', () => {
   let flowOrchestrator: FlowOrchestrator;
@@ -36,7 +36,7 @@ describe('認證流程整合測試', () => {
 
   describe('登入流程與 Token 提取', () => {
     it('應該成功執行登入步驟並提取 Token', async () => {
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'auth-test-flow',
         rawContent: '',
         steps: [
@@ -80,7 +80,7 @@ describe('認證流程整合測試', () => {
       const tokenManager = authHandler.getTokenManager();
       vi.spyOn(tokenManager, 'extractTokenFromResponse').mockReturnValue(null);
 
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'auth-fail-flow',
         rawContent: '',
         steps: [
@@ -112,7 +112,7 @@ describe('認證流程整合測試', () => {
     });
 
     it('應該支援自訂 Token 提取路徑', async () => {
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'custom-path-flow',
         rawContent: '',
         steps: [
@@ -147,7 +147,7 @@ describe('認證流程整合測試', () => {
       // 設定靜態 Token
       authHandler.getTokenManager().loadStaticToken('static_token_value', 'external_api', 3600);
 
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'static-auth-flow',
         rawContent: '',
         steps: [
@@ -175,7 +175,7 @@ describe('認證流程整合測試', () => {
     });
 
     it('應該處理 Token 缺失的情況', async () => {
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'missing-token-flow',
         rawContent: '',
         steps: [
@@ -208,7 +208,7 @@ describe('認證流程整合測試', () => {
       // 設定環境變數
       process.env.SPEC_PILOT_TOKEN_API_V1 = 'env_token_value';
 
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'env-auth-flow',
         rawContent: '',
         steps: [
@@ -249,7 +249,7 @@ describe('認證流程整合測試', () => {
     });
 
     it('應該處理環境變數缺失的情況', async () => {
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'missing-env-flow',
         rawContent: '',
         steps: [
@@ -342,7 +342,7 @@ describe('認證流程整合測試', () => {
 
   describe('完整認證流程', () => {
     it('應該完整執行登入到 API 呼叫的流程', async () => {
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'complete-auth-flow',
         rawContent: '',
         steps: [
@@ -419,7 +419,7 @@ describe('認證流程整合測試', () => {
       // 預先載入外部服務 Token
       authHandler.getTokenManager().loadStaticToken('external_token', 'external_service', 7200);
 
-      const flowDefinition: IFlowDefinition = {
+      const flowDefinition: FlowDefinition = {
         id: 'multi-namespace-flow',
         rawContent: '',
         steps: [

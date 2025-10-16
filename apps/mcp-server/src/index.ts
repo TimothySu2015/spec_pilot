@@ -7,7 +7,7 @@ import path from 'path';
 import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
-import { type IExecutionConfig, DiagnosticContextBuilder } from '@specpilot/reporting';
+import { type ExecutionConfig, DiagnosticContextBuilder } from '@specpilot/reporting';
 import { overrideConfig, getConfig } from '@specpilot/config';
 import { SpecAnalyzer, TestSuiteGenerator, FlowQualityChecker } from '@specpilot/test-suite-generator';
 import { FlowValidator } from '@specpilot/flow-validator';
@@ -302,7 +302,7 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
     const orchestrator = new EnhancedFlowOrchestrator(undefined, { baseUrl: finalBaseUrl });
 
     // 準備執行配置
-    const executionConfig: IExecutionConfig = {
+    const executionConfig: ExecutionConfig = {
       baseUrl: finalBaseUrl,
       fallbackUsed: false,
       authNamespaces: []

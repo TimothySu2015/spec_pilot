@@ -249,11 +249,12 @@ describe('HttpRunner', () => {
         .replyWithError('Network Error');
 
       // ✨ 修改: 現在回傳虛擬 response 而不是拋出錯誤
+      // 使用新的錯誤分類: NO_RESPONSE
       const response = await runner.get('/network-error');
 
       expect(response.status).toBe(0);
       expect(response.data).toHaveProperty('_network_error', true);
-      expect(response.data).toHaveProperty('error', 'NETWORK_ERROR');
+      expect(response.data).toHaveProperty('error', 'NO_RESPONSE');
     });
   });
 

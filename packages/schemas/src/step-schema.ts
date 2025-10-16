@@ -68,10 +68,10 @@ export const FlowStepSchema = z.object({
   retryPolicy: RetryPolicySchema.optional(),
 });
 
-export type IFlowStep = z.infer<typeof FlowStepSchema>;
-export type IFlowRequest = z.infer<typeof FlowRequestSchema>;
-export type IFlowExpect = z.infer<typeof FlowExpectSchema>;
-export type IExpectBodyField = z.infer<typeof ExpectBodyFieldSchema>;
-export type ICapture = z.infer<typeof CaptureSchema>;
-export type ICaptureVariable = ICapture;
+export type FlowStep = z.infer<typeof FlowStepSchema>;
+export type FlowRequest = z.infer<typeof FlowRequestSchema>;
+export type FlowExpect = z.infer<typeof FlowExpectSchema>;
+export type ExpectBodyField = z.infer<typeof ExpectBodyFieldSchema>;
+export type Capture = z.infer<typeof CaptureSchema>;
+export type CaptureVariable = Capture;
 export type HTTPMethod = z.infer<typeof HTTPMethodSchema>;

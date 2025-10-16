@@ -4,11 +4,11 @@ import {
   getExecutionId,
   setExecutionId,
   resetExecutionId,
-  type IStructuredLogger 
+  type StructuredLogger 
 } from '../src/logger.js';
 
 describe('logger', () => {
-  let logger: IStructuredLogger;
+  let logger: StructuredLogger;
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {

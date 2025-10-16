@@ -8,16 +8,16 @@
  * 4. 支援巢狀物件路徑（如 user.name, data[0].id）
  */
 
-import { createStructuredLogger, type IStructuredLogger } from '@specpilot/shared';
+import { createStructuredLogger, type StructuredLogger } from '@specpilot/shared';
 
 /**
  * 變數解析器類別
  */
 export class VariableResolver {
   private variables: Map<string, unknown> = new Map();
-  private logger: IStructuredLogger;
+  private logger: StructuredLogger;
 
-  constructor(logger?: IStructuredLogger) {
+  constructor(logger?: StructuredLogger) {
     this.logger = logger || createStructuredLogger('variable-resolver');
   }
 

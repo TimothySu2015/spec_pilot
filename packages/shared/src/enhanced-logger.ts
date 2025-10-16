@@ -5,17 +5,17 @@ import { createHash } from 'crypto';
 import path from 'path';
 import { createWriteStream, existsSync, mkdirSync, readdirSync, statSync, unlinkSync, renameSync } from 'fs';
 import {
-  IStructuredLogEntry,
-  IRequestSummary,
-  IResponseSummary,
-  ILogRotationConfig
+  StructuredLogEntry,
+  RequestSummary,
+  ResponseSummary,
+  LogRotationConfig
 } from './structured-log-types.js';
 import { EVENT_CODES } from './index.js';
 
 /**
  * 增強版結構化日誌介面
  */
-export interface IEnhancedStructuredLogger {
+export interface EnhancedStructuredLogger {
   /**
    * 記錄步驟開始
    */
@@ -61,13 +61,13 @@ export interface IEnhancedStructuredLogger {
   /**
    * 建立子 Logger
    */
-  child(bindings: Record<string, unknown>): IEnhancedStructuredLogger;
+  child(bindings: Record<string, unknown>): EnhancedStructuredLogger;
 }
 
 /**
  * 預設日誌輪替配置
  */
-const DEFAULT_ROTATION_CONFIG: ILogRotationConfig = {
+const DEFAULT_ROTATION_CONFIG: LogRotationConfig = {
   maxFileSize: '10MB',
   maxFiles: 10,
   datePattern: 'YYYY-MM-DD',
@@ -78,16 +78,16 @@ const DEFAULT_ROTATION_CONFIG: ILogRotationConfig = {
 /**
  * 增強版結構化 Logger 實作
  */
-export class EnhancedStructuredLogger implements IEnhancedStructuredLogger {
+export class EnhancedStructuredLoggerImpl implements EnhancedStructuredLogger {
   private logger: pino.Logger;
   private currentExecutionId: string;
   private component: string;
-  private rotationConfig: ILogRotationConfig;
+  private rotationConfig: LogRotationConfig;
 
   constructor(
     component: string,
     executionId?: string,
-    rotationConfig: Partial<ILogRotationConfig> = {}
+    rotationConfig: Partial<LogRotationConfig> = {}
   ) {
     this.component = component;
     this.currentExecutionId = executionId || randomUUID();
@@ -330,11 +330,11 @@ export class EnhancedStructuredLogger implements IEnhancedStructuredLogger {
     options: {
       stepName?: string;
       duration?: number;
-      requestSummary?: IRequestSummary;
-      responseSummary?: IResponseSummary;
+      requestSummary?: RequestSummary;
+      responseSummary?: ResponseSummary;
       context?: Record<string, unknown>;
     } = {}
-  ): IStructuredLogEntry {
+  ): StructuredLogEntry {
     const { stepName, duration, requestSummary, responseSummary, context } = options;
 
     return {
@@ -386,7 +386,7 @@ export class EnhancedStructuredLogger implements IEnhancedStructuredLogger {
     headers: Record<string, string>;
     body: unknown;
   }): void {
-    const requestSummary: IRequestSummary = {
+    const requestSummary: RequestSummary = {
       method: request.method,
       url: request.url,
       headerHash: this.calculateHash(request.headers),
@@ -405,7 +405,7 @@ export class EnhancedStructuredLogger implements IEnhancedStructuredLogger {
     validationResults: string[];
     errorMessage?: string;
   }): void {
-    const responseSummary: IResponseSummary = {
+    const responseSummary: ResponseSummary = {
       statusCode: response.statusCode,
       validationResults: response.validationResults,
       errorMessage: response.errorMessage,
@@ -438,8 +438,8 @@ export class EnhancedStructuredLogger implements IEnhancedStructuredLogger {
     this.logger.debug(logEntry);
   }
 
-  child(_bindings: Record<string, unknown>): IEnhancedStructuredLogger {
-    return new EnhancedStructuredLogger(
+  child(_bindings: Record<string, unknown>): EnhancedStructuredLogger {
+    return new EnhancedStructuredLoggerImpl(
       this.component,
       this.currentExecutionId,
       this.rotationConfig
@@ -453,7 +453,7 @@ export class EnhancedStructuredLogger implements IEnhancedStructuredLogger {
 export function createEnhancedStructuredLogger(
   component: string,
   executionId?: string,
-  rotationConfig?: Partial<ILogRotationConfig>
-): IEnhancedStructuredLogger {
-  return new EnhancedStructuredLogger(component, executionId, rotationConfig);
+  rotationConfig?: Partial<LogRotationConfig>
+): EnhancedStructuredLogger {
+  return new EnhancedStructuredLoggerImpl(component, executionId, rotationConfig);
 }

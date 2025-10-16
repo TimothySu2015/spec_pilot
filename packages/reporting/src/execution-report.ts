@@ -6,7 +6,7 @@
 /**
  * 錯誤詳情（失敗時才包含）
  */
-export interface IErrorDetails {
+export interface ErrorDetails {
   /** 完整錯誤回應 body（已遮罩敏感資料） */
   body: unknown;
   /** 回應 Headers（已遮罩敏感資料） */
@@ -22,7 +22,7 @@ export interface IErrorDetails {
 /**
  * 步驟執行結果
  */
-export interface IStepResult {
+export interface StepResult {
   /** 步驟名稱 */
   name: string;
   /** 執行狀態 */
@@ -53,14 +53,14 @@ export interface IStepResult {
     /** 錯誤訊息（如果有） */
     errorMessage: string | null;
     /** ✨ 新增: 失敗時的完整錯誤資訊 */
-    errorDetails?: IErrorDetails;
+    errorDetails?: ErrorDetails;
   };
 }
 
 /**
  * 執行配置資訊
  */
-export interface IExecutionConfig {
+export interface ExecutionConfig {
   /** 基礎 URL */
   baseUrl: string;
   /** 是否使用備援 */
@@ -72,7 +72,7 @@ export interface IExecutionConfig {
 /**
  * 執行摘要
  */
-export interface IExecutionSummary {
+export interface ExecutionSummary {
   /** 總步驟數 */
   totalSteps: number;
   /** 成功步驟數 */
@@ -86,7 +86,7 @@ export interface IExecutionSummary {
 /**
  * 完整執行報表
  */
-export interface IExecutionReport {
+export interface ExecutionReport {
   /** 執行 ID */
   executionId: string;
   /** 流程 ID */
@@ -100,28 +100,20 @@ export interface IExecutionReport {
   /** 整體狀態 */
   status: 'success' | 'failure' | 'partial';
   /** 執行摘要 */
-  summary: IExecutionSummary;
+  summary: ExecutionSummary;
   /** 步驟結果列表 */
-  steps: IStepResult[];
+  steps: StepResult[];
   /** 執行配置 */
-  config: IExecutionConfig;
+  config: ExecutionConfig;
 }
 
 /**
  * 部分報表（用於錯誤恢復）
  */
-export interface IPartialExecutionReport extends Omit<IExecutionReport, 'endTime' | 'duration' | 'status'> {
+export interface PartialExecutionReport extends Omit<ExecutionReport, 'endTime' | 'duration' | 'status'> {
   /** 產生時間 */
   generatedAt: string;
   /** 失敗原因 */
   failureReason: string;
 }
 
-/**
- * 類型別名，用於向後兼容
- */
-export type ExecutionReport = IExecutionReport;
-export type StepResult = IStepResult;
-export type ExecutionSummary = IExecutionSummary;
-export type ExecutionConfig = IExecutionConfig;
-export type ErrorDetails = IErrorDetails;

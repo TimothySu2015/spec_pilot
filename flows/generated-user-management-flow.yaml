@@ -7,23 +7,23 @@ steps:
     request:
       method: GET
       path: /api/health
-    expect:
-      statusCode: 200
+    expectations:
+      status: 200
   - name: 使用者登入 - 成功案例
     request:
       method: POST
       path: /auth/login
       body:
-        username: 測
-        password: 測
-    expect:
-      statusCode: 201
+        username: testuser
+        password: password123
+    expectations:
+      status: 201
   - name: 使用者登入 - 缺少 username
     request:
       method: POST
       path: /auth/login
       body:
-        password: 測
+        password: 測試資
     expect:
       statusCode: 400
   - name: 使用者登入 - 缺少 password
@@ -31,7 +31,7 @@ steps:
       method: POST
       path: /auth/login
       body:
-        username: 測
+        username: 測試資
     expect:
       statusCode: 400
   - name: 使用者登入 - 無效 username 格式
@@ -40,7 +40,7 @@ steps:
       path: /auth/login
       body:
         username: ""
-        password: 測
+        password: 測試資
     expect:
       statusCode: 400
   - name: 使用者登入 - 無效 password 格式
@@ -48,7 +48,7 @@ steps:
       method: POST
       path: /auth/login
       body:
-        username: 測
+        username: 測試資
         password: ""
     expect:
       statusCode: 400
@@ -56,8 +56,8 @@ steps:
     request:
       method: GET
       path: /api/users
-    expect:
-      statusCode: 200
+    expectations:
+      status: 200
   - name: 取得使用者列表 - 無認證
     request:
       method: GET
@@ -69,12 +69,12 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測
+        name: 測試使用者
         email: test@example.tw
         role: user
         status: active
-    expect:
-      statusCode: 201
+    expectations:
+      status: 201
   - name: 建立新使用者 - 缺少 name
     request:
       method: POST
@@ -90,7 +90,7 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測
+        name: 測試資
         role: user
         status: active
     expect:
@@ -111,7 +111,7 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測
+        name: 測試資
         email: invalid-email
         role: user
         status: active
@@ -122,7 +122,7 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         role: 123
         status: active
@@ -133,7 +133,7 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         role: user
         status: 123
@@ -149,8 +149,8 @@ steps:
     request:
       method: GET
       path: /api/users/{id}
-    expect:
-      statusCode: 200
+    expectations:
+      status: 200
   - name: 取得使用者詳情 - 無認證
     request:
       method: GET
@@ -162,12 +162,12 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試使用者
         email: test@example.tw
         role: admin
         status: active
-    expect:
-      statusCode: 200
+    expectations:
+      status: 200
   - name: 完整更新使用者 - 缺少 name
     request:
       method: PUT
@@ -183,7 +183,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         role: admin
         status: active
     expect:
@@ -193,7 +193,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         status: active
     expect:
@@ -203,7 +203,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         role: admin
     expect:
@@ -224,7 +224,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: invalid-email
         role: admin
         status: active
@@ -235,7 +235,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         role: 123
         status: active
@@ -246,7 +246,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         role: admin
         status: 123
@@ -263,8 +263,8 @@ steps:
       method: PATCH
       path: /api/users/{id}
       body: {}
-    expect:
-      statusCode: 200
+    expectations:
+      status: 200
   - name: 部分更新使用者 - 無效 name 格式
     request:
       method: PATCH
@@ -281,7 +281,7 @@ steps:
       method: PATCH
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: invalid-email
         role: admin
         status: active
@@ -292,7 +292,7 @@ steps:
       method: PATCH
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         role: 123
         status: active
@@ -303,7 +303,7 @@ steps:
       method: PATCH
       path: /api/users/{id}
       body:
-        name: 測
+        name: 測試資
         email: test@example.tw
         role: admin
         status: 123
@@ -319,20 +319,20 @@ steps:
     request:
       method: DELETE
       path: /api/users/{id}
-    expect:
-      statusCode: 204
+    expectations:
+      status: 204
   - name: 刪除使用者 - 無認證
     request:
       method: DELETE
       path: /api/users/{id}
     expect:
       statusCode: 401
-  - name: 建立建立新使用者
+  - name: 建立新使用者
     request:
       method: POST
       path: /api/users
       body:
-        name: 測
+        name: 測試使用者
         email: test@example.tw
         role: user
         status: active
@@ -341,39 +341,39 @@ steps:
         path: id
     expect:
       statusCode: 201
-  - name: 取得取得使用者詳情
+  - name: 取得使用者詳情
     request:
       method: GET
       path: /api/users/{{resourceId}}
     expect:
       statusCode: 200
-  - name: 更新完整更新使用者
+  - name: 完整更新使用者
     request:
       method: PUT
       path: /api/users/{{resourceId}}
       body:
-        name: 測
+        name: 測試使用者
         email: test@example.tw
         role: admin
         status: active
     expect:
       statusCode: 200
-  - name: 刪除刪除使用者
+  - name: 刪除使用者
     request:
       method: DELETE
       path: /api/users/{{resourceId}}
     expect:
       statusCode: 204
-  - name: 建立使用者登入
+  - name: 使用者登入
     request:
       method: POST
       path: /auth/login
       body:
-        username: 測
-        password: 測
+        username: testuser
+        password: password123
     capture:
-      - variableName: resourceId
-        path: id
+      - variableName: authToken
+        path: token
     expect:
       statusCode: 201
 metadata:

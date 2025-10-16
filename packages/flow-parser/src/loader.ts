@@ -5,21 +5,21 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { parse as parseYaml } from 'yaml';
-import { createStructuredLogger, IStructuredLogger } from '@specpilot/shared';
+import { createStructuredLogger, StructuredLogger } from '@specpilot/shared';
 import {
   FlowDefinitionSchema as UnifiedFlowDefinitionSchema,
-  type IFlowDefinition as UnifiedFlowDefinition,
-  type IFlowStep as UnifiedFlowStep,
-  type ICaptureVariable,
-  type IExpectBodyField,
-  type IValidationRule,
+  type FlowDefinition as UnifiedFlowDefinition,
+  type FlowStep as UnifiedFlowStep,
+  type CaptureVariable,
+  type ExpectBodyField,
+  type ValidationRule,
 } from '@specpilot/schemas';
 import { FlowParseError, FlowValidationError } from './errors.js';
 import {
-  IFlowDefinition,
-  IFlowStep,
-  IFlowExpectations,
-  IFlowGlobals,
+  FlowDefinition,
+  FlowStep,
+  FlowExpectations,
+  FlowGlobals,
   HttpMethod,
 } from './types.js';
 import { AuthParser, AuthConfigValidationError } from './auth-parser.js';
@@ -28,16 +28,16 @@ import { AuthParser, AuthConfigValidationError } from './auth-parser.js';
  * Flow YAML 載入器
  */
 export class FlowLoader {
-  private logger: IStructuredLogger;
+  private logger: StructuredLogger;
 
-  constructor(logger?: IStructuredLogger) {
+  constructor(logger?: StructuredLogger) {
     this.logger = logger || createStructuredLogger('flow-parser');
   }
 
   /**
    * 從檔案載入 Flow 定義
    */
-  async loadFlowFromFile(filePath: string, executionId?: string): Promise<IFlowDefinition> {
+  async loadFlowFromFile(filePath: string, executionId?: string): Promise<FlowDefinition> {
     this.logger.info('FLOW_LOAD_START', '開始載入 Flow 檔案', {
       filePath,
       executionId,
@@ -72,7 +72,7 @@ export class FlowLoader {
   /**
    * 從字串內容載入 Flow 定義
    */
-  async loadFlowFromContent(content: string, executionId?: string): Promise<IFlowDefinition> {
+  async loadFlowFromContent(content: string, executionId?: string): Promise<FlowDefinition> {
     this.logger.info('FLOW_LOAD_START', '開始解析 Flow 內容', {
       contentLength: content.length,
       executionId,
@@ -132,7 +132,7 @@ export class FlowLoader {
     schemaData: UnifiedFlowDefinition,
     rawContent: string,
     executionId?: string
-  ): IFlowDefinition {
+  ): FlowDefinition {
     const globals = this.convertGlobals(schemaData, executionId);
 
     return {
@@ -149,7 +149,7 @@ export class FlowLoader {
   /**
    * 轉換單一 Step
    */
-  private convertStep(schemaStep: UnifiedFlowStep, executionId?: string): IFlowStep {
+  private convertStep(schemaStep: UnifiedFlowStep, executionId?: string): FlowStep {
     const method = this.normalizeHttpMethod(schemaStep.request.method, schemaStep.name, executionId);
 
     const expectations = this.convertExpectations(schemaStep.expect, schemaStep.validation);
@@ -178,9 +178,9 @@ export class FlowLoader {
    */
   private convertExpectations(
     expect: UnifiedFlowStep['expect'],
-    validationRules?: IValidationRule[]
-  ): IFlowExpectations {
-    const expectations: IFlowExpectations = {};
+    validationRules?: ValidationRule[]
+  ): FlowExpectations {
+    const expectations: FlowExpectations = {};
 
     if (expect.statusCode !== undefined) {
       expectations.status = expect.statusCode;
@@ -190,7 +190,7 @@ export class FlowLoader {
       expectations.body = expect.body;
     }
 
-    const customRules: IFlowExpectations['custom'] = [];
+    const customRules: FlowExpectations['custom'] = [];
 
     if (expect.bodyFields) {
       for (const field of expect.bodyFields) {
@@ -220,7 +220,7 @@ export class FlowLoader {
   /**
    * 將 bodyFields 轉為自訂驗證
    */
-  private buildCustomRuleFromBodyField(field: IExpectBodyField): IFlowExpectations['custom'][number] | null {
+  private buildCustomRuleFromBodyField(field: ExpectBodyField): FlowExpectations['custom'][number] | null {
     if (!field.fieldName) {
       return null;
     }
@@ -250,7 +250,7 @@ export class FlowLoader {
   /**
    * 將 validation 規則轉為自訂驗證
    */
-  private buildCustomRuleFromValidation(rule: IValidationRule): IFlowExpectations['custom'][number] | null {
+  private buildCustomRuleFromValidation(rule: ValidationRule): FlowExpectations['custom'][number] | null {
     if (!rule || typeof rule !== 'object') {
       return null;
     }
@@ -266,7 +266,7 @@ export class FlowLoader {
   /**
    * 轉換 capture 陣列為對應表
    */
-  private convertCapture(capture?: ICaptureVariable[] | null): Record<string, string> | undefined {
+  private convertCapture(capture?: CaptureVariable[] | null): Record<string, string> | undefined {
     if (!capture || capture.length === 0) {
       return undefined;
     }
@@ -282,7 +282,7 @@ export class FlowLoader {
   /**
    * 轉換 Globals，並確保靜態認證設定有效
    */
-  private convertGlobals(schemaData: UnifiedFlowDefinition, executionId?: string): IFlowGlobals | undefined {
+  private convertGlobals(schemaData: UnifiedFlowDefinition, executionId?: string): FlowGlobals | undefined {
     const baseUrl = schemaData.globals?.baseUrl ?? schemaData.baseUrl;
     const headers = schemaData.globals?.headers;
     const auth = schemaData.globals?.auth;
@@ -321,7 +321,8 @@ export class FlowLoader {
    */
   private normalizeHttpMethod(method: string, stepName?: string, executionId?: string): HttpMethod {
     const upperMethod = method.toUpperCase();
-    if (!Object.values(HttpMethod).includes(upperMethod as HttpMethod)) {
+    const validMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+    if (!validMethods.includes(upperMethod as HttpMethod)) {
       throw FlowValidationError.invalidHttpMethod(method, stepName, executionId);
     }
     return upperMethod as HttpMethod;

@@ -7,7 +7,7 @@ import type {
   CustomRuleHandler,
   CustomRuleContext,
   CustomRuleResult,
-  IStructuredLogger
+  StructuredLogger
 } from './types.js';
 
 /**
@@ -154,7 +154,7 @@ export class CustomValidator implements Validator {
                 ruleOptions: typeof schema === 'object' && schema !== null ? schema as Record<string, unknown> : {},
                 schemas: {},
                 field: '',
-                logger: console as unknown as IStructuredLogger, // fallback logger
+                logger: console as unknown as StructuredLogger, // fallback logger
                 executionId: '',
               });
               return result instanceof Promise ? false : result.isValid;

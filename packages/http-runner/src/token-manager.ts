@@ -1,5 +1,5 @@
 import { createStructuredLogger } from '@specpilot/shared';
-import type { ITokenInfo } from './types.js';
+import type { TokenInfo } from './types.js';
 
 const logger = createStructuredLogger('token-manager');
 
@@ -7,7 +7,7 @@ const logger = createStructuredLogger('token-manager');
  * JWT Token 管理器，處理 Token 儲存、檢索、注入與命名空間隔離
  */
 export class TokenManager {
-  private tokens = new Map<string, ITokenInfo>();
+  private tokens = new Map<string, TokenInfo>();
   private readonly defaultNamespace = 'default';
 
   /**
@@ -18,7 +18,7 @@ export class TokenManager {
       throw new Error('Token 必須是非空字串');
     }
 
-    const tokenInfo: ITokenInfo = {
+    const tokenInfo: TokenInfo = {
       token,
       namespace,
       expiresAt,

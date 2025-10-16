@@ -6,7 +6,7 @@ import path from 'path';
 /**
  * 結構化日誌介面
  */
-export interface IStructuredLogger {
+export interface StructuredLogger {
   /**
    * 記錄偵錯訊息
    */
@@ -30,7 +30,7 @@ export interface IStructuredLogger {
   /**
    * 建立子 Logger，繼承執行 ID 與元件資訊
    */
-  child(bindings: Record<string, unknown>): IStructuredLogger;
+  child(bindings: Record<string, unknown>): StructuredLogger;
 }
 
 /**
@@ -80,7 +80,7 @@ function maskSensitiveData(data: Record<string, unknown>): Record<string, unknow
 /**
  * 建立結構化 Logger
  */
-export function createStructuredLogger(component: string): IStructuredLogger {
+export function createStructuredLogger(component: string): StructuredLogger {
   // 確保 logs 目錄存在
   const logDir = path.resolve(process.cwd(), 'logs');
   
@@ -166,7 +166,7 @@ export function createStructuredLogger(component: string): IStructuredLogger {
       });
     },
 
-    child(bindings: Record<string, unknown>): IStructuredLogger {
+    child(bindings: Record<string, unknown>): StructuredLogger {
       const childLogger = logger.child(maskSensitiveData(bindings));
       
       return {
@@ -210,7 +210,7 @@ export function createStructuredLogger(component: string): IStructuredLogger {
             timestamp: new Date().toISOString(),
           });
         },
-        child: (childBindings: Record<string, unknown>): IStructuredLogger => childLogger.child(maskSensitiveData(childBindings)) as IStructuredLogger,
+        child: (childBindings: Record<string, unknown>): StructuredLogger => childLogger.child(maskSensitiveData(childBindings)) as StructuredLogger,
       };
     },
   };

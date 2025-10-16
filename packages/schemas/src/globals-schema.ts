@@ -25,5 +25,5 @@ export const GlobalsSchema = z.object({
   retryPolicy: RetryPolicySchema.optional(),
 });
 
-export type IGlobals = z.infer<typeof GlobalsSchema>;
-export type IRetryPolicy = z.infer<typeof RetryPolicySchema>;
+export type Globals = z.infer<typeof GlobalsSchema>;
+export type RetryPolicy = z.infer<typeof RetryPolicySchema>;

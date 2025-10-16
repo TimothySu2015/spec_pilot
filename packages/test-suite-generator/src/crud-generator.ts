@@ -3,7 +3,7 @@
  * 產生基本 CRUD 操作的成功測試案例
  */
 
-import type { FlowStep } from '@specpilot/flow-parser';
+import type { FlowStep, HttpMethod } from '@specpilot/flow-parser';
 import type { EndpointInfo, CRUDGeneratorConfig, JSONSchema } from './types.js';
 import { DataSynthesizer } from './data-synthesizer.js';
 
@@ -28,11 +28,11 @@ export class CRUDGenerator {
     const step: FlowStep = {
       name: `${endpoint.summary || endpoint.operationId} - 成功案例`,
       request: {
-        method: endpoint.method.toUpperCase() as any,
+        method: endpoint.method.toUpperCase() as HttpMethod,
         path: endpoint.path,
       },
-      expect: {
-        statusCode: expectedStatus,
+      expectations: {
+        status: expectedStatus,
       },
     };
 

@@ -13,10 +13,10 @@ export {
   StaticAuthItemSchema,
   StepAuthSchema,
   GlobalAuthSchema,
-  type ITokenExtraction,
-  type IStepAuth,
-  type IGlobalAuth,
-  type IStaticAuthItem,
+  type TokenExtraction,
+  type StepAuth,
+  type GlobalAuth,
+  type StaticAuthItem,
 } from './auth-schema';
 
 // Globals Schema
@@ -24,8 +24,8 @@ export {
   HeadersSchema,
   RetryPolicySchema,
   GlobalsSchema,
-  type IRetryPolicy,
-  type IGlobals,
+  type RetryPolicy,
+  type Globals,
 } from './globals-schema';
 
 // Flow Schema
@@ -35,7 +35,7 @@ export {
   ReportingOptionsSchema,
   FlowDefinitionSchema,
   HTTPMethodSchema,
-  type IFlowDefinition,
+  type FlowDefinition,
   type HTTPMethod,
 } from './flow-schema';
 
@@ -47,12 +47,12 @@ export {
   FlowExpectSchema,
   CaptureSchema,
   FlowStepSchema,
-  type IFlowStep,
-  type IFlowRequest,
-  type IFlowExpect,
-  type IExpectBodyField,
-  type ICapture,
-  type ICaptureVariable,
+  type FlowStep,
+  type FlowRequest,
+  type FlowExpect,
+  type ExpectBodyField,
+  type Capture,
+  type CaptureVariable,
 } from './step-schema';
 
 // Validation Schema
@@ -61,10 +61,10 @@ export {
   RegexRuleSchema,
   ContainsRuleSchema,
   ValidationRuleSchema,
-  type IValidationRule,
-  type INotNullRule,
-  type IRegexRule,
-  type IContainsRule,
+  type ValidationRule,
+  type NotNullRule,
+  type RegexRule,
+  type ContainsRule,
 } from './validation-schema';
 
 // 實用函式

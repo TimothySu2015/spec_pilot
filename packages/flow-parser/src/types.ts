@@ -3,22 +3,14 @@
  */
 
 /**
- * HTTP 方法列舉
+ * HTTP 方法類型
  */
-export enum HttpMethod {
-  GET = 'GET',
-  POST = 'POST',
-  PUT = 'PUT',
-  DELETE = 'DELETE',
-  PATCH = 'PATCH',
-  HEAD = 'HEAD',
-  OPTIONS = 'OPTIONS'
-}
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
 
 /**
  * Flow 載入選項
  */
-export interface IFlowLoadOptions {
+export interface FlowLoadOptions {
   /** 檔案路徑（與 content 擇一） */
   filePath?: string;
   /** 直接給定內容（與 filePath 擇一） */
@@ -32,7 +24,7 @@ export interface IFlowLoadOptions {
 /**
  * HTTP 請求設定
  */
-export interface IFlowRequest {
+export interface FlowRequest {
   /** HTTP 方法 */
   method: HttpMethod;
   /** 請求路徑 */
@@ -50,7 +42,7 @@ export interface IFlowRequest {
 /**
  * 重試策略
  */
-export interface IRetryPolicy {
+export interface RetryPolicy {
   /** 最大重試次數 */
   maxRetries?: number;
   /** 初始延遲毫秒數 */
@@ -62,7 +54,7 @@ export interface IRetryPolicy {
 /**
  * Flow 執行選項
  */
-export interface IFlowOptions {
+export interface FlowOptions {
   timeout?: number;
   retryCount?: number;
   failFast?: boolean;
@@ -71,7 +63,7 @@ export interface IFlowOptions {
 /**
  * Flow 報告設定
  */
-export interface IReportingOptions {
+export interface ReportingOptions {
   outputPath?: string;
   format?: 'json' | 'html' | 'markdown';
   verbose?: boolean;
@@ -80,7 +72,7 @@ export interface IReportingOptions {
 /**
  * 回應驗證設定
  */
-export interface IFlowExpectations {
+export interface FlowExpectations {
   /** 預期的 HTTP 狀態碼 */
   status?: number;
   /** JSON Schema 名稱 */
@@ -103,7 +95,7 @@ export interface IFlowExpectations {
 /**
  * Token 擷取設定
  */
-export interface ITokenExtraction {
+export interface TokenExtraction {
   /** Token 擷取路徑，例如 data.token */
   path: string;
   /** Token 逾時秒數 */
@@ -115,11 +107,11 @@ export interface ITokenExtraction {
 /**
  * 步驟層級認證設定
  */
-export interface IFlowAuth {
+export interface FlowAuth {
   /** 認證類型 */
   type: 'login' | 'static';
   /** 登入型別所需的 token 擷取設定 */
-  tokenExtraction?: ITokenExtraction;
+  tokenExtraction?: TokenExtraction;
   /** 命名空間（靜態 token 用） */
   namespace?: string;
 }
@@ -127,19 +119,19 @@ export interface IFlowAuth {
 /**
  * Flow 步驟定義
  */
-export interface IFlowStep {
+export interface FlowStep {
   /** 步驟名稱 */
   name: string;
   /** 步驟描述 */
   description?: string;
   /** HTTP 請求設定 */
-  request: IFlowRequest;
+  request: FlowRequest;
   /** 回應驗證設定 */
-  expectations: IFlowExpectations;
+  expectations: FlowExpectations;
   /** 重試策略 */
-  retryPolicy?: IRetryPolicy;
+  retryPolicy?: RetryPolicy;
   /** 步驟認證 */
-  auth?: IFlowAuth;
+  auth?: FlowAuth;
   /** Capture 設定：變數名稱 -> JSON Path */
   capture?: Record<string, string>;
 }
@@ -147,7 +139,7 @@ export interface IFlowStep {
 /**
  * 靜態認證設定
  */
-export interface IStaticAuth {
+export interface StaticAuth {
   /** 命名空間 */
   namespace: string;
   /** Token */
@@ -159,7 +151,7 @@ export interface IStaticAuth {
 /**
  * Flow 全域設定
  */
-export interface IFlowGlobals {
+export interface FlowGlobals {
   /** 基礎 URL */
   baseUrl?: string;
   /** 共用標頭 */
@@ -169,42 +161,43 @@ export interface IFlowGlobals {
     type: 'bearer';
     token: string;
   } | {
-    static?: IStaticAuth[];
+    static?: StaticAuth[];
   };
   /** 共用重試策略 */
-  retryPolicy?: IRetryPolicy;
+  retryPolicy?: RetryPolicy;
 }
 
 /**
  * Flow 定義
  */
-export interface IFlowDefinition {
+export interface FlowDefinition {
   /** Flow ID */
   id: string;
   /** 原始內容 */
   rawContent: string;
   /** 步驟列表 */
-  steps: IFlowStep[];
+  steps: FlowStep[];
   /** 全域設定 */
-  globals?: IFlowGlobals;
+  globals?: FlowGlobals;
   /** 流程變數 */
   variables?: Record<string, unknown>;
   /** 執行選項 */
-  options?: IFlowOptions;
+  options?: FlowOptions;
   /** 報告設定 */
-  reporting?: IReportingOptions;
+  reporting?: ReportingOptions;
 }
 
 /**
  * Flow 載入結果
  */
-export interface IFlowLoadResult {
+export interface FlowLoadResult {
   /** 是否成功 */
   success: boolean;
   /** 成功時的 Flow 定義 */
-  flow?: IFlowDefinition;
+  flow?: FlowDefinition;
   /** 失敗訊息 */
   error?: string;
   /** 失敗詳情 */
   details?: Record<string, unknown>;
 }
+

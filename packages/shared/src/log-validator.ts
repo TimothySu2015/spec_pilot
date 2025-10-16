@@ -9,7 +9,7 @@ const logger = createStructuredLogger('log-validator');
 /**
  * 驗證錯誤詳情
  */
-export interface ILogValidationError {
+export interface LogValidationError {
   path: string;
   message: string;
   value: unknown;
@@ -18,9 +18,9 @@ export interface ILogValidationError {
 /**
  * 驗證結果
  */
-export interface ILogValidationResult {
+export interface LogValidationResult {
   valid: boolean;
-  errors: ILogValidationError[];
+  errors: LogValidationError[];
 }
 
 /**
@@ -114,14 +114,14 @@ export class LogValidator {
     invalidEntries: Array<{
       index: number;
       entry: unknown;
-      errors: ILogValidationError[];
+      errors: LogValidationError[];
     }>;
   } {
     const validEntries: StructuredLogEntry[] = [];
     const invalidEntries: Array<{
       index: number;
       entry: unknown;
-      errors: ILogValidationError[];
+      errors: LogValidationError[];
     }> = [];
 
     for (let i = 0; i < logEntries.length; i++) {

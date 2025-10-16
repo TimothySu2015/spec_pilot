@@ -4,7 +4,7 @@ import { join } from 'path';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
 import { ReportValidator, type ExecutionConfig } from '@specpilot/reporting';
 import { SchemaValidator } from '@specpilot/shared';
-import type { IFlowDefinition as FlowParserDefinition } from '@specpilot/flow-parser';
+import type { FlowDefinition as FlowParserDefinition } from '@specpilot/flow-parser';
 
 describe('Reporting Flow Integration', () => {
   let orchestrator: EnhancedFlowOrchestrator;

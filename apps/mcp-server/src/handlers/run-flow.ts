@@ -6,7 +6,7 @@ import { createStructuredLogger } from '@specpilot/shared';
 import { loadSpec } from '@specpilot/spec-loader';
 import { loadFlow } from '@specpilot/flow-parser';
 import { EnhancedFlowOrchestrator } from '@specpilot/core-flow';
-import { type IExecutionConfig } from '@specpilot/reporting';
+import { type ExecutionConfig } from '@specpilot/reporting';
 
 const logger = createStructuredLogger('mcp-server');
 
@@ -85,7 +85,7 @@ export async function handleRunFlow(request: IMcpRequest): Promise<IMcpResponse>
       const orchestrator = new EnhancedFlowOrchestrator(undefined, { baseUrl });
 
       // 準備執行配置
-      const executionConfig: IExecutionConfig = {
+      const executionConfig: ExecutionConfig = {
         baseUrl,
         fallbackUsed: false,
         authNamespaces: []

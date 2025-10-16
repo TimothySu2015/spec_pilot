@@ -9,7 +9,7 @@ const logger = createStructuredLogger('report-validator');
 /**
  * 驗證錯誤詳情
  */
-export interface IValidationError {
+export interface ValidationError {
   path: string;
   message: string;
   value: unknown;
@@ -18,9 +18,9 @@ export interface IValidationError {
 /**
  * 驗證結果
  */
-export interface IValidationResult {
+export interface ValidationResult {
   valid: boolean;
-  errors: IValidationError[];
+  errors: ValidationError[];
 }
 
 /**
@@ -51,13 +51,13 @@ export class ReportValidator {
   /**
    * 驗證執行報表
    */
-  validateReport(report: unknown): IValidationResult {
+  validateReport(report: unknown): ValidationResult {
     logger.debug('開始驗證執行報表', {
       reportType: typeof report,
     });
 
     const valid = this.validateExecutionReport(report);
-    const errors: IValidationError[] = [];
+    const errors: ValidationError[] = [];
 
     if (!valid && this.validateExecutionReport.errors) {
       for (const error of this.validateExecutionReport.errors) {
@@ -69,7 +69,7 @@ export class ReportValidator {
       }
     }
 
-    const result: IValidationResult = {
+    const result: ValidationResult = {
       valid,
       errors,
     };
@@ -116,7 +116,7 @@ export class ReportValidator {
   /**
    * 驗證步驟結果格式
    */
-  validateStepResult(stepResult: unknown): IValidationResult {
+  validateStepResult(stepResult: unknown): ValidationResult {
     const stepSchema = executionReportSchema.definitions?.StepResult;
 
     if (!stepSchema) {
@@ -133,7 +133,7 @@ export class ReportValidator {
 
     const validateStep = this.ajv.compile(stepSchema);
     const valid = validateStep(stepResult);
-    const errors: IValidationError[] = [];
+    const errors: ValidationError[] = [];
 
     if (!valid && validateStep.errors) {
       for (const error of validateStep.errors) {

@@ -4,7 +4,7 @@ import { resolveSchemaRef } from './openapi-parser';
 /**
  * 驗證建議項目
  */
-export interface ValidationSuggestion {
+export interface IValidationSuggestion {
   path: string;
   rule: 'notNull' | 'regex' | 'contains';
   value?: string;
@@ -18,8 +18,8 @@ export interface ValidationSuggestion {
 export function generateValidationSuggestions(
   responseSchema: any,
   openApiSpec: any
-): ValidationSuggestion[] {
-  const suggestions: ValidationSuggestion[] = [];
+): IValidationSuggestion[] {
+  const suggestions: IValidationSuggestion[] = [];
   const schema = resolveSchemaRef(responseSchema, openApiSpec);
 
   if (!schema || schema.type !== 'object') {
@@ -104,7 +104,7 @@ export function generateValidationSuggestions(
 /**
  * 將建議轉換為實際的 Validation Rule
  */
-export function suggestionToValidationRule(suggestion: ValidationSuggestion): IValidationRule {
+export function suggestionToValidationRule(suggestion: IValidationSuggestion): IValidationRule {
   switch (suggestion.rule) {
     case 'notNull':
       return {

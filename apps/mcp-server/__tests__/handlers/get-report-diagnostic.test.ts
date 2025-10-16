@@ -3,7 +3,7 @@ import { writeFileSync, mkdirSync, rmSync, existsSync } from 'fs';
 import path from 'path';
 import { handleGetReport } from '../../src/handlers/get-report.js';
 import type { IMcpRequest } from '../../src/rpc-handler.js';
-import type { IExecutionReport } from '@specpilot/reporting';
+import type { ExecutionReport } from '@specpilot/reporting';
 
 describe('getReport 診斷上下文整合測試', () => {
   const testReportsDir = path.join(process.cwd(), 'reports');
@@ -26,7 +26,7 @@ describe('getReport 診斷上下文整合測試', () => {
 
   it('應該在成功報表中不包含診斷上下文', () => {
     // Arrange: 建立成功報表
-    const successReport: IExecutionReport = {
+    const successReport: ExecutionReport = {
       executionId: 'success-exec-001',
       flowId: 'success-flow',
       startTime: '2025-09-30T10:00:00.000Z',
@@ -130,7 +130,7 @@ describe('getReport 診斷上下文整合測試', () => {
 
   it('應該在失敗報表中包含完整診斷上下文', () => {
     // Arrange: 建立失敗報表（網路錯誤）
-    const failureReport: IExecutionReport = {
+    const failureReport: ExecutionReport = {
       executionId: 'failure-exec-001',
       flowId: 'failure-flow',
       startTime: '2025-09-30T10:00:00.000Z',
@@ -264,7 +264,7 @@ describe('getReport 診斷上下文整合測試', () => {
 
   it('應該在認證失敗報表中提供認證相關診斷', () => {
     // Arrange: 建立認證失敗報表
-    const authFailureReport: IExecutionReport = {
+    const authFailureReport: ExecutionReport = {
       executionId: 'auth-failure-001',
       flowId: 'auth-flow',
       startTime: '2025-09-30T10:00:00.000Z',
@@ -402,7 +402,7 @@ describe('getReport 診斷上下文整合測試', () => {
 
   it('應該偵測連鎖失敗模式', () => {
     // Arrange: 建立第一步失敗導致後續失敗的報表
-    const cascadingReport: IExecutionReport = {
+    const cascadingReport: ExecutionReport = {
       executionId: 'cascading-001',
       flowId: 'cascading-flow',
       startTime: '2025-09-30T10:00:00.000Z',

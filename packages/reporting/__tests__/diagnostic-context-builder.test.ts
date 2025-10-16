@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DiagnosticContextBuilder } from '../src/diagnostic-context-builder.js';
-import type { IExecutionReport, IStepResult } from '../src/execution-report.js';
+import type { ExecutionReport, StepResult } from '../src/execution-report.js';
 
 describe('DiagnosticContextBuilder', () => {
   let builder: DiagnosticContextBuilder;
@@ -11,7 +11,7 @@ describe('DiagnosticContextBuilder', () => {
 
   describe('build', () => {
     it('應該對成功報表回傳 null', () => {
-      const report: IExecutionReport = {
+      const report: ExecutionReport = {
         executionId: 'test-001',
         flowId: 'success-flow',
         startTime: '2025-09-30T10:00:00.000Z',
@@ -40,7 +40,7 @@ describe('DiagnosticContextBuilder', () => {
     });
 
     it('應該對失敗報表建立診斷上下文', () => {
-      const report: IExecutionReport = {
+      const report: ExecutionReport = {
         executionId: 'test-002',
         flowId: 'failure-flow',
         startTime: '2025-09-30T10:00:00.000Z',
@@ -307,7 +307,7 @@ describe('DiagnosticContextBuilder', () => {
 
 // ========== 測試輔助函式 ==========
 
-function createSuccessStep(name: string, index: number): IStepResult {
+function createSuccessStep(name: string, index: number): StepResult {
   return {
     name,
     status: 'success',
@@ -329,7 +329,7 @@ function createSuccessStep(name: string, index: number): IStepResult {
   };
 }
 
-function createNetworkErrorStep(name: string, index: number): IStepResult {
+function createNetworkErrorStep(name: string, index: number): StepResult {
   return {
     name,
     status: 'failure',
@@ -357,7 +357,7 @@ function createNetworkErrorStep(name: string, index: number): IStepResult {
   };
 }
 
-function createAuthErrorStep(name: string, index: number): IStepResult {
+function createAuthErrorStep(name: string, index: number): StepResult {
   return {
     name,
     status: 'failure',
@@ -385,19 +385,19 @@ function createAuthErrorStep(name: string, index: number): IStepResult {
   };
 }
 
-function createAuthErrorStepWithCode(name: string, index: number, errorCode: string): IStepResult {
+function createAuthErrorStepWithCode(name: string, index: number, errorCode: string): StepResult {
   const step = createAuthErrorStep(name, index);
   step.response.errorDetails!.body = { error: errorCode, message: 'Authentication failed' };
   return step;
 }
 
-function createAuthErrorStepWithUrl(name: string, index: number, url: string): IStepResult {
+function createAuthErrorStepWithUrl(name: string, index: number, url: string): StepResult {
   const step = createAuthErrorStep(name, index);
   step.request.url = url;
   return step;
 }
 
-function createForbiddenErrorStep(name: string, index: number): IStepResult {
+function createForbiddenErrorStep(name: string, index: number): StepResult {
   const step = createAuthErrorStep(name, index);
   step.response.statusCode = 403;
   step.response.errorMessage = '權限不足';
@@ -405,7 +405,7 @@ function createForbiddenErrorStep(name: string, index: number): IStepResult {
   return step;
 }
 
-function createValidationErrorStep(name: string, index: number): IStepResult {
+function createValidationErrorStep(name: string, index: number): StepResult {
   return {
     name,
     status: 'failure',
@@ -433,7 +433,7 @@ function createValidationErrorStep(name: string, index: number): IStepResult {
   };
 }
 
-function createServerErrorStep(name: string, index: number): IStepResult {
+function createServerErrorStep(name: string, index: number): StepResult {
   return {
     name,
     status: 'failure',
@@ -461,7 +461,7 @@ function createServerErrorStep(name: string, index: number): IStepResult {
   };
 }
 
-function createReportWithSteps(steps: IStepResult[]): IExecutionReport {
+function createReportWithSteps(steps: StepResult[]): ExecutionReport {
   const failedCount = steps.filter(s => s.status === 'failure').length;
   const successCount = steps.filter(s => s.status === 'success').length;
 

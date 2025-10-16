@@ -10,7 +10,7 @@ import {
   FlowValidationError,
   HttpMethod,
 } from '../src/index.js';
-import { IStructuredLogger } from '@specpilot/shared';
+import { StructuredLogger } from '@specpilot/shared';
 
 vi.mock('fs');
 const mockReadFileSync = vi.mocked(readFileSync);
@@ -20,7 +20,7 @@ const mockLogger = {
   error: vi.fn(),
   debug: vi.fn(),
   warn: vi.fn(),
-} as unknown as IStructuredLogger;
+} as unknown as StructuredLogger;
 
 describe('Flow Parser', () => {
   beforeEach(() => {
@@ -52,7 +52,7 @@ steps:
 
       expect(result.id).toBe('測試流程');
       expect(result.steps).toHaveLength(1);
-      expect(result.steps[0].request.method).toBe(HttpMethod.GET);
+      expect(result.steps[0].request.method).toBe('GET');
       expect(result.steps[0].request.path).toBe('/api/test');
       expect(result.steps[0].expectations.status).toBe(200);
       expect(result.rawContent).toBe(yaml);
@@ -84,7 +84,7 @@ steps:
       }, mockLogger);
 
       expect(result.id).toBe('字串流程');
-      expect(result.steps[0].request.method).toBe(HttpMethod.POST);
+      expect(result.steps[0].request.method).toBe('POST');
       expect(result.steps[0].expectations.custom).toHaveLength(1);
       expect(result.steps[0].expectations.custom?.[0]).toMatchObject({ type: 'notNull', field: 'id' });
       expect(result.steps[0].capture).toEqual({ created_id: 'id' });

@@ -2,9 +2,9 @@
  * Flow Parser 主要匯出介面
  */
 
-import { createStructuredLogger, IStructuredLogger } from '@specpilot/shared';
+import { createStructuredLogger, StructuredLogger } from '@specpilot/shared';
 import { FlowLoader } from './loader.js';
-import { IFlowDefinition, IFlowLoadOptions, IFlowLoadResult } from './types.js';
+import { FlowDefinition, FlowLoadOptions, FlowLoadResult } from './types.js';
 
 // 匯出所有類型
 export * from './types.js';
@@ -21,9 +21,9 @@ const defaultLogger = createStructuredLogger('flow-parser');
  * 會拋出錯誤，適用於需要明確錯誤處理的情境
  */
 export async function loadFlow(
-  options: IFlowLoadOptions,
-  logger?: IStructuredLogger
-): Promise<IFlowDefinition> {
+  options: FlowLoadOptions,
+  logger?: StructuredLogger
+): Promise<FlowDefinition> {
   const loader = new FlowLoader(logger || defaultLogger);
   const executionId = options.executionId || generateExecutionId();
 
@@ -42,9 +42,9 @@ export async function loadFlow(
  * 回傳結果物件，適用於需要優雅錯誤處理的情境
  */
 export async function loadFlowSafe(
-  options: IFlowLoadOptions,
-  logger?: IStructuredLogger
-): Promise<IFlowLoadResult> {
+  options: FlowLoadOptions,
+  logger?: StructuredLogger
+): Promise<FlowLoadResult> {
   try {
     const flow = await loadFlow(options, logger);
     return {
@@ -68,8 +68,8 @@ export async function loadFlowSafe(
 export async function loadFlowFromFile(
   filePath: string,
   executionId?: string,
-  logger?: IStructuredLogger
-): Promise<IFlowDefinition> {
+  logger?: StructuredLogger
+): Promise<FlowDefinition> {
   return loadFlow({ filePath, executionId }, logger);
 }
 
@@ -79,8 +79,8 @@ export async function loadFlowFromFile(
 export async function loadFlowFromContent(
   content: string,
   executionId?: string,
-  logger?: IStructuredLogger
-): Promise<IFlowDefinition> {
+  logger?: StructuredLogger
+): Promise<FlowDefinition> {
   return loadFlow({ content, executionId }, logger);
 }
 

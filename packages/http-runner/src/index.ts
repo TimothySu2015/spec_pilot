@@ -4,11 +4,11 @@ import { TokenManager } from './token-manager.js';
 import { UrlBuilder } from './url-builder.js';
 import { RetryHandler } from './retry-handler.js';
 import type {
-  IHttpRequest,
-  IHttpResponse,
-  IHttpClientConfig,
-  IRetryConfig,
-  ICircuitBreakerConfig,
+  HttpRequest,
+  HttpResponse,
+  HttpClientConfig,
+  RetryConfig,
+  CircuitBreakerConfig,
 } from './types.js';
 
 // 匯出所有類別和型別
@@ -17,11 +17,11 @@ export { TokenManager } from './token-manager.js';
 export { UrlBuilder } from './url-builder.js';
 export { RetryHandler } from './retry-handler.js';
 export type {
-  IHttpRequest,
-  IHttpResponse,
-  IHttpClientConfig,
-  IRetryConfig,
-  ICircuitBreakerConfig,
+  HttpRequest,
+  HttpResponse,
+  HttpClientConfig,
+  RetryConfig,
+  CircuitBreakerConfig,
 } from './types.js';
 
 // 匯出設定整合功能
@@ -39,10 +39,10 @@ const logger = createStructuredLogger('http-runner');
 /**
  * HTTP Runner 整合配置
  */
-export interface IHttpRunnerConfig {
-  http?: IHttpClientConfig;
-  retry?: Partial<IRetryConfig>;
-  circuitBreaker?: Partial<ICircuitBreakerConfig>;
+export interface HttpRunnerConfig {
+  http?: HttpClientConfig;
+  retry?: Partial<RetryConfig>;
+  circuitBreaker?: Partial<CircuitBreakerConfig>;
   baseUrl?: string;
 }
 
@@ -55,7 +55,7 @@ export class HttpRunner {
   private readonly retryHandler: RetryHandler;
   private readonly baseUrl?: string;
 
-  constructor(config: IHttpRunnerConfig = {}) {
+  constructor(config: HttpRunnerConfig = {}) {
     this.baseUrl = config.baseUrl;
     this.httpClient = new HttpClient(config.http);
     this.tokenManager = new TokenManager();
@@ -72,7 +72,7 @@ export class HttpRunner {
   /**
    * 執行 HTTP 請求（包含重試、Token 注入、URL 建構）
    */
-  async execute(request: IHttpRequest, options: {
+  async execute(request: HttpRequest, options: {
     tokenNamespace?: string;
     pathParams?: Record<string, string>;
     queryParams?: Record<string, string>;
@@ -81,7 +81,7 @@ export class HttpRunner {
       namespace?: string;
       expiresIn?: number;
     };
-  } = {}): Promise<IHttpResponse> {
+  } = {}): Promise<HttpResponse> {
     const executionId = crypto.randomUUID();
     const { tokenNamespace = 'default', pathParams, queryParams, extractToken } = options;
 
@@ -95,7 +95,7 @@ export class HttpRunner {
         tokenNamespace
       );
 
-      const finalRequest: IHttpRequest = {
+      const finalRequest: HttpRequest = {
         ...request,
         url: fullUrl,
         headers: headersWithAuth,
@@ -160,7 +160,7 @@ export class HttpRunner {
   async get(url: string, options: Parameters<typeof this.execute>[1] & {
     headers?: Record<string, string>;
     timeout?: number;
-  } = {}): Promise<IHttpResponse> {
+  } = {}): Promise<HttpResponse> {
     const { headers, timeout, ...executeOptions } = options;
     return this.execute({
       method: 'GET',
@@ -176,7 +176,7 @@ export class HttpRunner {
   async post(url: string, body?: unknown, options: Parameters<typeof this.execute>[1] & {
     headers?: Record<string, string>;
     timeout?: number;
-  } = {}): Promise<IHttpResponse> {
+  } = {}): Promise<HttpResponse> {
     const { headers, timeout, ...executeOptions } = options;
     return this.execute({
       method: 'POST',
@@ -193,7 +193,7 @@ export class HttpRunner {
   async put(url: string, body?: unknown, options: Parameters<typeof this.execute>[1] & {
     headers?: Record<string, string>;
     timeout?: number;
-  } = {}): Promise<IHttpResponse> {
+  } = {}): Promise<HttpResponse> {
     const { headers, timeout, ...executeOptions } = options;
     return this.execute({
       method: 'PUT',
@@ -210,7 +210,7 @@ export class HttpRunner {
   async patch(url: string, body?: unknown, options: Parameters<typeof this.execute>[1] & {
     headers?: Record<string, string>;
     timeout?: number;
-  } = {}): Promise<IHttpResponse> {
+  } = {}): Promise<HttpResponse> {
     const { headers, timeout, ...executeOptions } = options;
     return this.execute({
       method: 'PATCH',
@@ -227,7 +227,7 @@ export class HttpRunner {
   async delete(url: string, options: Parameters<typeof this.execute>[1] & {
     headers?: Record<string, string>;
     timeout?: number;
-  } = {}): Promise<IHttpResponse> {
+  } = {}): Promise<HttpResponse> {
     const { headers, timeout, ...executeOptions } = options;
     return this.execute({
       method: 'DELETE',
@@ -348,7 +348,7 @@ export class HttpRunner {
   /**
    * 更新 HTTP 客戶端設定
    */
-  updateHttpConfig(config: Partial<IHttpClientConfig>): void {
+  updateHttpConfig(config: Partial<HttpClientConfig>): void {
     this.httpClient.updateConfig(config);
   }
 }

@@ -1,14 +1,14 @@
-import type { IStructuredLogger } from '@specpilot/shared';
-import type { IHttpResponse } from '@specpilot/http-runner';
-import type { IFlowStep, IFlowExpectations } from '@specpilot/flow-parser';
+import type { StructuredLogger } from '@specpilot/shared';
+import type { HttpResponse } from '@specpilot/http-runner';
+import type { FlowStep, FlowExpectations } from '@specpilot/flow-parser';
 
 /**
  * JSON Schema 定義
  */
-export interface IJsonSchema {
+export interface JsonSchema {
   [key: string]: unknown;
   type?: string;
-  properties?: Record<string, IJsonSchema>;
+  properties?: Record<string, JsonSchema>;
   required?: string[];
 }
 
@@ -25,7 +25,7 @@ export type ValidationSeverity = 'error' | 'warning';
 /**
  * 驗證問題
  */
-export interface IValidationIssue {
+export interface ValidationIssue {
   category: ValidationCategory;
   severity: ValidationSeverity;
   message: string;
@@ -38,7 +38,7 @@ export interface IValidationIssue {
 /**
  * 驗證日誌項目
  */
-export interface IValidationLogEntry {
+export interface ValidationLogEntry {
   executionId: string;
   component: string;
   stepName: string;
@@ -53,7 +53,7 @@ export interface IValidationLogEntry {
 /**
  * 步驟結果修補
  */
-export interface IStepResultPatch {
+export interface StepResultPatch {
   success?: boolean;
   customChecks?: Array<{
     rule: string;
@@ -66,17 +66,17 @@ export interface IStepResultPatch {
 /**
  * 驗證結果
  */
-export interface IValidationOutcome {
+export interface ValidationOutcome {
   status: 'success' | 'partial' | 'failed';
-  issues: IValidationIssue[];
-  stepResultPatch: IStepResultPatch;
-  logs: IValidationLogEntry[];
+  issues: ValidationIssue[];
+  stepResultPatch: StepResultPatch;
+  logs: ValidationLogEntry[];
 }
 
 /**
  * 驗證執行上下文
  */
-export interface IRunContext {
+export interface RunContext {
   executionId: string;
   flowId: string;
   timestamp: Date;
@@ -86,35 +86,35 @@ export interface IRunContext {
 /**
  * 驗證輸入
  */
-export interface IValidationInput {
-  step: IFlowStep;
-  response: IHttpResponse;
-  expectations: IFlowExpectations;
-  schemas: Record<string, IJsonSchema>;
-  logger: IStructuredLogger;
+export interface ValidationInput {
+  step: FlowStep;
+  response: HttpResponse;
+  expectations: FlowExpectations;
+  schemas: Record<string, JsonSchema>;
+  logger: StructuredLogger;
   executionId: string;
-  runContext: IRunContext;
+  runContext: RunContext;
 }
 
 /**
  * 驗證器上下文
  */
-export interface IValidationContext {
-  step: IFlowStep;
-  response: IHttpResponse;
-  expectations: IFlowExpectations;
-  schemas: Record<string, IJsonSchema>;
-  logger: IStructuredLogger;
+export interface ValidationContext {
+  step: FlowStep;
+  response: HttpResponse;
+  expectations: FlowExpectations;
+  schemas: Record<string, JsonSchema>;
+  logger: StructuredLogger;
   executionId: string;
-  runContext: IRunContext;
+  runContext: RunContext;
 }
 
 /**
  * 驗證器結果
  */
-export interface IValidatorResult {
+export interface ValidatorResult {
   isValid: boolean;
-  issues: IValidationIssue[];
+  issues: ValidationIssue[];
   telemetry: {
     durationMs: number;
     details?: Record<string, unknown>;
@@ -124,27 +124,27 @@ export interface IValidatorResult {
 /**
  * 驗證器介面
  */
-export interface IValidator {
-  validate(ctx: IValidationContext): Promise<IValidatorResult>;
+export interface Validator {
+  validate(ctx: ValidationContext): Promise<ValidatorResult>;
 }
 
 /**
  * 自訂規則處理器上下文
  */
-export interface ICustomRuleContext {
+export interface CustomRuleContext {
   payload: unknown;
   ruleName: string;
   ruleOptions: Record<string, unknown>;
-  schemas: Record<string, IJsonSchema>;
+  schemas: Record<string, JsonSchema>;
   field: string;
-  logger: IStructuredLogger;
+  logger: StructuredLogger;
   executionId: string;
 }
 
 /**
  * 自訂規則處理器結果
  */
-export interface ICustomRuleResult {
+export interface CustomRuleResult {
   isValid: boolean;
   message?: string;
   details?: Record<string, unknown>;
@@ -153,14 +153,14 @@ export interface ICustomRuleResult {
 /**
  * 自訂規則處理器
  */
-export interface ICustomRuleHandler {
-  (input: ICustomRuleContext): Promise<ICustomRuleResult> | ICustomRuleResult;
+export interface CustomRuleHandler {
+  (input: CustomRuleContext): Promise<CustomRuleResult> | CustomRuleResult;
 }
 
 /**
  * 狀態碼驗證選項
  */
-export interface IStatusValidationOptions {
+export interface StatusValidationOptions {
   expected: number | number[] | string;
   actual: number;
 }
@@ -168,16 +168,16 @@ export interface IStatusValidationOptions {
 /**
  * Schema 驗證選項
  */
-export interface ISchemaValidationOptions {
+export interface SchemaValidationOptions {
   schemaName: string;
   data: unknown;
-  schemas: Record<string, IJsonSchema>;
+  schemas: Record<string, JsonSchema>;
 }
 
 /**
  * 自訂規則驗證選項
  */
-export interface ICustomRuleValidationOptions {
+export interface CustomRuleValidationOptions {
   rules: Array<{
     rule: string;
     path: string;

@@ -1,13 +1,13 @@
 import { getConfig, getToken } from '@specpilot/config';
 import { createStructuredLogger } from '@specpilot/shared';
-import type { IHttpRunnerConfig, IHttpClientConfig, IRetryConfig, ICircuitBreakerConfig } from './types.js';
+import type { HttpRunnerConfig, HttpClientConfig, RetryConfig, CircuitBreakerConfig } from './types.js';
 
 const logger = createStructuredLogger('http-runner-config');
 
 /**
  * HTTP Runner 專用設定擴展
  */
-export interface IHttpRunnerEnvConfig {
+export interface HttpRunnerEnvConfig {
   timeout?: number;
   retries?: number;
   retryDelay?: number;
@@ -19,8 +19,8 @@ export interface IHttpRunnerEnvConfig {
 /**
  * 從環境變數載入 HTTP Runner 設定
  */
-export function loadHttpRunnerConfigFromEnv(): IHttpRunnerEnvConfig {
-  const config: IHttpRunnerEnvConfig = {};
+export function loadHttpRunnerConfigFromEnv(): HttpRunnerEnvConfig {
+  const config: HttpRunnerEnvConfig = {};
 
   // HTTP 設定
   if (process.env.SPEC_PILOT_HTTP_TIMEOUT) {
@@ -80,12 +80,12 @@ export function loadHttpRunnerConfigFromEnv(): IHttpRunnerEnvConfig {
 /**
  * 建立 HTTP Runner 設定
  */
-export function createHttpRunnerConfig(overrides: Partial<IHttpRunnerConfig> = {}): IHttpRunnerConfig {
+export function createHttpRunnerConfig(overrides: Partial<HttpRunnerConfig> = {}): HttpRunnerConfig {
   const baseConfig = getConfig();
   const envConfig = loadHttpRunnerConfigFromEnv();
 
   // HTTP 客戶端設定
-  const httpConfig: IHttpClientConfig = {
+  const httpConfig: HttpClientConfig = {
     timeout: envConfig.timeout || 30000,
     retries: envConfig.retries || 3,
     retryDelay: envConfig.retryDelay || 500,
@@ -93,7 +93,7 @@ export function createHttpRunnerConfig(overrides: Partial<IHttpRunnerConfig> = {
   };
 
   // 重試設定
-  const retryConfig: Partial<IRetryConfig> = {
+  const retryConfig: Partial<RetryConfig> = {
     retries: envConfig.retries || 3,
     delay: envConfig.retryDelay || 500,
     maxDelay: envConfig.retryMaxDelay || 10000,
@@ -102,14 +102,14 @@ export function createHttpRunnerConfig(overrides: Partial<IHttpRunnerConfig> = {
   };
 
   // 斷路器設定
-  const circuitBreakerConfig: Partial<ICircuitBreakerConfig> = {
+  const circuitBreakerConfig: Partial<CircuitBreakerConfig> = {
     failureThreshold: envConfig.circuitBreakerThreshold || 5,
     recoveryTimeout: envConfig.circuitBreakerTimeout || 30000,
     monitoringPeriod: 60000,
     ...overrides.circuitBreaker,
   };
 
-  const finalConfig: IHttpRunnerConfig = {
+  const finalConfig: HttpRunnerConfig = {
     baseUrl: baseConfig.baseUrl,
     http: httpConfig,
     retry: retryConfig,
@@ -148,7 +148,7 @@ export function getStaticToken(): string | undefined {
  * 建立包含 Token 的 HTTP Runner 實例
  */
 export function createConfiguredHttpRunner(
-  overrides: Partial<IHttpRunnerConfig> = {}
+  overrides: Partial<HttpRunnerConfig> = {}
 ): { runner: unknown; hasStaticToken: boolean } {
   // 動態匯入以避免循環依賴
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -177,7 +177,7 @@ export function createConfiguredHttpRunner(
 /**
  * 驗證設定值
  */
-export function validateHttpRunnerConfig(config: IHttpRunnerConfig): {
+export function validateHttpRunnerConfig(config: HttpRunnerConfig): {
   isValid: boolean;
   errors: string[];
 } {

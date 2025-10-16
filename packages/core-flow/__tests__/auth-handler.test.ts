@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TokenManager } from '@specpilot/http-runner';
 import { AuthHandler } from '../src/auth-handler.js';
-import type { IFlowStep, IStaticAuth } from '@specpilot/flow-parser';
+import type { FlowStep, StaticAuth } from '@specpilot/flow-parser';
 
 // Mock TokenManager
 vi.mock('@specpilot/http-runner', () => ({
@@ -29,7 +29,7 @@ describe('AuthHandler', () => {
 
   describe('handleStepAuth', () => {
     it('應該成功處理登入類型認證', async () => {
-      const step: IFlowStep = {
+      const step: FlowStep = {
         name: 'login_step',
         request: { method: 'POST' as any, path: '/auth/login' },
         expectations: {},
@@ -61,7 +61,7 @@ describe('AuthHandler', () => {
     });
 
     it('應該處理登入認證的 Token 提取失敗', async () => {
-      const step: IFlowStep = {
+      const step: FlowStep = {
         name: 'login_step',
         request: { method: 'POST' as any, path: '/auth/login' },
         expectations: {},
@@ -82,7 +82,7 @@ describe('AuthHandler', () => {
     });
 
     it('應該成功處理靜態類型認證', async () => {
-      const step: IFlowStep = {
+      const step: FlowStep = {
         name: 'api_call',
         request: { method: 'GET' as any, path: '/users' },
         expectations: {},
@@ -101,7 +101,7 @@ describe('AuthHandler', () => {
     });
 
     it('應該處理靜態認證的 Token 缺失', async () => {
-      const step: IFlowStep = {
+      const step: FlowStep = {
         name: 'api_call',
         request: { method: 'GET' as any, path: '/users' },
         expectations: {},
@@ -120,7 +120,7 @@ describe('AuthHandler', () => {
     });
 
     it('應該返回成功如果步驟沒有認證設定', async () => {
-      const step: IFlowStep = {
+      const step: FlowStep = {
         name: 'public_api',
         request: { method: 'GET' as any, path: '/public' },
         expectations: {}
@@ -134,7 +134,7 @@ describe('AuthHandler', () => {
 
   describe('loadGlobalStaticAuth', () => {
     it('應該成功載入靜態認證設定', async () => {
-      const staticConfigs: IStaticAuth[] = [
+      const staticConfigs: StaticAuth[] = [
         {
           namespace: 'api_v1',
           token: 'static_token_1',
@@ -155,7 +155,7 @@ describe('AuthHandler', () => {
     });
 
     it('應該處理環境變數格式的 Token', async () => {
-      const staticConfigs: IStaticAuth[] = [
+      const staticConfigs: StaticAuth[] = [
         {
           namespace: 'api_v1',
           token: '${TEST_TOKEN}',
@@ -180,7 +180,7 @@ describe('AuthHandler', () => {
     });
 
     it('應該處理環境變數未設定的情況', async () => {
-      const staticConfigs: IStaticAuth[] = [
+      const staticConfigs: StaticAuth[] = [
         {
           namespace: 'api_v1',
           token: '${MISSING_TOKEN}'

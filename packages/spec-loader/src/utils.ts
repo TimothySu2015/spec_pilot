@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { extname } from 'node:path';
-import type { FileFormat, IContentTypeDetection, SUPPORTED_EXTENSIONS } from './types.js';
+import type { FileFormat, ContentTypeDetection, SUPPORTED_EXTENSIONS } from './types.js';
 
 /**
  * 根據檔案副檔名判斷格式
@@ -31,7 +31,7 @@ export function isSupportedExtension(filePath: string): boolean {
  * 推斷內容格式
  * 基於內容的第一個非空白字符判斷
  */
-export function detectContentFormat(content: string): IContentTypeDetection {
+export function detectContentFormat(content: string): ContentTypeDetection {
   const trimmed = content.trim();
   
   if (!trimmed) {

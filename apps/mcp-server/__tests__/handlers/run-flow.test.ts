@@ -54,7 +54,7 @@ vi.mock('@specpilot/core-flow', () => ({
 
 const mockBuildDiagnostic = vi.fn().mockReturnValue(null);
 vi.mock('@specpilot/reporting', () => ({
-  // 現在只需要 IExecutionConfig 型別
+  // 現在只需要 ExecutionConfig 型別
   DiagnosticContextBuilder: vi.fn().mockImplementation(() => ({
     build: mockBuildDiagnostic,
   })),

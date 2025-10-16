@@ -4,7 +4,7 @@ import type { IMcpRequest, IMcpResponse, IGetReportResult } from '../rpc-handler
 import { createSuccessResponse, createErrorResponse, validateGetReportParams, JSON_RPC_ERROR_CODES } from '../rpc-handler.js';
 import { ReportValidator, DiagnosticContextBuilder } from '@specpilot/reporting';
 import { createStructuredLogger } from '@specpilot/shared';
-import type { IExecutionReport } from '@specpilot/reporting';
+import type { ExecutionReport } from '@specpilot/reporting';
 
 const logger = createStructuredLogger('mcp-server');
 
@@ -138,7 +138,7 @@ export function handleGetReport(request: IMcpRequest): IMcpResponse {
     }
 
     // 類型斷言為執行報表
-    const report = parsedReport as IExecutionReport;
+    const report = parsedReport as ExecutionReport;
 
     // ✨ 階段 3: 建立或取得診斷上下文
     let diagnosticContext = report.diagnosticContext || null;

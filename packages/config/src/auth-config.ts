@@ -41,17 +41,17 @@ const AuthConfigSchema = z.object({
   defaultExpirySeconds: z.number().int().positive().optional().default(3600),
 });
 
-export type IStaticToken = z.infer<typeof StaticTokenSchema>;
-export type INamespaceConfig = z.infer<typeof NamespaceConfigSchema>;
-export type IAuthConfig = z.infer<typeof AuthConfigSchema>;
+export type StaticToken = z.infer<typeof StaticTokenSchema>;
+export type NamespaceConfig = z.infer<typeof NamespaceConfigSchema>;
+export type AuthConfig = z.infer<typeof AuthConfigSchema>;
 
 /**
  * 認證設定管理器
  */
 export class AuthConfigManager {
-  private authConfig: IAuthConfig;
+  private authConfig: AuthConfig;
 
-  constructor(authConfig?: Partial<IAuthConfig>) {
+  constructor(authConfig?: Partial<AuthConfig>) {
     this.authConfig = AuthConfigSchema.parse(authConfig || {});
     this.loadFromEnvironment();
   }
@@ -138,21 +138,21 @@ export class AuthConfigManager {
   /**
    * 取得所有靜態 Token 設定
    */
-  getStaticTokens(): IStaticToken[] {
+  getStaticTokens(): StaticToken[] {
     return this.authConfig.static || [];
   }
 
   /**
    * 取得指定命名空間的靜態 Token
    */
-  getStaticToken(namespace: string): IStaticToken | undefined {
+  getStaticToken(namespace: string): StaticToken | undefined {
     return this.authConfig.static?.find(token => token.namespace === namespace);
   }
 
   /**
    * 新增或更新靜態 Token
    */
-  setStaticToken(staticToken: IStaticToken): void {
+  setStaticToken(staticToken: StaticToken): void {
     this.authConfig.static = this.authConfig.static || [];
 
     const existingIndex = this.authConfig.static.findIndex(
@@ -200,7 +200,7 @@ export class AuthConfigManager {
   /**
    * 取得命名空間設定
    */
-  getNamespaceConfig(namespace: string): INamespaceConfig {
+  getNamespaceConfig(namespace: string): NamespaceConfig {
     return this.authConfig.namespaces[namespace] || {
       retryOnAuthFailure: false
     };
@@ -209,7 +209,7 @@ export class AuthConfigManager {
   /**
    * 設定命名空間配置
    */
-  setNamespaceConfig(namespace: string, config: INamespaceConfig): void {
+  setNamespaceConfig(namespace: string, config: NamespaceConfig): void {
     this.authConfig.namespaces[namespace] = config;
 
     logger.info('命名空間設定已更新', {
@@ -313,7 +313,7 @@ export class AuthConfigManager {
   /**
    * 取得完整認證設定
    */
-  getConfig(): IAuthConfig {
+  getConfig(): AuthConfig {
     return { ...this.authConfig };
   }
 
