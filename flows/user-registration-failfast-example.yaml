@@ -1,0 +1,115 @@
+# Fail-Fast 模式範例：使用者註冊流程
+# 此流程展示 Fail-Fast 模式的使用，當任何步驟失敗時立即停止執行
+
+name: "使用者註冊流程（Fail-Fast 模式）"
+description: "展示 Fail-Fast 模式：驗證碼 -> 註冊 -> 發送歡迎郵件"
+version: "1.0.0"
+
+# 全域設定
+globals:
+  baseUrl: "http://localhost:3000"
+  headers:
+    Content-Type: "application/json"
+
+# 執行選項
+options:
+  failFast: true  # ✅ 啟用 Fail-Fast 模式：任何步驟失敗立即停止
+
+# 測試步驟
+steps:
+  # 步驟 1: 發送驗證碼
+  - name: "發送驗證碼"
+    description: "發送驗證碼到使用者手機"
+    request:
+      method: POST
+      path: /api/auth/send-verification-code
+      body:
+        phone: "+886912345678"
+    expectations:
+      status: 200
+      custom:
+        - type: notNull
+          field: verificationId
+    capture:
+      verificationId: $.verificationId
+
+  # 步驟 2: 驗證碼確認
+  # ⚠️ 如果步驟 1 失敗，此步驟將被跳過
+  - name: "驗證碼確認"
+    description: "確認使用者輸入的驗證碼"
+    request:
+      method: POST
+      path: /api/auth/verify-code
+      body:
+        verificationId: "${verificationId}"
+        code: "123456"
+    expectations:
+      status: 200
+      custom:
+        - type: notNull
+          field: token
+    capture:
+      authToken: $.token
+
+  # 步驟 3: 建立使用者帳號
+  # ⚠️ 如果步驟 2 失敗，此步驟將被跳過
+  - name: "建立使用者帳號"
+    description: "使用驗證過的資訊建立帳號"
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer ${authToken}"
+      body:
+        name: "測試使用者"
+        email: "test@example.com"
+        phone: "+886912345678"
+    expectations:
+      status: 201
+      custom:
+        - type: notNull
+          field: id
+    capture:
+      userId: $.id
+
+  # 步驟 4: 發送歡迎郵件
+  # ⚠️ 如果步驟 3 失敗，此步驟將被跳過
+  - name: "發送歡迎郵件"
+    description: "發送歡迎郵件給新使用者"
+    request:
+      method: POST
+      path: /api/notifications/welcome-email
+      headers:
+        Authorization: "Bearer ${authToken}"
+      body:
+        userId: "${userId}"
+    expectations:
+      status: 200
+      custom:
+        - type: notNull
+          field: emailSent
+        - type: contains
+          field: status
+          value: "sent"
+
+# 📝 使用說明：
+#
+# 1. Fail-Fast 模式特點：
+#    - 任何步驟失敗 → 立即停止後續步驟
+#    - 節省時間與資源
+#    - 適合依賴性強的流程（每個步驟都依賴前一個步驟的結果）
+#
+# 2. 對比 Continue-On-Error 模式（預設）：
+#    若要改為 Continue-On-Error 模式，只需：
+#    options:
+#      failFast: false  # 或完全移除此行（預設為 false）
+#
+# 3. 執行方式：
+#    CLI: pnpm run start -- --spec specs/openapi.yaml --flow flows/user-registration-failfast-example.yaml
+#    MCP: 使用 runFlow 工具並指定此檔案路徑
+#
+# 4. 預期行為：
+#    - 如果步驟 1 失敗 → 只執行 1 個步驟，跳過步驟 2、3、4
+#    - 如果步驟 2 失敗 → 只執行 2 個步驟，跳過步驟 3、4
+#    - 如果步驟 3 失敗 → 只執行 3 個步驟，跳過步驟 4
+#    - 如果全部成功 → 執行全部 4 個步驟
