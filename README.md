@@ -272,16 +272,45 @@ LOG_LEVEL=debug
 
 ## 日誌與報表
 
-### 日誌輸出
-- **檔案位置**: `logs/specpilot.log`（JSON Lines 格式）
-- **主控台輸出**: 開發模式下同時輸出至終端
+### 雙日誌系統
+
+SpecPilot 使用兩種日誌系統,針對不同執行環境優化:
+
+#### 1. `logs/specpilot.log` - 標準結構化日誌
+- **使用者**: CLI 與核心套件 (core-flow, http-runner 等)
+- **輸出方式**: stdout **+** 檔案
+- **格式**: JSON Lines (含 pid、component、executionId)
 - **日誌欄位**: `timestamp`、`level`、`executionId`、`component`、`message`、`context`
 - **敏感資料遮罩**: 自動以 `***` 遮罩 token、password、secret 等欄位
+- **彩色輸出**: ✅ 開發模式支援
+
+#### 2. `logs/mcp-server.log` - 靜默日誌 (MCP Server 專用)
+- **使用者**: MCP Server 工具呼叫與生命週期
+- **輸出方式**: **只有**檔案 (避免干擾 Stdio Transport)
+- **格式**: JSON Lines (精簡格式)
+- **設計原因**: MCP 協議使用 stdin/stdout 通訊,必須避免日誌污染協議訊息
+
+#### 監看日誌
+```bash
+# 監看 CLI 執行日誌
+tail -f logs/specpilot.log
+
+# 監看 MCP Server 日誌
+tail -f logs/mcp-server.log
+
+# 同時監看兩個日誌
+tail -f logs/specpilot.log logs/mcp-server.log
+```
+
+**詳細說明**:
+- 雙日誌系統架構: [`docs/LOGGING-ARCHITECTURE.md`](docs/LOGGING-ARCHITECTURE.md)
+- MCP Server 日誌詳解: [`apps/mcp-server/LOGGING.md`](apps/mcp-server/LOGGING.md)
 
 ### 測試報表
 - **輸出位置**: `reports/result.json`
 - **格式**: 結構化 JSON，包含測試步驟、驗證結果、執行時間等資訊
 - **錯誤追蹤**: 完整的錯誤堆疊與執行上下文
+- **智能診斷**: 失敗時自動產生 `diagnosticContext` (參考上方 AI 智能診斷功能)
 
 ## 測試
 
@@ -341,8 +370,22 @@ open coverage/index.html
    - Mock 結束後，確認目標 API 的健康檢查步驟（如 `healthcheck`）已通過，再執行實際流程，確保修正成果在真實環境下仍可通過。
 
 ## 參考文件
-- `docs/prd.md`：產品需求文件，詳述功能、非功能需求與 Epic/Story。
-- `docs/architecture.md`：系統架構、模組切分、部署與安全策略。
-- `docs/SpecPilot-Req.md`：原始需求彙總。
+
+### 核心文件
+- [`docs/prd.md`](docs/prd.md) - 產品需求文件，詳述功能、非功能需求與 Epic/Story
+- [`docs/architecture.md`](docs/architecture.md) - 系統架構、模組切分、部署與安全策略
+- [`docs/SpecPilot-Req.md`](docs/SpecPilot-Req.md) - 原始需求彙總
+
+### MCP Server 文件
+- [`apps/mcp-server/README.md`](apps/mcp-server/README.md) - MCP Server 架構說明與使用指南
+- [`apps/mcp-server/LOGGING.md`](apps/mcp-server/LOGGING.md) - MCP Server 日誌系統詳解
+- [`MCP-SETUP.md`](MCP-SETUP.md) - Claude Desktop 整合設定指南
+
+### 日誌與診斷
+- [`docs/LOGGING-ARCHITECTURE.md`](docs/LOGGING-ARCHITECTURE.md) - 雙日誌系統架構完整說明
+- [`docs/ai-diagnosis-implementation-plan.md`](docs/ai-diagnosis-implementation-plan.md) - AI 智能診斷系統設計
+
+### 開發指南
+- [`CLAUDE.md`](CLAUDE.md) - Claude Code 專案開發指導方針
 
 如需進一步協助，請依文件指引或聯絡專案維運人員。

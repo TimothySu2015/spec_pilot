@@ -113,7 +113,19 @@
       "Bash(where node)",
       "Bash(dir:*)",
       "Bash(pnpm:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(git push:*)",
+      "mcp__serena__get_symbols_overview",
+      "Bash(mv:*)",
+      "Bash(python:*)",
+      "mcp__serena__find_symbol",
+      "mcp__serena__search_for_pattern",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(if [ -f logs/mcp-server.log ])",
+      "Bash(then mv logs/mcp-server.log logs/mcp-server.log.old)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

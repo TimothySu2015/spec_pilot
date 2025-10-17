@@ -56,3 +56,4 @@ reports/*.json
 # BMAD (local only)
 .bmad-core/
 .bmad-*/
+test-integration/

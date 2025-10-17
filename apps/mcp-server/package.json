@@ -22,8 +22,8 @@
     "@modelcontextprotocol/sdk": "^1.18.2",
     "@specpilot/config": "workspace:*",
     "@specpilot/core-flow": "workspace:*",
-    "@specpilot/flow-parser": "workspace:*",
     "@specpilot/flow-generator": "workspace:*",
+    "@specpilot/flow-parser": "workspace:*",
     "@specpilot/flow-validator": "workspace:*",
     "@specpilot/reporting": "workspace:*",
     "@specpilot/schemas": "workspace:*",
@@ -38,5 +38,8 @@
     "pino-pretty": "^13.1.1",
     "yaml": "^2.4.3",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "rotating-file-stream": "^3.2.7"
   }
 }

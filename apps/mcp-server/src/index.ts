@@ -12,49 +12,8 @@ import { overrideConfig, getConfig } from '@specpilot/config';
 import { SpecAnalyzer, TestSuiteGenerator, FlowQualityChecker } from '@specpilot/test-suite-generator';
 import { FlowValidator } from '@specpilot/flow-validator';
 import { stringify as yamlStringify } from 'yaml';
-
-// 為 MCP Server 建立靜默日誌記錄器（避免干擾 stdio transport）
-const logger = {
-  info: (message: string, context?: unknown): void => {
-    // 寫入檔案而非 stdout/stderr
-    const logsDir = path.join(process.cwd(), 'logs');
-    const logPath = path.join(logsDir, 'mcp-server.log');
-    try {
-      // 確保 logs 目錄存在
-      if (!existsSync(logsDir)) {
-        mkdirSync(logsDir, { recursive: true });
-      }
-      const logEntry = JSON.stringify({
-        level: 'info',
-        time: new Date().toISOString(),
-        message,
-        context
-      }) + '\n';
-      writeFileSync(logPath, logEntry, { flag: 'a' });
-    } catch (e) {
-      // 靜默處理日誌錯誤
-    }
-  },
-  error: (message: string, context?: unknown): void => {
-    const logsDir = path.join(process.cwd(), 'logs');
-    const logPath = path.join(logsDir, 'mcp-server.log');
-    try {
-      // 確保 logs 目錄存在
-      if (!existsSync(logsDir)) {
-        mkdirSync(logsDir, { recursive: true });
-      }
-      const logEntry = JSON.stringify({
-        level: 'error',
-        time: new Date().toISOString(),
-        message,
-        context
-      }) + '\n';
-      writeFileSync(logPath, logEntry, { flag: 'a' });
-    } catch (e) {
-      // 靜默處理日誌錯誤
-    }
-  }
-};
+// 匯入使用 rotating-file-stream 的靜默日誌器
+import { logger } from './logger.js';
 
 // 建立 MCP Server
 const server = new McpServer({
