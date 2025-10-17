@@ -111,6 +111,9 @@ export class EnhancedFlowOrchestrator {
 
       const results: TestResult[] = [];
 
+      // 取得 failFast 設定（預設為 false，保持向後相容）
+      const failFast = flowDefinition.options?.failFast ?? false;
+
       // 執行每個步驟
       for (const step of flowDefinition.steps) {
         if (enableReporting && this.reportingIntegration) {
@@ -128,14 +131,30 @@ export class EnhancedFlowOrchestrator {
           this.captureVariables(step.capture, stepResult.response.data, executionId);
         }
 
-        // 如果步驟失敗且非認證錯誤，考慮是否繼續執行
-        if (stepResult.status === 'failed' && !stepResult.authStatus?.authError) {
-          logger.warn('步驟執行失敗，繼續執行下一步驟', {
-            stepName: step.name,
-            error: stepResult.error,
-            executionId,
-            component: 'enhanced-orchestrator'
-          });
+        // 處理失敗步驟
+        if (stepResult.status === 'failed') {
+          if (failFast) {
+            // Fail-Fast 模式：立即停止執行
+            const remainingSteps = flowDefinition.steps.length - results.length;
+            logger.error('步驟執行失敗，啟用 Fail-Fast 模式，停止執行後續步驟', {
+              stepName: step.name,
+              error: stepResult.error,
+              executedSteps: results.length,
+              remainingSteps,
+              executionId,
+              component: 'enhanced-orchestrator',
+              event: 'FAIL_FAST_TRIGGERED'
+            });
+            break; // 中斷迴圈，停止執行
+          } else if (!stepResult.authStatus?.authError) {
+            // Continue-On-Error 模式：繼續執行（原有行為）
+            logger.warn('步驟執行失敗，繼續執行下一步驟', {
+              stepName: step.name,
+              error: stepResult.error,
+              executionId,
+              component: 'enhanced-orchestrator'
+            });
+          }
         }
       }
 

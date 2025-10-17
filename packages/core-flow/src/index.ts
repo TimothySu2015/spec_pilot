@@ -88,10 +88,14 @@ export class FlowOrchestrator {
       startTime: new Date()
     };
 
+    // 取得 failFast 設定（預設為 false，保持向後相容）
+    const failFast = flowDefinition.options?.failFast ?? false;
+
     logger.info('開始執行測試流程', {
       flowId: flowDefinition.id,
       stepCount: flowDefinition.steps.length,
       executionId: context.executionId,
+      failFast,
       component: 'core-flow'
     });
 
@@ -120,14 +124,30 @@ export class FlowOrchestrator {
       const stepResult = await this.executeStep(step, context);
       results.push(stepResult);
 
-      // 如果步驟失敗且非認證錯誤，考慮是否繼續執行
-      if (stepResult.status === 'failed' && !stepResult.authStatus?.authError) {
-        logger.warn('步驟執行失敗，繼續執行下一步驟', {
-          stepName: step.name,
-          error: stepResult.error,
-          executionId: context.executionId,
-          component: 'core-flow'
-        });
+      // 處理失敗步驟
+      if (stepResult.status === 'failed') {
+        if (failFast) {
+          // Fail-Fast 模式：立即停止執行
+          const remainingSteps = flowDefinition.steps.length - results.length;
+          logger.error('步驟執行失敗，啟用 Fail-Fast 模式，停止執行後續步驟', {
+            stepName: step.name,
+            error: stepResult.error,
+            executedSteps: results.length,
+            remainingSteps,
+            executionId: context.executionId,
+            component: 'core-flow',
+            event: 'FAIL_FAST_TRIGGERED'
+          });
+          break; // 中斷迴圈，停止執行
+        } else if (!stepResult.authStatus?.authError) {
+          // Continue-On-Error 模式：繼續執行（原有行為）
+          logger.warn('步驟執行失敗，繼續執行下一步驟', {
+            stepName: step.name,
+            error: stepResult.error,
+            executionId: context.executionId,
+            component: 'core-flow'
+          });
+        }
       }
     }
 
