@@ -125,7 +125,11 @@
       "WebFetch(domain:www.npmjs.com)",
       "Bash(if [ -f logs/mcp-server.log ])",
       "Bash(then mv logs/mcp-server.log logs/mcp-server.log.old)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(git log:*)",
+      "mcp__serena__list_dir",
+      "mcp__serena__activate_project",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []
