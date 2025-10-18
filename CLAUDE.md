@@ -19,6 +19,8 @@
 
 **完整文件管理指南**: 詳見 `docs/DOC-MANAGEMENT-GUIDE.md`
 
+**當前開發計畫**: 查看 `docs/plans/ACTIVE.md` 了解進行中的任務
+
 ---
 
 ## 語言與溝通規範
