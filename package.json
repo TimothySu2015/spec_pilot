@@ -30,7 +30,8 @@
     "prepare": "husky install",
     "bmad:refresh": "bmad-method install -f -i codex",
     "bmad:list": "bmad-method list:agents",
-    "bmad:validate": "bmad-method validate"
+    "bmad:validate": "bmad-method validate",
+    "check:docs": "bash scripts/check-docs.sh"
   },
   "engines": {
     "node": ">=20.11.1",
