@@ -63,7 +63,7 @@ export class EdgeCaseGenerator {
 
     if (schema.type === 'string') {
       // 最大長度
-      if (schema.maxLength) {
+      if (schema.maxLength !== undefined) {
         cases.push({
           name: '最大長度',
           value: 'x'.repeat(schema.maxLength),
@@ -77,7 +77,7 @@ export class EdgeCaseGenerator {
       }
 
       // 最小長度
-      if (schema.minLength) {
+      if (schema.minLength !== undefined) {
         cases.push({
           name: '最小長度',
           value: 'x'.repeat(schema.minLength),
