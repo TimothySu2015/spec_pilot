@@ -35,6 +35,7 @@ export interface ParameterInfo {
 
 /**
  * JSON Schema 定義
+ * 支援 OpenAPI 3.0 複合 Schema
  */
 export interface JSONSchema {
   type?: string;
@@ -49,6 +50,16 @@ export interface JSONSchema {
   maxLength?: number;
   enum?: unknown[];
   examples?: unknown[];
+
+  // OpenAPI 3.0 複合 Schema 支援
+  oneOf?: JSONSchema[];
+  anyOf?: JSONSchema[];
+  allOf?: JSONSchema[];
+  discriminator?: {
+    propertyName: string;
+    mapping?: Record<string, string>;
+  };
+
   [key: string]: unknown;
 }
 

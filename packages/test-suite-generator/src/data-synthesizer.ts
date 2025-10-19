@@ -32,6 +32,9 @@ export class DataSynthesizer {
    * 根據 schema 合成測試資料
    */
   synthesize(schema: JSONSchema, examples?: Record<string, unknown>): unknown {
+    // 0. 處理複合 Schema (allOf/oneOf/anyOf)
+    const resolvedSchema = this.resolveCompositeSchema(schema);
+
     // 1. 優先使用 examples
     if (this.options.useExamples && examples) {
       const exampleValue = this.extractExample(examples);
@@ -41,17 +44,17 @@ export class DataSynthesizer {
     }
 
     // 2. 使用 schema 中的 examples
-    if (this.options.useExamples && schema.examples && schema.examples.length > 0) {
-      return schema.examples[0];
+    if (this.options.useExamples && resolvedSchema.examples && resolvedSchema.examples.length > 0) {
+      return resolvedSchema.examples[0];
     }
 
     // 3. 使用 default 值
-    if (this.options.useDefaults && 'default' in schema) {
-      return schema.default;
+    if (this.options.useDefaults && 'default' in resolvedSchema) {
+      return resolvedSchema.default;
     }
 
     // 4. 根據類型產生
-    return this.generateByType(schema);
+    return this.generateByType(resolvedSchema);
   }
 
   /**
@@ -384,5 +387,112 @@ export class DataSynthesizer {
       default:
         return undefined;
     }
+  }
+
+  /**
+   * 解析複合 Schema (allOf/oneOf/anyOf)
+   */
+  private resolveCompositeSchema(schema: JSONSchema): JSONSchema {
+    // 處理 allOf: 合併所有 schema
+    if (schema.allOf && Array.isArray(schema.allOf) && schema.allOf.length > 0) {
+      return this.mergeSchemas(schema.allOf);
+    }
+
+    // 處理 oneOf: 選擇第一個 schema
+    if (schema.oneOf && Array.isArray(schema.oneOf) && schema.oneOf.length > 0) {
+      // 如果有 discriminator，使用它來選擇
+      if (schema.discriminator) {
+        return this.resolveDiscriminator(schema.oneOf, schema.discriminator);
+      }
+      // 否則選擇第一個 schema
+      return schema.oneOf[0];
+    }
+
+    // 處理 anyOf: 選擇第一個 schema (簡化實作)
+    if (schema.anyOf && Array.isArray(schema.anyOf) && schema.anyOf.length > 0) {
+      return schema.anyOf[0];
+    }
+
+    // 沒有複合 schema，直接返回
+    return schema;
+  }
+
+  /**
+   * 合併多個 schemas (用於 allOf)
+   */
+  private mergeSchemas(schemas: JSONSchema[]): JSONSchema {
+    const merged: JSONSchema = {
+      type: schemas[0]?.type,
+      properties: {},
+      required: [],
+    };
+
+    for (const schema of schemas) {
+      // 處理巢狀複合 schema（oneOf/anyOf）
+      let resolved = schema;
+
+      // 如果這個 schema 包含 oneOf/anyOf（但不處理 allOf，避免遞迴）
+      if (schema.oneOf && !schema.allOf) {
+        resolved = schema.oneOf[0];
+      } else if (schema.anyOf && !schema.allOf) {
+        resolved = schema.anyOf[0];
+      }
+
+      // 合併 type
+      if (resolved.type && !merged.type) {
+        merged.type = resolved.type;
+      }
+
+      // 合併 properties
+      if (resolved.properties) {
+        merged.properties = { ...merged.properties, ...resolved.properties };
+      }
+
+      // 合併 required
+      if (resolved.required) {
+        const currentRequired = Array.isArray(merged.required) ? merged.required : [];
+        merged.required = [...currentRequired, ...resolved.required];
+      }
+
+      // 合併其他屬性
+      Object.keys(resolved).forEach((key) => {
+        if (!['type', 'properties', 'required', 'allOf', 'oneOf', 'anyOf'].includes(key)) {
+          merged[key] = resolved[key];
+        }
+      });
+    }
+
+    return merged;
+  }
+
+  /**
+   * 根據 discriminator 選擇對應的 schema
+   */
+  private resolveDiscriminator(
+    schemas: JSONSchema[],
+    discriminator: { propertyName: string; mapping?: Record<string, string> }
+  ): JSONSchema {
+    // 簡化實作：選擇第一個 schema 並加上 discriminator 屬性
+    const selected = schemas[0];
+
+    // 如果有 mapping，使用第一個 mapping key
+    if (discriminator.mapping) {
+      const firstKey = Object.keys(discriminator.mapping)[0];
+      if (firstKey && selected.type === 'object') {
+        return {
+          ...selected,
+          properties: {
+            ...selected.properties,
+            [discriminator.propertyName]: {
+              type: 'string',
+              enum: [firstKey],
+            },
+          },
+          required: [...(selected.required || []), discriminator.propertyName],
+        };
+      }
+    }
+
+    return selected;
   }
 }

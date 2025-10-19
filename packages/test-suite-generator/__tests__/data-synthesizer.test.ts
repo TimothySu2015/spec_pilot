@@ -691,4 +691,200 @@ describe('DataSynthesizer', () => {
       expect(contacts[0].value).toBeDefined();
     });
   });
+
+  describe('OpenAPI 3.0 複合 Schema 支援', () => {
+    describe('allOf - 合併多個 schemas', () => {
+      it('應該合併多個 schemas 的屬性', () => {
+        const schema: JSONSchema = {
+          allOf: [
+            {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' }
+              },
+              required: ['id']
+            },
+            {
+              type: 'object',
+              properties: {
+                email: { type: 'string', format: 'email' },
+                age: { type: 'integer' }
+              },
+              required: ['email']
+            }
+          ]
+        };
+
+        const result = synthesizer.synthesize(schema) as Record<string, unknown>;
+
+        // 應該包含所有屬性
+        expect(result.id).toBeDefined();
+        expect(typeof result.id).toBe('number');
+        expect(result.name).toBeUndefined(); // 非 required
+        expect(result.email).toBeDefined();
+        expect(typeof result.email).toBe('string');
+        expect(result.age).toBeUndefined(); // 非 required
+      });
+
+      it('應該合併 required 欄位', () => {
+        const schema: JSONSchema = {
+          allOf: [
+            {
+              type: 'object',
+              properties: { a: { type: 'string' }, b: { type: 'string' } },
+              required: ['a']
+            },
+            {
+              type: 'object',
+              properties: { c: { type: 'string' } },
+              required: ['c']
+            }
+          ]
+        };
+
+        const result = synthesizer.synthesize(schema) as Record<string, unknown>;
+
+        expect(result.a).toBeDefined(); // required in first schema
+        expect(result.c).toBeDefined(); // required in second schema
+        expect(result.b).toBeUndefined(); // not required
+      });
+    });
+
+    describe('oneOf - 選擇其中一個 schema', () => {
+      it('應該選擇第一個 schema', () => {
+        const schema: JSONSchema = {
+          oneOf: [
+            {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['cat'] },
+                meow: { type: 'string' }
+              },
+              required: ['type', 'meow']
+            },
+            {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['dog'] },
+                bark: { type: 'string' }
+              },
+              required: ['type', 'bark']
+            }
+          ]
+        };
+
+        const result = synthesizer.synthesize(schema) as Record<string, unknown>;
+
+        // 應該選擇第一個 schema (cat)
+        expect(result.type).toBe('cat');
+        expect(result.meow).toBeDefined();
+        expect(result.bark).toBeUndefined();
+      });
+
+      it('應該支援 discriminator', () => {
+        const schema: JSONSchema = {
+          oneOf: [
+            {
+              type: 'object',
+              properties: {
+                name: { type: 'string' }
+              },
+              required: ['name']
+            },
+            {
+              type: 'object',
+              properties: {
+                title: { type: 'string' }
+              },
+              required: ['title']
+            }
+          ],
+          discriminator: {
+            propertyName: 'petType',
+            mapping: {
+              cat: '#/components/schemas/Cat',
+              dog: '#/components/schemas/Dog'
+            }
+          }
+        };
+
+        const result = synthesizer.synthesize(schema) as Record<string, unknown>;
+
+        // 應該包含 discriminator 屬性
+        expect(result.petType).toBe('cat'); // 第一個 mapping key
+        expect(result.name).toBeDefined(); // 來自第一個 schema
+      });
+    });
+
+    describe('anyOf - 選擇其中一個或多個 schemas', () => {
+      it('應該選擇第一個 schema', () => {
+        const schema: JSONSchema = {
+          anyOf: [
+            {
+              type: 'object',
+              properties: {
+                email: { type: 'string', format: 'email' }
+              },
+              required: ['email']
+            },
+            {
+              type: 'object',
+              properties: {
+                phone: { type: 'string' }
+              },
+              required: ['phone']
+            }
+          ]
+        };
+
+        const result = synthesizer.synthesize(schema) as Record<string, unknown>;
+
+        // 應該選擇第一個 schema
+        expect(result.email).toBeDefined();
+        expect(typeof result.email).toBe('string');
+        expect(result.phone).toBeUndefined();
+      });
+    });
+
+    describe('巢狀複合 Schema', () => {
+      it('應該處理 allOf 內包含 oneOf', () => {
+        const schema: JSONSchema = {
+          allOf: [
+            {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' }
+              },
+              required: ['id']
+            },
+            {
+              oneOf: [
+                {
+                  type: 'object',
+                  properties: {
+                    type: { type: 'string', enum: ['A'] }
+                  },
+                  required: ['type']
+                },
+                {
+                  type: 'object',
+                  properties: {
+                    type: { type: 'string', enum: ['B'] }
+                  },
+                  required: ['type']
+                }
+              ]
+            }
+          ]
+        };
+
+        const result = synthesizer.synthesize(schema) as Record<string, unknown>;
+
+        expect(result.id).toBeDefined();
+        expect(typeof result.id).toBe('number');
+        expect(result.type).toBe('A'); // oneOf 選擇第一個
+      });
+    });
+  });
 });
