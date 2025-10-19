@@ -47,6 +47,37 @@ export class EnhancedFlowOrchestrator {
     const reportPath = options.reportPath || 'reports/result.json';
     const enableReporting = options.enableReporting !== false;
 
+    // 根據 Flow options 重新建立 HttpRunner（支援 retryCount 和 timeout）
+    if (flowDefinition.options?.retryCount !== undefined || flowDefinition.options?.timeout !== undefined) {
+      const httpRunnerConfig: {
+        baseUrl?: string;
+        retry?: { retries: number };
+        http?: { timeout: number };
+      } = {
+        baseUrl: config.baseUrl
+      };
+
+      if (flowDefinition.options.retryCount !== undefined) {
+        httpRunnerConfig.retry = { retries: flowDefinition.options.retryCount };
+        logger.info('從 Flow options 設定 retryCount', {
+          executionId,
+          retryCount: flowDefinition.options.retryCount,
+          component: 'enhanced-orchestrator'
+        });
+      }
+
+      if (flowDefinition.options.timeout !== undefined) {
+        httpRunnerConfig.http = { timeout: flowDefinition.options.timeout };
+        logger.info('從 Flow options 設定 timeout', {
+          executionId,
+          timeout: flowDefinition.options.timeout,
+          component: 'enhanced-orchestrator'
+        });
+      }
+
+      this.httpRunner = new HttpRunner(httpRunnerConfig);
+    }
+
     // 初始化報表整合
     if (enableReporting) {
       this.reportingIntegration = new ReportingIntegration(executionId);

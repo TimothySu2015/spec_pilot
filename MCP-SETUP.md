@@ -69,15 +69,17 @@ SpecPilot MCP Server 提供以下工具：
 - token (選填): API 認證 Token
 - options (選填):
   - failFast (boolean): 遇到錯誤時立即停止（預設：false）✅ 已實作
-  - retryCount (number): 重試次數（預設：3）⚠️ 規劃中 (Phase 8.2)
-  - timeout (number): 請求逾時時間，毫秒（預設：30000）⚠️ 規劃中 (Phase 8.3)
+  - retryCount (number): 重試次數（預設：3）✅ 已實作
+  - timeout (number): 請求逾時時間，毫秒（預設：30000）✅ 已實作
 
 使用範例：
   {
     "spec": "specs/petstore.yaml",
     "flow": "flows/user-test.yaml",
     "options": {
-      "failFast": true  // 第一個步驟失敗後立即停止
+      "failFast": true,      // 第一個步驟失敗後立即停止
+      "retryCount": 5,       // 設定重試次數為 5 次
+      "timeout": 10000       // 設定請求逾時為 10 秒
     }
   }
 ```
