@@ -290,22 +290,36 @@ const suggestions = engine.getSuggestions(
 ### 5. NLPFlowParser - 自然語言解析器
 
 **檔案位置**: `src/nlp-parser.ts`
-**測試覆蓋**: `__tests__/nlp-parser.test.ts` (100% 覆蓋率, 41 tests)
+**測試覆蓋**: `__tests__/nlp-parser.test.ts` (89.97% 覆蓋率, 205 tests)
 
 ✅ **完整實作的功能**:
 - 解析使用者自然語言輸入
 - 意圖分類 (create_flow, add_step, modify_step, add_validation)
+- **簡易中文分詞** (ChineseTokenizer - 最長匹配算法 + 領域自訂詞典)
 - 關鍵字提取 (支援繁體中文與英文，含複合詞拆分)
-- HTTP Method 識別 (15+ 種中文動詞映射)
-- 端點名稱提取 (多種模式匹配)
-- 參數提取 (支援多種格式: key:value, key=value, key is value)
+- HTTP Method 識別 (支援英文 HTTP Method 直接識別 + 15+ 種中文動詞映射)
+- **改善 URL 路徑識別** (支援多層級、路徑參數、完整 URL)
+- 端點名稱提取 (10+ 種資源名稱提取模式)
+- **改善參數提取** (支援布林、null、陣列、引號字串、數值)
 - 驗證規則識別
 - 信心度計算 (0-1 分數，基於提取實體數量)
 
 **核心演算法**:
-- **HTTP Method 映射**: 登入→POST, 查詢→GET, 更新→PUT, 刪除→DELETE 等
-- **關鍵字提取**: Unicode 中文字元識別 `/[\u4e00-\u9fa5]/`
-- **複合詞拆分**: 將多字詞拆分為 2 字組合 (如「使用者管理」→「使用者」、「者管」、「管理」)
+- **中文分詞**: 最長匹配 + 停用詞過濾 (100+ 常用停用詞)
+- **HTTP Method 映射**:
+  - 英文優先 (GET/POST/PUT/DELETE/PATCH 等，不區分大小寫)
+  - 中文動詞 (登入→POST, 查詢→GET, 更新→PUT, 刪除→DELETE)
+- **URL 路徑識別**:
+  - 簡單路徑: `/users`
+  - 多層級: `/api/v1/users`
+  - 路徑參數: `/users/{id}`
+  - 完整 URL: `http://example.com/api/users`
+- **參數提取**:
+  - 布林值: `true`, `false`, `真`, `假`
+  - Null: `null`, `空`, `無`
+  - 陣列: `[1,2,3]`, `["a","b"]`
+  - 字串: `"hello world"`
+  - 數值: 整數、浮點數、負數
 - **信心度計算**: 基礎 0.3 + HTTP Method(+0.2) + 端點(+0.3) + 參數(+0.1) + 驗證(+0.1)
 
 **API 範例**:
@@ -608,9 +622,14 @@ packages/flow-generator/
 
 ### 短期 (優先度 P0)
 
-- [ ] 新增端對端整合測試
+- [x] 新增端對端整合測試 (已完成於 P1 Phase 6.4)
 - [ ] 改善端點匹配演算法準確率
-- [ ] 優化 NLP 解析的複雜語句支援
+- [x] **優化 NLP 解析的複雜語句支援 - 階段 1 已完成** (db81b52)
+  - ✅ 實作簡易中文分詞器
+  - ✅ 改善 HTTP Method 識別（支援英文）
+  - ✅ 改善 URL 路徑識別
+  - ✅ 改善參數提取（支援多型別）
+  - 📊 測試數量：41 → 205 tests (+164)
 
 ### 中期 (優先度 P1)
 
@@ -630,6 +649,7 @@ packages/flow-generator/
 
 | 版本 | 日期 | 主要變更 |
 |------|------|---------|
+| 0.4.0 | 2025-10-19 | ✅ **優化 NLP 解析支援複雜語句（階段 1）** (db81b52)<br>  - 實作簡易中文分詞器 ChineseTokenizer<br>  - 改善 HTTP Method 識別（支援英文）<br>  - 改善 URL 路徑識別（多層級、路徑參數）<br>  - 改善參數提取（布林、null、陣列）<br>  - 新增 164 個測試 (41 → 205 tests)<br>  - NLPFlowParser 覆蓋率：89.97%<br>  - ChineseTokenizer 覆蓋率：95.42%<br>✅ **新增 MCP 與 NLP 架構決策記錄** (e2643ac)<br>  - 明確 MCP Server 不使用 NLP 解析<br>  - NLP 為未來 CLI 介面保留 |
 | 0.3.0 | 2025-01-19 | ✅ 完成 NLPFlowParser 實作 (41 tests)<br>✅ 新增 IntentRecognizer 測試 (37 tests)<br>✅ 新增 ContextManager 測試 (40 tests)<br>✅ 新增 SuggestionEngine 測試 (34 tests)<br>📊 測試覆蓋率提升至 85% (156 tests) |
 | 0.2.0 | 2025-01-17 | 更新 CLAUDE.md 反映實際狀態 |
 | 0.1.0 | 2025-10-12 | 初始版本，基礎架構完成 |

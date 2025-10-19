@@ -223,7 +223,7 @@ const steps = generator.generateSuccessCases(endpoint);
 ### 4. DataSynthesizer - 測試資料合成器
 
 **檔案位置**: `src/data-synthesizer.ts` (340 行)
-**測試覆蓋**: `__tests__/data-synthesizer.test.ts` (97.34% 覆蓋率, 39 tests)
+**測試覆蓋**: `__tests__/data-synthesizer.test.ts` (92.57% 覆蓋率, 83 tests)
 
 ✅ **完整實作的功能**:
 - 根據 JSON Schema 產生測試資料
@@ -231,8 +231,9 @@ const steps = generator.generateSuccessCases(endpoint);
 - 支援 enum 選擇
 - 支援所有 JSON 類型 (string, number, boolean, array, object)
 - 支援 format 驗證 (email, uuid, date, phone 等)
+- **整合 faker.js 產生真實測試資料** (支援 zh_TW 和 en_US locale)
 - 根據欄位名稱產生合理資料 (username, password, email 等)
-- 支援繁體中文與英文 locale
+- **支援 OpenAPI 3.0 複合 Schema** (allOf, oneOf, anyOf, discriminator)
 - 產生無效值 (用於錯誤測試)
 
 **主要方法**:
@@ -274,22 +275,34 @@ const invalidEmail = synthesizer.synthesizeInvalid({
 // 'invalid-email'
 ```
 
-**支援的 format**:
-- email → `test@example.tw` / `test@example.com`
-- uuid → `123e4567-e89b-12d3-a456-426614174000`
-- date → `2025-01-17`
+**支援的 format** (使用 faker.js):
+- email → `Maximo_White91@example.com` (faker.internet.email)
+- uuid → `8f5e7d9a-3c2b-4f1e-9a7d-6c3b2e1f0a9b` (faker.string.uuid)
+- date → `2025-01-17` (faker.date.recent)
 - date-time → ISO 8601 格式
-- uri/url → `https://example.com`
-- ipv4 → `192.168.1.1`
-- phone → `0912345678` (zh-TW) / `+1-555-123-4567` (en-US)
+- uri/url → `https://wonderful-saloon.info` (faker.internet.url)
+- ipv4 → `192.168.1.1` (faker.internet.ipv4)
+- phone → `0912-345-678` (zh-TW) / `+1-555-123-4567` (en-US, faker.phone.number)
 
-**智慧欄位識別**:
-- `username` → `testuser`
-- `password` → `password123`
-- `email` → `test@example.tw`
-- `name` → `測試使用者` (zh-TW) / `Test User` (en-US)
-- `description` → `這是測試描述`
-- `address` → `台北市信義區`
+**智慧欄位識別** (使用 faker.js):
+- `username` → `Maximo_White91` (faker.internet.username)
+- `password` → `kR8xP2mQ9nL3` (faker.internet.password)
+- `email` → `Maximo_White91@example.com` (faker.internet.email)
+- `name` / `fullName` → `張小明` (zh-TW) / `Maximo White` (en-US, faker.person.fullName)
+- `firstName` → `小明` / `Maximo` (faker.person.firstName)
+- `lastName` → `張` / `White` (faker.person.lastName)
+- `description` → 仍使用靜態文字
+- `address` → `123 Main St` (faker.location.streetAddress)
+- `city` → `台北市` / `New York` (faker.location.city)
+- `country` → `台灣` / `United States` (faker.location.country)
+- `company` → `台積電` / `Apple Inc.` (faker.company.name)
+- `avatar` → `https://cloudflare-ipfs.com/ipfs/...` (faker.image.avatar)
+
+**OpenAPI 3.0 複合 Schema 支援**:
+- `allOf` → 合併多個 schema 的屬性
+- `oneOf` / `anyOf` → 選擇第一個 schema
+- `discriminator` → 支援多型處理
+- 支援巢狀複合 schema（如 allOf 內包含 oneOf）
 
 ---
 
@@ -630,17 +643,19 @@ const yamlContent = stringify(flow);
 
 ### 4. 資料產生策略
 
-❌ **狀態**: 部分未實作
+✅ **狀態**: 完整實作
 
 **實作的**:
 - ✅ 根據 Schema 產生資料
 - ✅ 使用 examples
 - ✅ 使用 default 值
 - ✅ 根據 format 產生
+- ✅ **整合 faker.js 產生真實測試資料 (v10.1.0)**
+- ✅ **支援 OpenAPI 3.0 複合 Schema (allOf/oneOf/anyOf)**
+- ✅ 可配置 locale (zh_TW / en_US)
 
-**未實作的**:
-- ❌ 使用 faker.js 產生更真實的資料
-- ❌ 可配置的資料產生策略
+**資料優先順序**:
+examples > defaults > enums > faker.js > 基本型別
 
 ---
 
@@ -705,6 +720,7 @@ const models = generator.analyzeDataModels(spec);
 - `@specpilot/schemas` (workspace:*) - Schema 定義
 - `@specpilot/shared` (workspace:*) - 共用工具
 - `yaml` (^2.4.3) - YAML 序列化
+- **`@faker-js/faker` (^10.1.0) - 真實測試資料產生**
 
 **開發依賴**:
 - `vitest` (^1.6.0) - 測試框架
@@ -836,15 +852,7 @@ packages/test-suite-generator/
 
 ### 已知問題
 
-- [ ] **DataSynthesizer 不使用 faker.js**
-  - **影響**: 測試資料不夠真實
-  - **暫行方案**: 根據欄位名稱與 format 產生合理資料
-
-- [ ] **步驟名稱可能重複** (DependencyResolver:126-137)
-  - **症狀**: 如果 endpoint.summary 已包含動作詞，可能產生重複文字
-  - **範例**: `summary="建立使用者"` → 產生 `"建立建立使用者"`
-  - **影響**: FlowQualityChecker 會偵測到警告
-  - **修正方式**: 已有邏輯檢查 summary 是否包含動作詞
+無 (所有已知問題已於 P1/P2 階段修正)
 
 ### 限制
 
@@ -859,13 +867,10 @@ packages/test-suite-generator/
 
 ### 短期 (優先度 P0)
 
-- [ ] 修正步驟名稱重複問題
-- [ ] 支援更多 OpenAPI 3.0 特性
-- [ ] 優化測試資料產生策略
+無 (核心功能已完成)
 
 ### 中期 (優先度 P1)
 
-- [ ] 整合 faker.js 產生更真實的測試資料
 - [ ] 支援更複雜的依賴推斷
 - [ ] 支援 OpenAPI 3.1
 
@@ -882,6 +887,7 @@ packages/test-suite-generator/
 
 | 版本 | 日期 | 主要變更 |
 |------|------|---------|
+| 0.4.0 | 2025-10-19 | ✅ **整合 faker.js** (b01b2cf)<br>  - 安裝 @faker-js/faker v10.1.0<br>  - 支援 zh_TW 和 en_US locale<br>  - 更新 77 個測試使用格式驗證<br>✅ **支援 OpenAPI 3.0 複合 Schema** (05bbce0)<br>  - 支援 allOf, oneOf, anyOf<br>  - 支援 discriminator 多型處理<br>  - 支援巢狀複合 schema<br>  - 新增 6 個測試案例 (83 tests total)<br>📊 測試覆蓋率：92.57% |
 | 0.3.0 | 2025-01-19 | ✅ 新增 DataSynthesizer 測試 (39 tests, 97.34%)<br>✅ 新增 ErrorCaseGenerator 測試 (39 tests, 98.83%)<br>✅ 新增 EdgeCaseGenerator 測試 (39 tests, 100%)<br>✅ 新增 DependencyResolver 測試 (59 tests, 98.42%)<br>✅ 新增 TestSuiteGenerator 測試 (31 tests, 100%)<br>✅ 新增 FlowQualityChecker 測試 (41 tests, 100%)<br>📊 測試覆蓋率提升至 90% (252 tests) |
 | 0.2.0 | 2025-01-17 | 更新 CLAUDE.md 反映實際狀態 |
 | 0.1.0 | 2025-10-12 | 初始版本，核心功能完成 |
