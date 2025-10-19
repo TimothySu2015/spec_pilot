@@ -19,6 +19,69 @@
 
 ---
 
+### 🔴 架構決策：MCP 與 NLP 的分離
+
+**重要**: 如果未來需要調整此模組的 NLP 相關功能，請**特別注意**以下架構設計決策：
+
+#### MCP Server 不使用 NLP 解析
+
+**結論**: 新版 MCP Server (`apps/mcp-server/src/index.ts`) **不使用** NLPFlowParser 進行自然語言解析。
+
+**原因**:
+- AI (Claude) 本身已具備強大的自然語言理解能力
+- Claude 可直接產生結構化參數 (specPath, endpoints, options 等)
+- 不需要額外的 NLP 解析層來理解使用者意圖
+
+**實際運作方式**:
+```typescript
+// ✅ 新版 MCP Server 直接使用 TestSuiteGenerator
+const generator = new TestSuiteGenerator(analyzer, {
+  endpoints: params.endpoints,           // AI 直接提供結構化參數
+  includeSuccessCases: true,
+  includeErrorCases: true,
+  generateFlows: params.generateFlows
+});
+const flow = generator.generate(options);
+```
+
+**Legacy MCP 的 NLP 使用** (`apps/mcp-server/src/legacy/handlers/generate-flow.ts`):
+- 舊版 MCP handler 確實使用 NLPFlowParser 解析自然語言 `description`
+- 但此 handler 已被標記為 deprecated，僅作為參考實作保留
+
+#### NLP 模組的實際用途
+
+**當前實作目的**: 為**未來的 CLI 介面**預留 NLP 功能
+
+**潛在使用場景**:
+```bash
+# 未來可能的 CLI 使用方式（尚未實作）
+specpilot generate --natural "我想測試使用者登入功能，使用 POST /auth/login"
+```
+
+在這種情況下，CLI 需要 NLPFlowParser 來解析使用者的自然語言輸入，因為 CLI 環境沒有 AI 可以直接提供結構化參數。
+
+#### 維護注意事項
+
+**如果未來需要調整 NLP 模組，請注意**:
+
+1. **不要假設 MCP 會使用 NLP**:
+   - MCP 相關的功能變更不需要同步更新 NLP 模組
+   - NLP 模組的改動不會影響 MCP Server 的行為
+
+2. **CLI 是 NLP 的主要目標使用者**:
+   - 改善 NLP 解析準確度時，應以 CLI 使用場景為考量
+   - 測試案例應模擬 CLI 環境下的使用者輸入
+
+3. **避免重複實作**:
+   - MCP 環境：讓 AI 直接提供結構化參數，不要嘗試引入 NLP
+   - CLI 環境：使用 NLP 解析自然語言輸入
+
+4. **文件同步**:
+   - 調整 NLP 功能時，同步更新此文件說明
+   - 在 commit message 中標註影響範圍 (CLI/MCP)
+
+---
+
 ## 已實作功能 ✅
 
 ### 1. FlowBuilder - Flow 建構器

@@ -2,6 +2,14 @@
  * 簡易中文分詞器
  * 使用貪婪最長匹配算法 + 領域自訂詞典
  * 專為 API 測試流程產生優化
+ *
+ * ⚠️ 設計目的：
+ * - 為未來 CLI 介面的 NLP 解析提供中文分詞功能
+ * - 不依賴原生模組 (如 nodejieba)，確保可打包成單一 .cjs 檔案
+ * - MCP Server 環境相容（雖然 MCP 不使用 NLP，但技術上可支援）
+ *
+ * 如需了解為何使用自訂分詞器而非 nodejieba 等套件，請參考：
+ * packages/flow-generator/CLAUDE.md - 「架構決策：MCP 與 NLP 的分離」章節
  */
 
 export class ChineseTokenizer {

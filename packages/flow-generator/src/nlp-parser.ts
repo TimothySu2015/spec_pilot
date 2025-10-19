@@ -1,6 +1,23 @@
 /**
  * NLP Flow Parser - 自然語言解析器
  * 解析使用者輸入，識別測試意圖
+ *
+ * ⚠️ 使用場景說明：
+ *
+ * - **MCP Server 不使用此模組**：
+ *   新版 MCP Server (apps/mcp-server/src/index.ts) 不需要 NLP 解析，
+ *   因為 AI (Claude) 會直接提供結構化參數給 TestSuiteGenerator。
+ *
+ * - **為未來 CLI 介面保留**：
+ *   此模組主要為未來的 CLI 介面預留功能，當使用者透過命令列輸入自然語言時，
+ *   CLI 需要 NLP 解析器來理解使用者意圖並產生測試流程。
+ *
+ * - **Legacy MCP Handler**：
+ *   apps/mcp-server/src/legacy/handlers/generate-flow.ts 中仍使用此模組，
+ *   但該 handler 已被標記為 deprecated，僅作為參考實作保留。
+ *
+ * 如需調整此模組，請參考 packages/flow-generator/CLAUDE.md 中的
+ * 「架構決策：MCP 與 NLP 的分離」章節。
  */
 
 import type { ParsedIntent, ConversationContext, NLPParserConfig } from './types.js';

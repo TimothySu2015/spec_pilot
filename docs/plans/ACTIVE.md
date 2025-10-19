@@ -134,6 +134,38 @@
 
 ---
 
+## 🏗️ 架構決策記錄
+
+### MCP 與 NLP 的分離 (2025-01-19)
+
+**背景**: 在完成 P2 中期任務（引入 faker.js、OpenAPI 3.0 複合 Schema、優化 NLP 解析）後，發現一個重要的架構問題。
+
+**調查發現**:
+- 新版 MCP Server (`apps/mcp-server/src/index.ts`) **不使用** NLPFlowParser
+- AI (Claude) 本身可直接產生結構化參數，不需要 NLP 解析層
+- Legacy MCP handler (`apps/mcp-server/src/legacy/`) 有使用 NLP，但已被標記為 deprecated
+
+**決策內容**:
+1. **MCP Server 不使用 NLP**: 新版 MCP 直接讓 AI 提供結構化參數給 TestSuiteGenerator
+2. **NLP 保留為 CLI 預留功能**: 未來 CLI 介面需要 NLP 來解析使用者的自然語言輸入
+3. **避免架構混淆**: 明確區分 MCP 環境與 CLI 環境的不同需求
+
+**實作變更**:
+- 在 `packages/flow-generator/CLAUDE.md` 新增「架構決策：MCP 與 NLP 的分離」章節
+- 在 `packages/flow-generator/src/nlp-parser.ts` 檔案頭部加入使用場景說明
+- 明確標記 NLP 模組的目標使用者是 CLI，而非 MCP
+
+**維護建議**:
+- 調整 NLP 功能時，以 CLI 使用場景為考量
+- 不要假設 MCP 會使用 NLP 相關功能
+- 避免在 MCP 環境中引入 NLP 解析層（讓 AI 直接處理）
+
+**相關文件**:
+- `packages/flow-generator/CLAUDE.md` - 「架構決策：MCP 與 NLP 的分離」章節
+- `packages/flow-generator/src/nlp-parser.ts` - 檔案頭部註解
+
+---
+
 ## 📊 總體成果摘要
 
 ### 測試覆蓋率提升
