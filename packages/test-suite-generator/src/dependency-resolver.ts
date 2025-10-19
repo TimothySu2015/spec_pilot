@@ -123,18 +123,8 @@ export class DependencyResolver {
     const isLoginEndpoint = node.endpoint.path.includes('/login') || node.endpoint.path.includes('/auth');
 
     // 產生步驟名稱 (避免重複文字)
-    let stepName: string;
-    if (node.endpoint.summary) {
-      // 如果 summary 已經包含動作詞,直接使用
-      const summary = node.endpoint.summary;
-      if (summary.includes('建立') || summary.includes('新增') || summary.includes('登入')) {
-        stepName = summary;
-      } else {
-        stepName = `建立${summary}`;
-      }
-    } else {
-      stepName = `建立${node.operationId}`;
-    }
+    const methodName = this.getMethodName(node.endpoint.method);
+    const stepName = this.generateStepName(node.endpoint.summary, node.operationId, methodName);
 
     return {
       name: stepName,
@@ -172,20 +162,8 @@ export class DependencyResolver {
     }
 
     // 產生步驟名稱 (避免重複文字)
-    let stepName: string;
-    if (node.endpoint.summary) {
-      const summary = node.endpoint.summary;
-      const methodName = this.getMethodName(node.endpoint.method);
-
-      // 如果 summary 已經包含動作詞,直接使用
-      if (summary.includes(methodName)) {
-        stepName = summary;
-      } else {
-        stepName = `${methodName}${summary}`;
-      }
-    } else {
-      stepName = `${this.getMethodName(node.endpoint.method)}${node.operationId}`;
-    }
+    const methodName = this.getMethodName(node.endpoint.method);
+    const stepName = this.generateStepName(node.endpoint.summary, node.operationId, methodName);
 
     const step: FlowStep = {
       name: stepName,
@@ -280,6 +258,44 @@ export class DependencyResolver {
       DELETE: '刪除',
     };
     return methodMap[method.toUpperCase()] || method;
+  }
+
+  /**
+   * 產生步驟名稱（避免重複動作詞）
+   *
+   * @param summary - OpenAPI summary
+   * @param operationId - 操作 ID
+   * @param actionVerb - 動作詞（如「建立」、「取得」等）
+   * @returns 步驟名稱
+   *
+   * @example
+   * generateStepName('建立使用者', 'createUser', '建立') // => '建立使用者'
+   * generateStepName('使用者', 'createUser', '建立')   // => '建立使用者'
+   * generateStepName(undefined, 'createUser', '建立')  // => '建立createUser'
+   */
+  private generateStepName(summary: string | undefined, operationId: string, actionVerb: string): string {
+    if (!summary) {
+      // 沒有 summary，使用 operationId
+      return `${actionVerb}${operationId}`;
+    }
+
+    // 檢查 summary 是否以動作詞開頭（精確匹配）
+    if (summary.startsWith(actionVerb)) {
+      // 已經以動作詞開頭，直接使用
+      return summary;
+    }
+
+    // 檢查 summary 是否包含其他常見動作詞（避免加上錯誤的前綴）
+    const commonVerbs = ['建立', '新增', '取得', '查詢', '讀取', '更新', '修改', '刪除', '移除', '登入', '註冊'];
+    const hasOtherVerb = commonVerbs.some(verb => summary.startsWith(verb));
+
+    if (hasOtherVerb) {
+      // summary 已經以其他動作詞開頭，直接使用
+      return summary;
+    }
+
+    // summary 不包含動作詞，加上前綴
+    return `${actionVerb}${summary}`;
   }
 
   /**

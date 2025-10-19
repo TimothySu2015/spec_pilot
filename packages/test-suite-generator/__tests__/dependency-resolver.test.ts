@@ -539,6 +539,93 @@ describe('DependencyResolver', () => {
       expect(steps[1].request.method).toBe('GET');
     });
   });
+
+  describe('步驟名稱產生（避免重複）', () => {
+    it('應該避免重複動作詞（summary 已包含動作詞）', () => {
+      const endpoints: EndpointInfo[] = [
+        createEndpoint({ method: 'POST', path: '/users', operationId: 'createUser', summary: '建立使用者' }),
+        createEndpoint({ method: 'GET', path: '/users/{id}', operationId: 'getUser', summary: '取得使用者' }),
+        createEndpoint({ method: 'PUT', path: '/users/{id}', operationId: 'updateUser', summary: '更新使用者' }),
+        createEndpoint({ method: 'DELETE', path: '/users/{id}', operationId: 'deleteUser', summary: '刪除使用者' }),
+      ];
+
+      const steps = resolver.resolveExecutionOrder(endpoints);
+
+      // 步驟名稱應該直接使用 summary，不重複動作詞
+      expect(steps[0].name).toBe('建立使用者'); // 不是「建立建立使用者」
+      expect(steps[1].name).toBe('取得使用者'); // 不是「取得取得使用者」
+      expect(steps[2].name).toBe('更新使用者'); // 不是「更新更新使用者」
+      expect(steps[3].name).toBe('刪除使用者'); // 不是「刪除刪除使用者」
+    });
+
+    it('應該正確處理 summary 不包含動作詞的情況', () => {
+      const endpoints: EndpointInfo[] = [
+        createEndpoint({ method: 'POST', path: '/users', operationId: 'createUser', summary: '使用者' }),
+        createEndpoint({ method: 'GET', path: '/users/{id}', operationId: 'getUser', summary: '使用者詳情' }),
+        createEndpoint({ method: 'PUT', path: '/users/{id}', operationId: 'updateUser', summary: '使用者資料' }),
+        createEndpoint({ method: 'DELETE', path: '/users/{id}', operationId: 'deleteUser', summary: '使用者' }),
+      ];
+
+      const steps = resolver.resolveExecutionOrder(endpoints);
+
+      // 步驟名稱應該加上動作詞
+      expect(steps[0].name).toBe('建立使用者');
+      expect(steps[1].name).toBe('取得使用者詳情');
+      expect(steps[2].name).toBe('更新使用者資料');
+      expect(steps[3].name).toBe('刪除使用者');
+    });
+
+    it('應該處理 summary 包含其他動作詞的情況', () => {
+      const endpoints: EndpointInfo[] = [
+        // POST 端點但 summary 是「註冊使用者」
+        createEndpoint({ method: 'POST', path: '/users', operationId: 'createUser', summary: '註冊使用者' }),
+        // GET 端點但 summary 是「查詢使用者」
+        createEndpoint({ method: 'GET', path: '/users/{id}', operationId: 'getUser', summary: '查詢使用者詳情' }),
+      ];
+
+      const steps = resolver.resolveExecutionOrder(endpoints);
+
+      // 步驟名稱應該保留原 summary 的動作詞
+      expect(steps[0].name).toBe('註冊使用者'); // 不是「建立註冊使用者」
+      expect(steps[1].name).toBe('查詢使用者詳情'); // 不是「取得查詢使用者詳情」
+    });
+
+    it('應該處理沒有 summary 的情況', () => {
+      const endpoints: EndpointInfo[] = [
+        createEndpoint({ method: 'POST', path: '/users', operationId: 'createUser' }),
+        createEndpoint({ method: 'GET', path: '/users/{id}', operationId: 'getUser' }),
+      ];
+
+      const steps = resolver.resolveExecutionOrder(endpoints);
+
+      // 沒有 summary 時，使用 operationId
+      expect(steps[0].name).toBe('建立createUser');
+      expect(steps[1].name).toBe('取得getUser');
+    });
+
+    it('應該處理登入端點的特殊情況', () => {
+      const endpoints: EndpointInfo[] = [
+        createEndpoint({ method: 'POST', path: '/auth/login', operationId: 'login', summary: '登入系統' }),
+      ];
+
+      const steps = resolver.resolveExecutionOrder(endpoints);
+
+      // 登入端點應該保留 summary
+      expect(steps[0].name).toBe('登入系統');
+      expect(steps[0].capture?.[0].variableName).toBe('authToken'); // 應該提取 authToken
+    });
+
+    it('應該處理 summary 以「新增」開頭的情況', () => {
+      const endpoints: EndpointInfo[] = [
+        createEndpoint({ method: 'POST', path: '/users', operationId: 'createUser', summary: '新增使用者' }),
+      ];
+
+      const steps = resolver.resolveExecutionOrder(endpoints);
+
+      // 「新增」也是建立的同義詞，應該保留
+      expect(steps[0].name).toBe('新增使用者'); // 不是「建立新增使用者」
+    });
+  });
 });
 
 // ==================== 輔助函數 ====================
