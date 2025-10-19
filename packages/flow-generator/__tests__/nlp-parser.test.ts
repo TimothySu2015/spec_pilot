@@ -358,4 +358,188 @@ describe('NLPFlowParser', () => {
       expect(result.entities.endpoint).toBeTruthy();
     });
   });
+
+  describe('新功能測試（階段 1 改善）', () => {
+    describe('HTTP Method 英文識別', () => {
+      it('應該識別大寫 HTTP Method', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('GET /users API');
+
+        expect(result.entities.method).toBe('GET');
+      });
+
+      it('應該識別小寫 HTTP Method', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('post /users 端點');
+
+        expect(result.entities.method).toBe('POST');
+      });
+
+      it('應該識別所有 HTTP Methods', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const testCases = [
+          { input: 'GET /test', expected: 'GET' },
+          { input: 'POST /test', expected: 'POST' },
+          { input: 'PUT /test', expected: 'PUT' },
+          { input: 'DELETE /test', expected: 'DELETE' },
+          { input: 'PATCH /test', expected: 'PATCH' },
+          { input: 'HEAD /test', expected: 'HEAD' },
+          { input: 'OPTIONS /test', expected: 'OPTIONS' },
+        ];
+
+        for (const { input, expected } of testCases) {
+          const result = await parser.parse(input);
+          expect(result.entities.method).toBe(expected);
+        }
+      });
+
+      it('應該優先匹配英文 HTTP Method', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        // "建立" 會映射到 POST，但 "GET" 應該優先
+        const result = await parser.parse('建立 GET /users 測試');
+
+        expect(result.entities.method).toBe('GET');
+      });
+    });
+
+    describe('URL 路徑識別', () => {
+      it('應該識別簡單的 URL 路徑', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 /users 端點');
+
+        expect(result.entities.endpoint).toBe('/users');
+      });
+
+      it('應該識別帶參數的 URL 路徑', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('呼叫 /users/{id} API');
+
+        expect(result.entities.endpoint).toBe('/users/{id}');
+      });
+
+      it('應該識別多層級 URL 路徑', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 /api/v1/users 介面');
+
+        expect(result.entities.endpoint).toBe('/api/v1/users');
+      });
+
+      it('應該識別帶連字符的 URL', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('呼叫 /user-management/list');
+
+        expect(result.entities.endpoint).toBe('/user-management/list');
+      });
+
+      it('應該從完整 URL 提取路徑', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 http://example.com/api/users');
+
+        expect(result.entities.endpoint).toBe('/api/users');
+      });
+    });
+
+    describe('參數提取改善', () => {
+      it('應該識別布林值 (true)', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 active: true');
+
+        expect(result.entities.parameters?.active).toBe(true);
+      });
+
+      it('應該識別布林值 (false)', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 enabled: false');
+
+        expect(result.entities.parameters?.enabled).toBe(false);
+      });
+
+      it('應該識別中文布林值', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result1 = await parser.parse('測試 active: 真');
+        const result2 = await parser.parse('測試 enabled: 假');
+
+        expect(result1.entities.parameters?.active).toBe(true);
+        expect(result2.entities.parameters?.enabled).toBe(false);
+      });
+
+      it('應該識別 null 值', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 value: null');
+
+        expect(result.entities.parameters?.value).toBe(null);
+      });
+
+      it('應該識別中文 null 值', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result1 = await parser.parse('測試 value: 空');
+        const result2 = await parser.parse('測試 data: 無');
+
+        expect(result1.entities.parameters?.value).toBe(null);
+        expect(result2.entities.parameters?.data).toBe(null);
+      });
+
+      it('應該識別數字陣列', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 ids: [1,2,3]');
+
+        expect(result.entities.parameters?.ids).toEqual([1, 2, 3]);
+      });
+
+      it('應該識別字串陣列', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 tags: ["a","b","c"]');
+
+        expect(result.entities.parameters?.tags).toEqual(['a', 'b', 'c']);
+      });
+
+      it('應該識別引號字串', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 name: "hello world"');
+
+        expect(result.entities.parameters?.name).toBe('hello world');
+      });
+
+      it('應該識別整數', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 age: 25');
+
+        expect(result.entities.parameters?.age).toBe(25);
+      });
+
+      it('應該識別浮點數', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 price: 99.99');
+
+        expect(result.entities.parameters?.price).toBe(99.99);
+      });
+
+      it('應該識別負數', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('測試 offset: -10');
+
+        expect(result.entities.parameters?.offset).toBe(-10);
+      });
+    });
+
+    describe('中文分詞改善', () => {
+      it('應該正確分詞複雜語句', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        const result = await parser.parse('我想建立一個使用者登入的測試流程');
+
+        // 分詞應該正確提取關鍵詞，而非單字
+        expect(result.entities.endpoint).toBeTruthy();
+        expect(result.confidence).toBeGreaterThan(0.5);
+      });
+
+      it('應該過濾停用詞', async () => {
+        const parser = new NLPFlowParser(createMockConfig());
+        // "的"、"了"、"我" 等停用詞應該被過濾
+        const result = await parser.parse('我想了建立的使用者測試');
+
+        expect(result.entities.method).toBe('POST');
+        expect(result.entities.endpoint).toBeTruthy();
+      });
+    });
+  });
 });

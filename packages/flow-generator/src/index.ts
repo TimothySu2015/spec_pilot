@@ -11,6 +11,9 @@ export { ContextManager } from './context-manager.js';
 export { FlowBuilder } from './flow-builder.js';
 export { SuggestionEngine } from './suggestion-engine.js';
 
+// 匯出工具類別
+export { ChineseTokenizer, STOP_WORDS } from './utils/chinese-tokenizer.js';
+
 // 匯出型別定義
 export type {
   ParsedIntent,

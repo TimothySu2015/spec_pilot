@@ -4,9 +4,14 @@
  */
 
 import type { ParsedIntent, ConversationContext, NLPParserConfig } from './types.js';
+import { ChineseTokenizer, STOP_WORDS } from './utils/chinese-tokenizer.js';
 
 export class NLPFlowParser {
-  constructor(private config: NLPParserConfig) {}
+  private tokenizer: ChineseTokenizer;
+
+  constructor(private config: NLPParserConfig) {
+    this.tokenizer = new ChineseTokenizer();
+  }
 
   /**
    * 解析使用者輸入，識別測試意圖
@@ -95,42 +100,51 @@ export class NLPFlowParser {
   }
 
   /**
-   * 提取關鍵字
+   * 提取關鍵字（使用中文分詞器 + 停用詞過濾）
    */
   private extractKeywords(text: string): string[] {
-    // 提取中文詞彙和英文單字
-    const allKeywords = text.toLowerCase().match(/[\u4e00-\u9fa5a-z]+/g) || [];
+    // 使用分詞器進行分詞並過濾停用詞
+    const tokens = this.tokenizer.cutWithStopWords(text, STOP_WORDS);
 
-    // 將複合詞拆分（例如：「建立訂單」-> [「建立」, 「訂單」, 「建立訂單」]）
-    const expandedKeywords: string[] = [];
-    for (const keyword of allKeywords) {
-      expandedKeywords.push(keyword);
+    // 過濾長度 < 2 的單字（除了特殊英文縮寫）
+    const validTokens = tokens.filter(token => {
+      // 保留 2 字以上的詞
+      if (token.length >= 2) return true;
 
-      // 對於中文詞彙，嘗試拆分成2字詞
-      if (/[\u4e00-\u9fa5]/.test(keyword) && keyword.length > 2) {
-        for (let i = 0; i < keyword.length - 1; i++) {
-          expandedKeywords.push(keyword.slice(i, i + 2));
-        }
-      }
-    }
+      // 保留特殊單字母（如 HTTP Method 可能被提取為單字）
+      if (/^[A-Z]$/.test(token)) return true;
 
-    return expandedKeywords;
+      return false;
+    });
+
+    return validTokens;
   }
 
   /**
-   * 識別 HTTP Method
+   * 識別 HTTP Method（支援英文 + 中文動詞）
    */
   private identifyHttpMethod(text: string): ParsedIntent['entities']['method'] | undefined {
+    // 1. 優先匹配英文 HTTP Method（不區分大小寫）
+    const httpMethodPattern = /\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b/i;
+    const httpMatch = text.match(httpMethodPattern);
+    if (httpMatch) {
+      return httpMatch[1].toUpperCase() as ParsedIntent['entities']['method'];
+    }
+
+    // 2. 匹配中文動詞
     const methodMap: Record<string, ParsedIntent['entities']['method']> = {
       登入: 'POST',
+      登出: 'POST',
       註冊: 'POST',
       建立: 'POST',
       新增: 'POST',
       創建: 'POST',
+      上傳: 'POST',
       查詢: 'GET',
       取得: 'GET',
       獲取: 'GET',
       讀取: 'GET',
+      下載: 'GET',
       更新: 'PUT',
       修改: 'PATCH',
       編輯: 'PATCH',
@@ -138,7 +152,7 @@ export class NLPFlowParser {
       移除: 'DELETE',
     };
 
-    // 優先匹配完整詞彙，避免部分匹配
+    // 優先匹配較長的詞彙，避免部分匹配
     const keywords = Object.keys(methodMap).sort((a, b) => b.length - a.length);
 
     for (const keyword of keywords) {
@@ -151,15 +165,34 @@ export class NLPFlowParser {
   }
 
   /**
-   * 提取端點資訊
+   * 提取端點資訊（支援 URL 路徑 + 資源名稱）
    */
   private extractEndpoint(text: string, keywords: string[]): string | undefined {
-    // 尋找可能的資源名稱
+    // 1. 優先識別 URL 路徑（如 /users/{id}, /api/v1/products）
+    // 先檢查是否有完整 URL（http://example.com/api/users）
+    const fullUrlMatch = text.match(/https?:\/\/[^\/\s]+(\/.+?)(?:\s|$|[，。！？])/);
+    if (fullUrlMatch && fullUrlMatch[1]) {
+      return fullUrlMatch[1].trim();
+    }
+
+    // 檢查路徑（/users, /api/v1/users, /users/{id}）
+    const pathMatch = text.match(/\/[\w\-\/{}]+/);
+    if (pathMatch) {
+      return pathMatch[0];
+    }
+
+    // 2. 識別資源名稱（從模式中提取）
     const resourcePatterns = [
-      /測試\s*([^\s，。]+)/,        // "測試 XXX"
-      /([^\s，。]+)\s+API/,          // "XXX API" (注意：非貪婪匹配)
-      /([^\s，。]+)\s*端點/,         // "XXX 端點"
-      /([^\s，。]+)\s*功能/,         // "XXX 功能"
+      /測試\s*([^\s，。]+)/,              // "測試 XXX"
+      /([^\s，。]+)\s+API/i,               // "XXX API"
+      /([^\s，。]+)\s*端點/,               // "XXX 端點"
+      /([^\s，。]+)\s*功能/,               // "XXX 功能"
+      /呼叫\s*([^\s，。]+)/,               // "呼叫 XXX"
+      /([^\s，。]+)\s*介面/,               // "XXX 介面"
+      /([^\s，。]+)\s*服務/,               // "XXX 服務"
+      /([^\s，。]+)\s*資源/,               // "XXX 資源"
+      /操作\s*([^\s，。]+)/,               // "操作 XXX"
+      /管理\s*([^\s，。]+)/,               // "管理 XXX"
     ];
 
     for (const pattern of resourcePatterns) {
@@ -167,19 +200,23 @@ export class NLPFlowParser {
       if (match && match[1]) {
         const matched = match[1].trim();
         // 移除可能的動詞前綴
-        const cleanedMatch = matched.replace(/^(呼叫|建立|新增|查詢|取得|更新|修改|刪除)\s*/, '');
+        const cleanedMatch = matched.replace(/^(呼叫|建立|新增|查詢|取得|更新|修改|刪除|上傳|下載)\s*/, '');
         if (cleanedMatch) {
           return cleanedMatch;
         }
       }
     }
 
-    // 從關鍵字中找出可能的資源名稱
+    // 3. 從關鍵字中找出可能的資源名稱
     // 排除動詞和常見詞彙
-    const excludeWords = new Set(['測試', '建立', '新增', '查詢', '取得', '更新', '修改', '刪除', 'api', '端點', '功能', '驗證', '檢查', '呼叫']);
+    const excludeWords = new Set([
+      '測試', '建立', '新增', '查詢', '取得', '更新', '修改', '刪除',
+      '上傳', '下載', 'api', '端點', '功能', '驗證', '檢查', '呼叫',
+      '流程', '步驟', '執行', '運行', '登入', '註冊', '登出',
+    ]);
 
     for (const keyword of keywords) {
-      if (!excludeWords.has(keyword) && keyword.length >= 2) {
+      if (!excludeWords.has(keyword.toLowerCase()) && keyword.length >= 2) {
         return keyword;
       }
     }
@@ -188,34 +225,91 @@ export class NLPFlowParser {
   }
 
   /**
-   * 提取參數
+   * 提取參數（支援多種型別：字串、數字、布林、null、陣列）
    */
   private extractParameters(text: string, _keywords: string[]): Record<string, unknown> {
     const parameters: Record<string, unknown> = {};
 
-    // 尋找 key-value 模式
-    // 例如: "username 是 testuser", "email: test@example.com"
+    // 尋找 key-value 模式（支援引號字串、陣列）
     const kvPatterns = [
-      /(\w+)\s*[:：]\s*([^\s，。,:]+)/g,        // "key: value" (修正：排除逗號)
-      /(\w+)\s*[是为]\s*([^\s，。,:]+)/g,      // "key 是 value"
-      /(\w+)\s*=\s*([^\s，。,:]+)/g,           // "key = value"
+      /(\w+)\s*[:：]\s*("(?:[^"]|\\")*"|'(?:[^']|\\')*'|\[[^\]]*\]|[^\s，。,]+)/g,  // "key: value" 或 "key: [array]" 或 "key: \"string\""
+      /(\w+)\s*[是为]\s*("(?:[^"]|\\")*"|'(?:[^']|\\')*'|\[[^\]]*\]|[^\s，。,]+)/g,  // "key 是 value"
+      /(\w+)\s*=\s*("(?:[^"]|\\")*"|'(?:[^']|\\')*'|\[[^\]]*\]|[^\s，。,]+)/g,        // "key = value"
     ];
 
     for (const pattern of kvPatterns) {
       let match;
+      // 重置 lastIndex 以避免正則狀態問題
+      pattern.lastIndex = 0;
+
       while ((match = pattern.exec(text)) !== null) {
-        const [, key, value] = match;
-        if (key && value) {
-          // 清理 value (移除可能的標點符號)
-          const cleanValue = value.trim().replace(/[,，。]$/, '');
-          // 嘗試轉換數字
-          const numValue = parseFloat(cleanValue);
-          parameters[key] = isNaN(numValue) ? cleanValue : numValue;
+        const [, key, rawValue] = match;
+        if (key && rawValue) {
+          const value = this.parseParameterValue(rawValue.trim());
+          parameters[key] = value;
         }
       }
     }
 
     return parameters;
+  }
+
+  /**
+   * 解析參數值（支援多種型別）
+   */
+  private parseParameterValue(rawValue: string): unknown {
+    // 移除尾部的標點符號
+    let value = rawValue.replace(/[,，。、]$/, '');
+
+    // 1. 布林值
+    if (value.toLowerCase() === 'true' || value === '真' || value === '是') {
+      return true;
+    }
+    if (value.toLowerCase() === 'false' || value === '假' || value === '否') {
+      return false;
+    }
+
+    // 2. null / undefined
+    if (value.toLowerCase() === 'null' || value === '空' || value === '無') {
+      return null;
+    }
+
+    // 3. 陣列 [1, 2, 3] 或 ["a", "b"]
+    if (value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const arrayContent = value.slice(1, -1); // 移除 []
+        const items = arrayContent.split(',').map(item => {
+          const trimmed = item.trim();
+          // 移除引號
+          if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+              (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            return trimmed.slice(1, -1);
+          }
+          // 嘗試解析數字
+          const num = parseFloat(trimmed);
+          return isNaN(num) ? trimmed : num;
+        });
+        return items;
+      } catch {
+        // 解析失敗，當成字串
+        return value;
+      }
+    }
+
+    // 4. 引號字串 "hello" 或 'hello'
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      return value.slice(1, -1);
+    }
+
+    // 5. 數字（整數或浮點數）
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && value.match(/^-?\d+(\.\d+)?$/)) {
+      return numValue;
+    }
+
+    // 6. 預設：字串
+    return value;
   }
 
   /**
