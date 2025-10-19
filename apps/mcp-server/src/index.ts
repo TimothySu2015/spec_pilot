@@ -234,6 +234,41 @@ async function handleRunFlow(params: Record<string, unknown>): Promise<{ content
     await loadSpec({ content: specData, executionId });
     const parsedFlow = await loadFlow({ content: flowData, executionId });
 
+    // 如果有提供執行選項，注入到 Flow 定義中
+    if (params.options) {
+      parsedFlow.options = parsedFlow.options || {};
+
+      if (params.options.failFast !== undefined) {
+        parsedFlow.options.failFast = params.options.failFast;
+        logger.info('已設定 failFast 選項', {
+          executionId,
+          method: 'runFlow',
+          event: 'option_set',
+          details: { failFast: params.options.failFast }
+        });
+      }
+
+      if (params.options.retryCount !== undefined) {
+        parsedFlow.options.retryCount = params.options.retryCount;
+        logger.info('已設定 retryCount 選項', {
+          executionId,
+          method: 'runFlow',
+          event: 'option_set',
+          details: { retryCount: params.options.retryCount }
+        });
+      }
+
+      if (params.options.timeout !== undefined) {
+        parsedFlow.options.timeout = params.options.timeout;
+        logger.info('已設定 timeout 選項', {
+          executionId,
+          method: 'runFlow',
+          event: 'option_set',
+          details: { timeout: params.options.timeout }
+        });
+      }
+    }
+
     // 如果有提供配置參數，覆寫全域配置
     if (baseUrl || port || token) {
       const configOverrides: Record<string, unknown> = {};
