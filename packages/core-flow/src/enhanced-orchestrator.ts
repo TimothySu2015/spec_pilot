@@ -279,7 +279,9 @@ export class EnhancedFlowOrchestrator {
           step: step,
           response: httpResponse,
           expectations: step.expectations,
-          schemas: {}, // TODO: 從 OpenAPI spec 載入 schemas
+          // 註：schemas 目前未使用，ValidationEngine 主要依賴 step.expectations 進行驗證
+          // 未來如需 JSON Schema 驗證，可透過構造函數傳入 OpenAPI spec 並從 spec.components.schemas 提取
+          schemas: {},
           logger,
           executionId: context.executionId,
           runContext: {

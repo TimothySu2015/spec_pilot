@@ -178,8 +178,9 @@ export class FlowOrchestrator {
       try {
         // 模擬一些處理時間
         await new Promise(resolve => setTimeout(resolve, 10));
-        
-        // TODO: 實際的 HTTP 執行邏輯需要 http-runner 模組
+
+        // 註：這是舊版協調器的模擬實作，實際 HTTP 執行請使用 EnhancedFlowOrchestrator
+        // EnhancedFlowOrchestrator 已整合 @specpilot/http-runner 模組
         const result: TestResult = {
           status: 'pending',
           duration: Date.now() - startTime,
@@ -268,7 +269,7 @@ export class FlowOrchestrator {
       }
 
       // 模擬 HTTP 請求執行
-      // TODO: 這裡應該整合實際的 HTTP Runner
+      // 註：實際的 HTTP Runner 已整合在 EnhancedFlowOrchestrator 中
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const mockResponse = {
