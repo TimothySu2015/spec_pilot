@@ -1,6 +1,6 @@
 # SpecPilot 當前開發計畫
 
-**狀態**: ✅ 主計畫已完成，P1 優先任務已完成，P2 中期任務已完成 (2025-10-19)
+**狀態**: ✅ 主計畫已完成，P1 優先任務已完成，P2 中期任務已完成，Phase 8 規劃中 (2025-10-19)
 **建立日期**: 2025-10-19
 **主計畫完成日期**: 2025-01-19
 **P1 任務完成日期**: 2025-01-19
@@ -8,7 +8,7 @@
 
 ---
 
-## 🎉 當前階段：P2 中期任務完成
+## 🎉 當前階段：P2 完成，Phase 8 規劃中
 
 ### ✅ 已完成的階段
 
@@ -176,6 +176,67 @@
 
 ---
 
+#### Phase 8: MCP Server 進階功能補強 - 🔄 規劃中
+
+**目標**: 完成 MCP Server runFlow 工具的進階選項，提升測試執行控制能力
+
+**優先度**: P0 (短期)
+
+**背景**:
+根據完成度分析，MCP Server 的 8 個核心工具中，runFlow 工具缺少 3 個進階選項：
+- failFast（遇到錯誤立即停止）
+- retryCount（自動重試機制）
+- timeout（自訂逾時時間）
+
+這些選項已在 MCP Server 的 inputSchema 中定義，但尚未實作到實際的執行邏輯中。
+
+**規劃任務**:
+- [ ] 8.1 實作 runFlow 的 failFast 選項
+  - 修改 EnhancedFlowOrchestrator 支援 failFast 模式
+  - 當步驟失敗時立即停止後續執行
+  - 更新報表標記為「部分執行」
+
+- [ ] 8.2 實作 runFlow 的 retryCount 選項
+  - 在 HTTP Runner 層級新增重試機制
+  - 支援指數退避策略
+  - 記錄重試次數到報表中
+
+- [ ] 8.3 實作 runFlow 的 timeout 選項
+  - 允許使用者覆寫預設逾時時間
+  - 傳遞 timeout 參數到 HTTP Runner
+  - 處理逾時錯誤並產生清晰的錯誤訊息
+
+- [ ] 8.4 新增 MCP Server 進階選項測試
+  - 測試 failFast 模式
+  - 測試 retryCount 機制
+  - 測試 timeout 設定
+
+- [ ] 8.5 更新文件
+  - 更新 MCP-SETUP.md 說明新選項
+  - 更新 apps/mcp-server 相關文件
+  - 更新 ACTIVE.md 標記完成
+
+**驗收標準**:
+- [ ] failFast 選項可正常運作，失敗時立即停止
+- [ ] retryCount 選項可自動重試失敗的請求
+- [ ] timeout 選項可覆寫預設逾時時間
+- [ ] 所有新增功能都有對應的測試
+- [ ] 測試覆蓋率維持在 90%+
+- [ ] 更新相關文件反映新功能
+
+**預計影響的模組**:
+- `apps/mcp-server/src/index.ts` - runFlow handler
+- `packages/core-flow` - EnhancedFlowOrchestrator
+- `packages/http-runner` - HTTP 執行引擎
+- `packages/config` - 組態選項
+
+**預估工作量**: 1-2 天
+
+**開始日期**: 待定
+**完成時間**: 待定
+
+---
+
 ## 🏗️ 架構決策記錄
 
 ### MCP 與 NLP 的分離 (2025-01-19)
@@ -301,7 +362,10 @@
 
 ### 🔄 後續建議任務
 
-以下任務優先度較低，可於後續迭代處理：
+**短期 (P0)** - 🔄 Phase 8 規劃中:
+- [ ] 實作 runFlow 的 failFast/retryCount/timeout 選項 - Phase 8 規劃中
+- [ ] 修正 Legacy MCP Server 測試失敗 (可選，如需保留)
+- [ ] 修正 CLI 整合測試退出碼問題 (可選)
 
 **短期 (P1)** - ✅ 已全部完成:
 - ✅ 新增端對端整合測試（flow-generator）- Phase 6.4 完成
@@ -352,6 +416,6 @@ pnpm -w run test packages/test-suite-generator/__tests__/ --coverage
 
 ---
 
-**最後更新**: 2025-10-19 (Phase 7 / P2 完成)
+**最後更新**: 2025-10-19 (Phase 8 規劃)
 **維護者**: 專案團隊
-**狀態**: ✅ 主計畫完成，P1 優先任務完成，P2 中期任務完成，已達成所有驗收標準
+**狀態**: ✅ 主計畫完成，P1/P2 任務完成，Phase 8 (MCP Server 進階功能) 規劃中
