@@ -1,5 +1,14 @@
 # @specpilot/spec-loader - OpenAPI 規格載入器
 
+## ⚠️ 實作狀態
+
+**版本**: 0.2.0
+**完成度**: 90%
+**最後更新**: 2025-10-20
+**維護狀態**: 開發中（核心功能完成）
+
+---
+
 ## 模組概述
 
 `@specpilot/spec-loader` 是 SpecPilot 的 OpenAPI 規格載入與解析模組，負責載入、驗證、解析 OpenAPI 規格檔案 (支援 JSON 與 YAML 格式)，並提供規格查詢與分析功能。
@@ -12,6 +21,7 @@
 4. **參照解析**: 處理 $ref 參照與外部檔案引用
 5. **規格查詢**: 提供便利的規格資訊查詢 API
 6. **Schema 提取**: 提取 Components Schemas 供驗證使用
+7. **✨ 規格增強**: 自動補充缺少的 operationId (Phase 9.2)
 
 ## 技術堆疊
 
@@ -368,6 +378,74 @@ const loader = new SpecLoader({
 await loader.clearCache();
 ```
 
+## SpecEnhancer - 規格增強器 ✨ NEW (Phase 9.2)
+
+**檔案位置**: `src/spec-enhancer.ts` (267 行)
+**測試覆蓋**: ✅ `__tests__/spec-enhancer.test.ts` (16 tests, 94.44% 覆蓋率)
+
+### 功能說明
+
+自動為 OpenAPI 規格中缺少 operationId 的端點補充合適的名稱，使用 `yaml.parseDocument()` 保留原檔案格式、註解和縮排。
+
+### 使用範例
+
+```typescript
+import { SpecEnhancer } from '@specpilot/spec-loader';
+
+// 1. 建立增強器
+const enhancer = new SpecEnhancer({
+  createBackup: true,     // 建立備份（預設 true）
+  backupSuffix: '.bak',   // 備份後綴（預設 .bak）
+  dryRun: false,          // 預覽模式（預設 false）
+});
+
+// 2. 執行 operationId 補充
+const result = await enhancer.addOperationIds('specs/my-api.yaml');
+
+// 3. 檢查結果
+if (result.success) {
+  console.log(`總端點數：${result.totalEndpoints}`);
+  console.log(`新增 operationId：${result.additions.length} 個`);
+  console.log(`備份檔案：${result.backupPath}`);
+
+  result.additions.forEach(item => {
+    console.log(`${item.method} ${item.path} -> ${item.generatedId}`);
+  });
+} else {
+  console.error(`失敗：${result.error}`);
+}
+```
+
+### operationId 產生規則
+
+- `POST /users` → `createUsers`
+- `GET /users/{id}` → `getUsers`
+- `PUT /users/{id}` → `updateUsers`
+- `PATCH /users/{id}` → `patchUsers`
+- `DELETE /users/{id}` → `deleteUsers`
+- `POST /api/v1/users` → `createApiV1Users`
+
+### DryRun 模式
+
+```typescript
+const enhancer = new SpecEnhancer({ dryRun: true });
+const result = await enhancer.addOperationIds('specs/my-api.yaml');
+
+// 只預覽變更，不修改檔案
+console.log(`將新增 ${result.additions.length} 個 operationId`);
+```
+
+### 特色功能
+
+- ✅ 保留 YAML 格式和註解
+- ✅ 自動建立備份檔案
+- ✅ 支援 dryRun 預覽模式
+- ✅ 與 test-suite-generator 的命名規則一致
+- ✅ 檢查檔案可寫入性
+- ✅ 只修改缺少 operationId 的端點
+
+---
+
 ## 未來擴充方向
 
 1. 支援 AsyncAPI 規格
@@ -380,3 +458,12 @@ await loader.clearCache();
 8. 破壞性變更偵測
 9. 規格版本管理
 10. OpenAPI 擴充欄位支援
+
+---
+
+## 變更歷史
+
+| 版本 | 日期 | 主要變更 |
+|------|------|---------|
+| 0.2.0 | 2025-10-20 | ✅ **新增 SpecEnhancer 模組** (Phase 9.2)<br>  - 實作 `SpecEnhancer.addOperationIds()` 自動補充 operationId<br>  - 使用 yaml.parseDocument() 保留格式和註解<br>  - 實作檔案備份機制<br>  - 支援 dryRun 預覽模式<br>  - 新增 16 個單元測試，94.44% 覆蓋率<br>  - 匯出 OperationIdAddition, EnhanceResult, SpecEnhancerOptions 型別 |
+| 0.1.0 | 2025-01-15 | 初始版本，核心載入功能完成 |

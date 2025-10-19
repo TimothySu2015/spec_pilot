@@ -306,12 +306,12 @@ generateFlow({
   - [x] 返回建議的 operationId 清單
   - [x] 新增 10+ 單元測試（實際新增 9 個測試）
 
-- [ ] 9.2 新增 SpecEnhancer 模組（修改 YAML 檔案）
-  - [ ] 建立 `packages/spec-loader/src/spec-enhancer.ts`
-  - [ ] 實作 `addOperationIds()` 方法
-  - [ ] 使用 `yaml.parseDocument()` 保留格式
-  - [ ] 自動備份原檔案
-  - [ ] 新增 15+ 單元測試
+- [x] 9.2 新增 SpecEnhancer 模組（修改 YAML 檔案）✅ (已完成)
+  - [x] 建立 `packages/spec-loader/src/spec-enhancer.ts`
+  - [x] 實作 `addOperationIds()` 方法
+  - [x] 使用 `yaml.parseDocument()` 保留格式
+  - [x] 自動備份原檔案
+  - [x] 新增 15+ 單元測試（實際新增 16 個測試，94.44% 覆蓋率）
 
 - [x] 9.3 擴展端點過濾邏輯支援多種格式 ✅ (已完成)
   - [x] 修改 `TestSuiteGenerator.getTargetEndpoints()`
@@ -327,12 +327,12 @@ generateFlow({
   - [x] 根據可修改性提供不同建議
   - [x] 新增整合測試（包含在 SpecAnalyzer 測試中）
 
-- [ ] 9.5 新增 MCP 工具：addOperationIds
-  - [ ] 註冊新工具到 MCP Server
-  - [ ] 支援 dryRun 預覽模式
-  - [ ] 調用 SpecEnhancer.addOperationIds()
-  - [ ] 返回修改結果與備份路徑
-  - [ ] 新增整合測試
+- [x] 9.5 新增 MCP 工具：addOperationIds ✅ (已完成)
+  - [x] 註冊新工具到 MCP Server
+  - [x] 支援 dryRun 預覽模式
+  - [x] 調用 SpecEnhancer.addOperationIds()
+  - [x] 返回修改結果與備份路徑
+  - [x] 新增整合測試（包含在 SpecEnhancer 測試中）
 
 - [ ] 9.6 修改 generateFlow 工具整合智慧檢測
   - [ ] 新增 `autoCheck` 選項（預設 true）
@@ -347,10 +347,10 @@ generateFlow({
   - [ ] 場景 C：快速測試（產生全部）
   - [ ] 驗證三種方式都能正常運作
 
-- [x] 9.8 更新文件 ✅ (進行中)
-  - [ ] 更新 `packages/spec-loader/CLAUDE.md`（如需實作 SpecEnhancer）
-  - [x] 更新 `packages/test-suite-generator/CLAUDE.md`
-  - [x] 更新 `MCP-SETUP.md` 新增 checkOperationIds 工具說明
+- [x] 9.8 更新文件 ✅ (已完成)
+  - [x] 更新 `packages/spec-loader/CLAUDE.md`（v0.2.0, 新增 SpecEnhancer）
+  - [x] 更新 `packages/test-suite-generator/CLAUDE.md`（v0.6.0）
+  - [x] 更新 `MCP-SETUP.md` 新增 checkOperationIds 和 addOperationIds 工具說明
   - [x] 更新 `ACTIVE.md` 標記完成
 
 **驗收標準**:

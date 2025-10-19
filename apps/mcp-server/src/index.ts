@@ -1049,6 +1049,128 @@ async function handleCheckOperationIds(params: {
   }
 }
 
+/**
+ * 處理 addOperationIds 工具調用
+ */
+async function handleAddOperationIds(params: {
+  specPath: string;
+  dryRun?: boolean;
+}): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('addOperationIds 方法開始執行', {
+    method: 'addOperationIds',
+    event: 'add_operation_ids_start',
+    details: { specPath: params.specPath, dryRun: params.dryRun }
+  });
+
+  try {
+    // 1. 解析規格檔案路徑
+    const specPath = path.resolve(process.cwd(), params.specPath);
+    if (!existsSync(specPath)) {
+      return {
+        content: [{
+          type: "text",
+          text: `錯誤：找不到規格檔案 '${specPath}'`
+        }]
+      };
+    }
+
+    // 2. 建立 SpecEnhancer
+    const { SpecEnhancer } = await import('@specpilot/spec-loader');
+    const enhancer = new SpecEnhancer({
+      dryRun: params.dryRun ?? false,
+      createBackup: true,
+      backupSuffix: '.bak',
+    });
+
+    // 3. 執行 operationId 補充
+    const result = await enhancer.addOperationIds(specPath);
+
+    // 4. 格式化輸出
+    let resultText = ``;
+
+    if (!result.success) {
+      resultText += `❌ operationId 補充失敗\n\n`;
+      resultText += `錯誤：${result.error}\n`;
+
+      logger.error('addOperationIds 方法執行失敗', {
+        method: 'addOperationIds',
+        event: 'add_operation_ids_error',
+        details: { error: result.error }
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: resultText
+        }]
+      };
+    }
+
+    // 成功情況
+    const relativePath = path.relative(process.cwd(), specPath);
+
+    if (params.dryRun) {
+      resultText += `🔍 Dry Run 模式 - 預覽變更（未實際修改檔案）\n\n`;
+    } else {
+      resultText += `✅ operationId 補充成功\n\n`;
+    }
+
+    resultText += `📄 規格檔案：${relativePath}\n`;
+    resultText += `🔢 總端點數：${result.totalEndpoints}\n`;
+    resultText += `➕ 新增 operationId 數量：${result.additions.length}\n\n`;
+
+    if (result.additions.length > 0) {
+      resultText += `📝 新增的 operationId：\n\n`;
+      result.additions.forEach((item, i) => {
+        resultText += `${i + 1}. ${item.method} ${item.path}\n`;
+        resultText += `   ✨ operationId: ${item.generatedId}\n\n`;
+      });
+
+      if (!params.dryRun && result.backupPath) {
+        const relativeBackupPath = path.relative(process.cwd(), result.backupPath);
+        resultText += `\n💾 原檔案備份至：${relativeBackupPath}\n`;
+      }
+
+      if (params.dryRun) {
+        resultText += `\n💡 提示：移除 dryRun 參數以實際修改檔案\n`;
+      }
+    } else {
+      resultText += `✅ 所有端點都已有 operationId，無需修改\n`;
+    }
+
+    logger.info('addOperationIds 方法成功完成', {
+      method: 'addOperationIds',
+      event: 'add_operation_ids_success',
+      details: {
+        addedCount: result.additions.length,
+        dryRun: params.dryRun,
+        hasBackup: !!result.backupPath
+      }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: resultText
+      }]
+    };
+
+  } catch (error) {
+    logger.error('addOperationIds 方法執行失敗', {
+      method: 'addOperationIds',
+      event: 'add_operation_ids_error',
+      details: { error: error instanceof Error ? error.message : '未知錯誤' }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `補充 operationId 時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`
+      }]
+    };
+  }
+}
+
 // 註冊 listSpecs 工具
 server.registerTool("listSpecs", {
   title: "列出 OpenAPI 規格檔案",
@@ -1180,6 +1302,18 @@ server.registerTool("checkOperationIds", {
   }
 }, async (params) => {
   return handleCheckOperationIds(params);
+});
+
+// 註冊 addOperationIds 工具
+server.registerTool("addOperationIds", {
+  title: "自動補充 operationId",
+  description: "自動為 OpenAPI 規格中缺少 operationId 的端點補充合適的名稱。此工具會根據端點的 HTTP 方法和路徑自動產生符合慣例的 operationId（例如 POST /users → createUsers）。支援 dryRun 模式預覽變更，並自動建立原檔案備份。",
+  inputSchema: {
+    specPath: z.string().describe("OpenAPI 規格檔案路徑（相對於專案根目錄）"),
+    dryRun: z.boolean().optional().describe("預覽模式，不實際修改檔案（預設 false）")
+  }
+}, async (params) => {
+  return handleAddOperationIds(params);
 });
 
 // 啟動 MCP Server（使用官方範例的方式）
