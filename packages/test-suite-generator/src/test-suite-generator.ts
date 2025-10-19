@@ -98,15 +98,48 @@ export class TestSuiteGenerator {
 
   /**
    * 取得目標端點
+   *
+   * 支援三種過濾格式：
+   * 1. operationId 格式：['createUser', 'getUser']
+   * 2. "METHOD /path" 格式：['POST /users', 'GET /users/{id}']
+   * 3. "/path" 格式：['/users', '/auth/login']（匹配所有 HTTP 方法）
    */
   private getTargetEndpoints(options: GenerationOptions): EndpointInfo[] {
     const allEndpoints = this.specAnalyzer.extractEndpoints();
 
-    if (options.endpoints && options.endpoints.length > 0) {
-      return allEndpoints.filter((ep) => options.endpoints!.includes(ep.operationId));
+    // 如果未指定 endpoints，返回所有端點
+    if (!options.endpoints || options.endpoints.length === 0) {
+      return allEndpoints;
     }
 
-    return allEndpoints;
+    // 使用過濾邏輯匹配端點
+    return allEndpoints.filter((ep) => {
+      return options.endpoints!.some((filter) => {
+        // 格式 1: operationId 精確匹配
+        if (filter === ep.operationId) {
+          return true;
+        }
+
+        // 格式 2: "METHOD /path" 格式
+        if (filter.includes(' ')) {
+          const parts = filter.split(' ');
+          if (parts.length === 2) {
+            const [method, path] = parts;
+            return (
+              ep.method.toUpperCase() === method.toUpperCase() &&
+              ep.path === path
+            );
+          }
+        }
+
+        // 格式 3: "/path" 格式（匹配所有方法）
+        if (filter.startsWith('/')) {
+          return ep.path === filter;
+        }
+
+        return false;
+      });
+    });
   }
 
   /**

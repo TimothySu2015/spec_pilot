@@ -2,9 +2,9 @@
 
 ## ⚠️ 實作狀態
 
-**版本**: 0.3.0
-**完成度**: 92%
-**最後更新**: 2025-01-19
+**版本**: 0.5.0
+**完成度**: 93%
+**最後更新**: 2025-10-20
 **維護狀態**: 開發中 (核心功能完成，測試覆蓋率優異)
 
 ---
@@ -30,13 +30,17 @@
 
 ### 1. TestSuiteGenerator - 測試套件產生器
 
-**檔案位置**: `src/test-suite-generator.ts` (146 行)
-**測試覆蓋**: `__tests__/test-suite-generator.test.ts` (100% 覆蓋率, 31 tests)
+**檔案位置**: `src/test-suite-generator.ts` (148 行)
+**測試覆蓋**: `__tests__/test-suite-generator.test.ts` (88% 覆蓋率, 52 tests)
 
 ✅ **完整實作的功能**:
 - 整合所有產生器 (CRUD、Error、Edge、Dependency)
 - 產生完整測試套件 (包含成功、錯誤、邊界案例)
-- 支援選擇性端點產生
+- **支援三種端點過濾格式** (Phase 9.3 完成)
+  - operationId 格式：`['createUser', 'getUser']`
+  - "METHOD /path" 格式：`['POST /users', 'GET /users/{id}']`
+  - "/path" 格式：`['/users']`（匹配該路徑下的所有 HTTP 方法）
+  - 支援混合使用三種格式
 - 自動產生測試統計摘要
 - 從 OpenAPI servers 提取 baseUrl
 
@@ -60,7 +64,13 @@ const generator = new TestSuiteGenerator(analyzer, {
   includeErrorCases: true,      // 預設 false
   includeEdgeCases: true,       // 預設 false
   generateFlows: true,          // 預設 false (資源依賴流程)
-  endpoints: ['createUser', 'getUser']  // 可選：只產生特定端點
+
+  // 可選：只產生特定端點（支援三種格式）
+  endpoints: [
+    'createUser',           // 格式 1: operationId
+    'POST /auth/login',     // 格式 2: "METHOD /path"
+    '/products'             // 格式 3: "/path" (匹配所有方法)
+  ]
 });
 
 // 3. 產生測試套件
@@ -767,7 +777,7 @@ pnpm run test:coverage
 
 | 模組 | 測試檔案 | 狀態 |
 |------|---------|------|
-| TestSuiteGenerator | ✅ `__tests__/test-suite-generator.test.ts` | 31 tests, 100% 覆蓋率 |
+| TestSuiteGenerator | ✅ `__tests__/test-suite-generator.test.ts` | 52 tests, 88% 覆蓋率 |
 | SpecAnalyzer | ✅ `__tests__/spec-analyzer.test.ts` | 2 tests, 基本驗證 |
 | CRUDGenerator | ✅ `__tests__/crud-generator.test.ts` | 2 tests, 基本驗證 |
 | DataSynthesizer | ✅ `__tests__/data-synthesizer.test.ts` | 39 tests, 97.34% 覆蓋率 |
@@ -776,7 +786,7 @@ pnpm run test:coverage
 | EdgeCaseGenerator | ✅ `__tests__/edge-case-generator.test.ts` | 39 tests, 100% 覆蓋率 |
 | FlowQualityChecker | ✅ `__tests__/flow-quality-checker.test.ts` | 41 tests, 100% 覆蓋率 |
 
-**總計**: 252 tests, ~90% 覆蓋率
+**總計**: 273 tests, ~90% 覆蓋率
 
 **執行測試**:
 ```bash
@@ -887,6 +897,7 @@ packages/test-suite-generator/
 
 | 版本 | 日期 | 主要變更 |
 |------|------|---------|
+| 0.5.0 | 2025-10-20 | ✅ **支援三種端點過濾格式** (Phase 9.3)<br>  - 擴展 `getTargetEndpoints()` 方法支援多種過濾格式<br>  - 格式 1: operationId（原有）<br>  - 格式 2: "METHOD /path" 格式（新增）<br>  - 格式 3: "/path" 格式匹配所有方法（新增）<br>  - 支援混合使用三種格式<br>  - 新增 21 個測試案例（52 tests total）<br>📊 TestSuiteGenerator 測試覆蓋率：88% |
 | 0.4.0 | 2025-10-19 | ✅ **整合 faker.js** (b01b2cf)<br>  - 安裝 @faker-js/faker v10.1.0<br>  - 支援 zh_TW 和 en_US locale<br>  - 更新 77 個測試使用格式驗證<br>✅ **支援 OpenAPI 3.0 複合 Schema** (05bbce0)<br>  - 支援 allOf, oneOf, anyOf<br>  - 支援 discriminator 多型處理<br>  - 支援巢狀複合 schema<br>  - 新增 6 個測試案例 (83 tests total)<br>📊 測試覆蓋率：92.57% |
 | 0.3.0 | 2025-01-19 | ✅ 新增 DataSynthesizer 測試 (39 tests, 97.34%)<br>✅ 新增 ErrorCaseGenerator 測試 (39 tests, 98.83%)<br>✅ 新增 EdgeCaseGenerator 測試 (39 tests, 100%)<br>✅ 新增 DependencyResolver 測試 (59 tests, 98.42%)<br>✅ 新增 TestSuiteGenerator 測試 (31 tests, 100%)<br>✅ 新增 FlowQualityChecker 測試 (41 tests, 100%)<br>📊 測試覆蓋率提升至 90% (252 tests) |
 | 0.2.0 | 2025-01-17 | 更新 CLAUDE.md 反映實際狀態 |

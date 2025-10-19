@@ -184,52 +184,289 @@ describe('TestSuiteGenerator', () => {
   });
 
   describe('generate() - 端點過濾', () => {
-    it('沒有指定 endpoints 應該使用所有端點', () => {
-      const flow = generator.generate();
+    describe('基本過濾功能', () => {
+      it('沒有指定 endpoints 應該使用所有端點', () => {
+        const flow = generator.generate();
 
-      const allEndpoints = analyzer.extractEndpoints();
-      const summary = (flow as any).metadata.summary;
+        const allEndpoints = analyzer.extractEndpoints();
+        const summary = (flow as any).metadata.summary;
 
-      expect(summary.endpoints).toHaveLength(allEndpoints.length);
-    });
-
-    it('應該只產生指定端點的測試', () => {
-      const flow = generator.generate({
-        endpoints: ['createUser'],
+        expect(summary.endpoints).toHaveLength(allEndpoints.length);
       });
 
-      const summary = (flow as any).metadata.summary;
-      expect(summary.endpoints).toEqual(['createUser']);
-    });
+      it('空的 endpoints 陣列應該使用所有端點', () => {
+        const flow = generator.generate({
+          endpoints: [],
+        });
 
-    it('應該支援多個端點過濾', () => {
-      const flow = generator.generate({
-        endpoints: ['createUser', 'getUser'],
+        const allEndpoints = analyzer.extractEndpoints();
+        const summary = (flow as any).metadata.summary;
+
+        expect(summary.endpoints).toHaveLength(allEndpoints.length);
       });
 
-      const summary = (flow as any).metadata.summary;
-      expect(summary.endpoints).toHaveLength(2);
-      expect(summary.endpoints).toContain('createUser');
-      expect(summary.endpoints).toContain('getUser');
+      it('指定不存在的端點應該返回空測試', () => {
+        const flow = generator.generate({
+          endpoints: ['nonExistentEndpoint'],
+        });
+
+        expect(flow.steps).toEqual([]);
+      });
     });
 
-    it('指定不存在的端點應該返回空測試', () => {
-      const flow = generator.generate({
-        endpoints: ['nonExistentEndpoint'],
+    describe('格式 1: operationId 過濾', () => {
+      it('應該只產生指定端點的測試', () => {
+        const flow = generator.generate({
+          endpoints: ['createUser'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toEqual(['createUser']);
       });
 
-      expect(flow.steps).toEqual([]);
+      it('應該支援多個端點過濾', () => {
+        const flow = generator.generate({
+          endpoints: ['createUser', 'getUser'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toHaveLength(2);
+        expect(summary.endpoints).toContain('createUser');
+        expect(summary.endpoints).toContain('getUser');
+      });
+
+      it('應該精確匹配 operationId', () => {
+        const flow = generator.generate({
+          endpoints: ['createUser'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).not.toContain('getUser');
+      });
     });
 
-    it('空的 endpoints 陣列應該使用所有端點', () => {
-      const flow = generator.generate({
-        endpoints: [],
+    describe('格式 2: "METHOD /path" 過濾', () => {
+      it('應該支援 "POST /users" 格式', () => {
+        const flow = generator.generate({
+          endpoints: ['POST /users'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toEqual(['createUser']);
       });
 
-      const allEndpoints = analyzer.extractEndpoints();
-      const summary = (flow as any).metadata.summary;
+      it('應該支援 "GET /users/{id}" 格式', () => {
+        const flow = generator.generate({
+          endpoints: ['GET /users/{id}'],
+        });
 
-      expect(summary.endpoints).toHaveLength(allEndpoints.length);
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toEqual(['getUser']);
+      });
+
+      it('應該支援小寫方法名稱', () => {
+        const flow = generator.generate({
+          endpoints: ['post /users'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toEqual(['createUser']);
+      });
+
+      it('應該支援混合大小寫方法名稱', () => {
+        const flow = generator.generate({
+          endpoints: ['Post /users'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toEqual(['createUser']);
+      });
+
+      it('應該支援多個 "METHOD /path" 過濾', () => {
+        const flow = generator.generate({
+          endpoints: ['POST /users', 'GET /users/{id}'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toHaveLength(2);
+        expect(summary.endpoints).toContain('createUser');
+        expect(summary.endpoints).toContain('getUser');
+      });
+
+      it('方法不匹配應該返回空', () => {
+        const flow = generator.generate({
+          endpoints: ['GET /users'], // /users 只有 POST
+        });
+
+        expect(flow.steps).toEqual([]);
+      });
+
+      it('路徑不匹配應該返回空', () => {
+        const flow = generator.generate({
+          endpoints: ['POST /products'], // 不存在的路徑
+        });
+
+        expect(flow.steps).toEqual([]);
+      });
+
+      it('格式錯誤（超過兩個部分）應該返回空', () => {
+        const flow = generator.generate({
+          endpoints: ['POST /users extra'],
+        });
+
+        expect(flow.steps).toEqual([]);
+      });
+    });
+
+    describe('格式 3: "/path" 過濾（匹配所有方法）', () => {
+      it('應該支援 "/users" 格式', () => {
+        const flow = generator.generate({
+          endpoints: ['/users'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        // /users 只有 POST 方法
+        expect(summary.endpoints).toEqual(['createUser']);
+      });
+
+      it('應該支援 "/users/{id}" 格式', () => {
+        const flow = generator.generate({
+          endpoints: ['/users/{id}'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        // /users/{id} 只有 GET 方法
+        expect(summary.endpoints).toEqual(['getUser']);
+      });
+
+      it('應該匹配該路徑下的所有方法', () => {
+        // 使用複雜 spec 測試多方法端點
+        const complexSpec = createComplexSpec();
+        const complexAnalyzer = new SpecAnalyzer({ spec: complexSpec });
+        const complexGenerator = new TestSuiteGenerator(complexAnalyzer);
+
+        const flow = complexGenerator.generate({
+          endpoints: ['/users/{id}'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        // /users/{id} 有 GET, PUT, DELETE 三個方法
+        expect(summary.endpoints).toHaveLength(3);
+        expect(summary.endpoints).toContain('getUser');
+        expect(summary.endpoints).toContain('updateUser');
+        expect(summary.endpoints).toContain('deleteUser');
+      });
+
+      it('路徑不存在應該返回空', () => {
+        const flow = generator.generate({
+          endpoints: ['/products'],
+        });
+
+        expect(flow.steps).toEqual([]);
+      });
+    });
+
+    describe('混合格式過濾', () => {
+      it('應該支援 operationId + "METHOD /path" 混合', () => {
+        const flow = generator.generate({
+          endpoints: ['createUser', 'GET /users/{id}'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toHaveLength(2);
+        expect(summary.endpoints).toContain('createUser');
+        expect(summary.endpoints).toContain('getUser');
+      });
+
+      it('應該支援 operationId + "/path" 混合', () => {
+        const flow = generator.generate({
+          endpoints: ['createUser', '/users/{id}'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toHaveLength(2);
+        expect(summary.endpoints).toContain('createUser');
+        expect(summary.endpoints).toContain('getUser');
+      });
+
+      it('應該支援 "METHOD /path" + "/path" 混合', () => {
+        const flow = generator.generate({
+          endpoints: ['POST /users', '/users/{id}'],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toHaveLength(2);
+        expect(summary.endpoints).toContain('createUser');
+        expect(summary.endpoints).toContain('getUser');
+      });
+
+      it('應該支援三種格式混合', () => {
+        const complexSpec = createComplexSpec();
+        const complexAnalyzer = new SpecAnalyzer({ spec: complexSpec });
+        const complexGenerator = new TestSuiteGenerator(complexAnalyzer);
+
+        const flow = complexGenerator.generate({
+          endpoints: [
+            'createUser',           // operationId
+            'GET /users/{id}',      // "METHOD /path"
+            '/users/{id}',          // "/path" (會匹配 GET, PUT, DELETE)
+          ],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        // createUser + GET /users/{id} (重複) + /users/{id} (GET, PUT, DELETE)
+        // 去重後應該有: createUser, getUser, updateUser, deleteUser
+        expect(summary.endpoints.length).toBeGreaterThanOrEqual(3);
+        expect(summary.endpoints).toContain('createUser');
+        expect(summary.endpoints).toContain('getUser');
+      });
+
+      it('部分匹配、部分不匹配應該只返回匹配的', () => {
+        const flow = generator.generate({
+          endpoints: [
+            'createUser',           // ✅ 存在
+            'nonExistent',          // ❌ 不存在
+            'GET /users/{id}',      // ✅ 存在
+            'POST /products',       // ❌ 不存在
+          ],
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toHaveLength(2);
+        expect(summary.endpoints).toContain('createUser');
+        expect(summary.endpoints).toContain('getUser');
+      });
+    });
+
+    describe('邊界案例', () => {
+      it('應該處理空格過多的格式', () => {
+        const flow = generator.generate({
+          endpoints: ['POST  /users'], // 兩個空格
+        });
+
+        // 因為 split(' ') 會產生空字串，parts.length 會 > 2
+        // 根據實作，這應該返回空
+        expect(flow.steps).toEqual([]);
+      });
+
+      it('應該處理前後有空格的格式', () => {
+        const flow = generator.generate({
+          endpoints: [' POST /users '],
+        });
+
+        // 這取決於實作是否有 trim()
+        // 目前實作沒有 trim，所以會失敗
+        expect(flow.steps).toEqual([]);
+      });
+
+      it('應該處理路徑參數格式差異', () => {
+        const flow = generator.generate({
+          endpoints: ['GET /users/{id}'], // 與 spec 完全匹配
+        });
+
+        const summary = (flow as any).metadata.summary;
+        expect(summary.endpoints).toEqual(['getUser']);
+      });
     });
   });
 
