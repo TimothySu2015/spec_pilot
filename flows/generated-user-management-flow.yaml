@@ -14,8 +14,8 @@ steps:
       method: POST
       path: /auth/login
       body:
-        username: testuser
-        password: password123
+        username: Paolo_Waters
+        password: J5Ag6wwHEfMuSLd
     expectations:
       status: 201
   - name: 使用者登入 - 缺少 username
@@ -23,7 +23,7 @@ steps:
       method: POST
       path: /auth/login
       body:
-        password: 測試資
+        password: textilis denego ullam
     expect:
       statusCode: 400
   - name: 使用者登入 - 缺少 password
@@ -31,7 +31,7 @@ steps:
       method: POST
       path: /auth/login
       body:
-        username: 測試資
+        username: commemoro
     expect:
       statusCode: 400
   - name: 使用者登入 - 無效 username 格式
@@ -40,7 +40,7 @@ steps:
       path: /auth/login
       body:
         username: ""
-        password: 測試資
+        password: dolorem
     expect:
       statusCode: 400
   - name: 使用者登入 - 無效 password 格式
@@ -48,7 +48,7 @@ steps:
       method: POST
       path: /auth/login
       body:
-        username: 測試資
+        username: suadeo cohors
         password: ""
     expect:
       statusCode: 400
@@ -69,8 +69,8 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測試使用者
-        email: test@example.tw
+        name: Spencer Paucek
+        email: Tillman31@gmail.com
         role: user
         status: active
     expectations:
@@ -80,7 +80,7 @@ steps:
       method: POST
       path: /api/users
       body:
-        email: test@example.tw
+        email: Heber_Thiel52@gmail.com
         role: user
         status: active
     expect:
@@ -90,7 +90,7 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測試資
+        name: via
         role: user
         status: active
     expect:
@@ -101,7 +101,7 @@ steps:
       path: /api/users
       body:
         name: ""
-        email: test@example.tw
+        email: Tracy.Watsica@yahoo.com
         role: user
         status: active
     expect:
@@ -111,7 +111,7 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測試資
+        name: vir cogito
         email: invalid-email
         role: user
         status: active
@@ -122,8 +122,8 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測試資
-        email: test@example.tw
+        name: atrocitas
+        email: Judson97@yahoo.com
         role: 123
         status: active
     expect:
@@ -133,8 +133,8 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測試資
-        email: test@example.tw
+        name: caelestis cursim
+        email: Jarret.Thiel65@hotmail.com
         role: user
         status: 123
     expect:
@@ -162,8 +162,8 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測試使用者
-        email: test@example.tw
+        name: Samuel Ankunding III
+        email: Mertie.Bernhard45@gmail.com
         role: admin
         status: active
     expectations:
@@ -173,7 +173,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        email: test@example.tw
+        email: Ayden_Hilll72@yahoo.com
         role: admin
         status: active
     expect:
@@ -183,7 +183,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測試資
+        name: strenuus candidus
         role: admin
         status: active
     expect:
@@ -193,8 +193,8 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測試資
-        email: test@example.tw
+        name: audacia tergeo conventus
+        email: Josue.Quitzon@gmail.com
         status: active
     expect:
       statusCode: 400
@@ -203,8 +203,8 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測試資
-        email: test@example.tw
+        name: texo sono debilito
+        email: Warren_Huels@hotmail.com
         role: admin
     expect:
       statusCode: 400
@@ -214,7 +214,7 @@ steps:
       path: /api/users/{id}
       body:
         name: ""
-        email: test@example.tw
+        email: Wilhelm.Wilkinson@gmail.com
         role: admin
         status: active
     expect:
@@ -224,7 +224,7 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測試資
+        name: depono perspiciatis
         email: invalid-email
         role: admin
         status: active
@@ -235,8 +235,8 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測試資
-        email: test@example.tw
+        name: addo ipsam
+        email: Novella.Lang9@yahoo.com
         role: 123
         status: active
     expect:
@@ -246,8 +246,8 @@ steps:
       method: PUT
       path: /api/users/{id}
       body:
-        name: 測試資
-        email: test@example.tw
+        name: decet
+        email: Tavares.Koelpin13@gmail.com
         role: admin
         status: 123
     expect:
@@ -271,7 +271,7 @@ steps:
       path: /api/users/{id}
       body:
         name: ""
-        email: test@example.tw
+        email: Clyde_Batz@gmail.com
         role: admin
         status: active
     expect:
@@ -281,7 +281,7 @@ steps:
       method: PATCH
       path: /api/users/{id}
       body:
-        name: 測試資
+        name: quibusdam
         email: invalid-email
         role: admin
         status: active
@@ -292,8 +292,8 @@ steps:
       method: PATCH
       path: /api/users/{id}
       body:
-        name: 測試資
-        email: test@example.tw
+        name: creator claudeo eligendi
+        email: Laverna.Schiller@yahoo.com
         role: 123
         status: active
     expect:
@@ -303,8 +303,8 @@ steps:
       method: PATCH
       path: /api/users/{id}
       body:
-        name: 測試資
-        email: test@example.tw
+        name: absum iste nostrum
+        email: Jerrell98@yahoo.com
         role: admin
         status: 123
     expect:
@@ -332,8 +332,8 @@ steps:
       method: POST
       path: /api/users
       body:
-        name: 測試使用者
-        email: test@example.tw
+        name: Jared Hagenes
+        email: Tito_Hackett@yahoo.com
         role: user
         status: active
     capture:
@@ -347,13 +347,13 @@ steps:
       path: /api/users/{{resourceId}}
     expect:
       statusCode: 200
-  - name: 完整更新使用者
+  - name: 更新完整更新使用者
     request:
       method: PUT
       path: /api/users/{{resourceId}}
       body:
-        name: 測試使用者
-        email: test@example.tw
+        name: Geneva Herman Jr.
+        email: Kristoffer54@yahoo.com
         role: admin
         status: active
     expect:
@@ -364,13 +364,13 @@ steps:
       path: /api/users/{{resourceId}}
     expect:
       statusCode: 204
-  - name: 使用者登入
+  - name: 建立使用者登入
     request:
       method: POST
       path: /auth/login
       body:
-        username: testuser
-        password: password123
+        username: Lourdes.Koch
+        password: 7XIimgVAe04yDmp
     capture:
       - variableName: authToken
         path: token
