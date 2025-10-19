@@ -52,10 +52,21 @@ Thumbs.db
 # Test reports and results
 reports/result.json
 reports/*.json
+test-reports/
 
 # Temporary files
 *.tmp
 *.temp
+
+# Test scripts (local development)
+test-*.ts
+test-*.js
+test-*.mjs
+test-*.cjs
+
+# Auto-generated test flows (temporary)
+flows/auto-generated-*.yaml
+
 # BMAD (local only)
 .bmad-core/
 .bmad-*/
