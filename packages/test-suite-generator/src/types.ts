@@ -151,3 +151,21 @@ export interface ErrorCaseGeneratorConfig {
   includeInvalidFormats?: boolean;
   includeAuthErrors?: boolean;
 }
+
+/**
+ * operationId 缺失資訊
+ */
+export interface MissingOperationIdInfo {
+  method: string;
+  path: string;
+  suggestedId: string;
+}
+
+/**
+ * 規格檢測結果
+ */
+export interface SpecDetectionResult {
+  missingOperationIds: MissingOperationIdInfo[];
+  totalEndpoints: number;
+  hasIssues: boolean;
+}

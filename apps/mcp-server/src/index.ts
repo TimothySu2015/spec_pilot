@@ -948,6 +948,107 @@ async function handleSaveFlow(params: {
   }
 }
 
+/**
+ * 處理 checkOperationIds 請求
+ */
+async function handleCheckOperationIds(params: {
+  specPath: string;
+}): Promise<{ content: Array<{ type: string; text: string }> }> {
+  logger.info('checkOperationIds 方法開始執行', {
+    method: 'checkOperationIds',
+    event: 'check_operation_ids_start',
+    details: { specPath: params.specPath }
+  });
+
+  try {
+    // 1. 載入 OpenAPI 規格
+    const specPath = path.resolve(process.cwd(), params.specPath);
+    if (!existsSync(specPath)) {
+      return {
+        content: [{
+          type: "text",
+          text: `錯誤：找不到規格檔案 '${specPath}'`
+        }]
+      };
+    }
+
+    const executionId = `check-${Date.now()}`;
+    const specDoc = await loadSpec({ filePath: specPath, executionId });
+
+    // 2. 調用 SpecAnalyzer.detectIssues() 檢測
+    const analyzer = new SpecAnalyzer({ spec: specDoc.document });
+    const issues = analyzer.detectIssues();
+
+    // 3. 檢查檔案可修改性
+    const isModifiable = analyzer.checkIfModifiable(specPath);
+
+    // 4. 格式化輸出
+    let resultText = `📊 OpenAPI 規格檢測結果\n\n`;
+    resultText += `📄 規格檔案：${path.relative(process.cwd(), specPath)}\n`;
+    resultText += `🔢 總端點數：${issues.totalEndpoints}\n\n`;
+
+    if (!issues.hasIssues) {
+      resultText += `✅ 所有端點都已定義 operationId\n`;
+    } else {
+      resultText += `⚠️ 發現 ${issues.missingOperationIds.length} 個端點缺少 operationId：\n\n`;
+      issues.missingOperationIds.forEach((item, i) => {
+        resultText += `${i + 1}. ${item.method} ${item.path}\n`;
+        resultText += `   💡 建議 operationId: ${item.suggestedId}\n\n`;
+      });
+
+      // 5. 根據可修改性提供建議
+      resultText += `\n💡 解決方案：\n`;
+      if (isModifiable) {
+        resultText += `\n**方式 1（推薦）**: 修改 OpenAPI 規格檔案\n`;
+        resultText += `- 手動編輯規格檔案，加入建議的 operationId\n`;
+        resultText += `- 或使用 addOperationIds 工具自動修改（未來功能）\n`;
+        resultText += `\n**方式 2**: 使用 "METHOD /path" 格式過濾端點\n`;
+        resultText += `- 範例：endpoints: ['POST /users', 'GET /users/{id}']\n`;
+        resultText += `\n**方式 3**: 使用 "/path" 格式匹配所有方法\n`;
+        resultText += `- 範例：endpoints: ['/users', '/products']\n`;
+        resultText += `\n**方式 4**: 不指定 endpoints 參數產生所有端點\n`;
+      } else {
+        resultText += `\n⚠️ 此規格檔案為唯讀，無法修改。建議使用：\n`;
+        resultText += `\n**方式 1**: 使用 "METHOD /path" 格式過濾端點\n`;
+        resultText += `- 範例：endpoints: ['POST /users', 'GET /users/{id}']\n`;
+        resultText += `\n**方式 2**: 使用 "/path" 格式匹配所有方法\n`;
+        resultText += `- 範例：endpoints: ['/users', '/products']\n`;
+        resultText += `\n**方式 3**: 不指定 endpoints 參數產生所有端點\n`;
+      }
+    }
+
+    logger.info('checkOperationIds 方法成功完成', {
+      method: 'checkOperationIds',
+      event: 'check_operation_ids_success',
+      details: {
+        missingCount: issues.missingOperationIds.length,
+        isModifiable
+      }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: resultText
+      }]
+    };
+
+  } catch (error) {
+    logger.error('checkOperationIds 方法執行失敗', {
+      method: 'checkOperationIds',
+      event: 'check_operation_ids_error',
+      details: { error: error instanceof Error ? error.message : '未知錯誤' }
+    });
+
+    return {
+      content: [{
+        type: "text",
+        text: `檢測 operationId 時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`
+      }]
+    };
+  }
+}
+
 // 註冊 listSpecs 工具
 server.registerTool("listSpecs", {
   title: "列出 OpenAPI 規格檔案",
@@ -1068,6 +1169,17 @@ server.registerTool("saveFlow", {
   }
 }, async (params) => {
   return handleSaveFlow(params);
+});
+
+// 註冊 checkOperationIds 工具
+server.registerTool("checkOperationIds", {
+  title: "檢測 operationId",
+  description: "檢查 OpenAPI 規格中缺少 operationId 的端點，並提供修正建議。這個工具可以幫助你找出規格中沒有定義 operationId 的端點，並建議合適的名稱。如果你在使用 generateFlow 時無法預知自動產生的 operationId，可以先使用這個工具檢測。",
+  inputSchema: {
+    specPath: z.string().describe("OpenAPI 規格檔案路徑（相對於專案根目錄）")
+  }
+}, async (params) => {
+  return handleCheckOperationIds(params);
 });
 
 // 啟動 MCP Server（使用官方範例的方式）

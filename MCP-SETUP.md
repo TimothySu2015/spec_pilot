@@ -109,6 +109,38 @@ SpecPilot MCP Server 提供以下工具：
 
 診斷上下文幫助 Claude 快速理解問題並提供精準的修復建議。
 
+### 🔍 checkOperationIds
+檢查 OpenAPI 規格中缺少 operationId 的端點 ✨ NEW (Phase 9.4)
+```
+參數：
+- specPath (必填): OpenAPI 規格檔案路徑（相對於專案根目錄）
+
+使用範例：
+  {
+    "specPath": "specs/user-management-api.yaml"
+  }
+
+回應內容：
+- 檢測結果統計（總端點數、缺少 operationId 的端點數）
+- 缺少 operationId 的端點清單與建議名稱
+- 檔案可修改性檢查結果
+- 根據檔案權限提供不同的解決方案建議：
+  - 方案 1：自動修改規格檔案（檔案可寫入時）
+  - 方案 2：使用 "METHOD /path" 格式過濾端點（檔案唯讀時）
+  - 方案 3：產生所有端點（快速測試）
+```
+
+**使用時機**：
+- 當使用 `generateFlow` 指定 `endpoints` 參數失敗時
+- 當不確定 OpenAPI 規格是否定義 operationId
+- 當需要了解自動產生的 operationId 名稱規則
+
+**特色功能**：
+- 智慧產生符合慣例的 operationId 建議（例如：POST /users → createUsers）
+- 自動檢測檔案寫入權限，提供對應解決方案
+- 提供三種不同場景的解決建議（可修改規格、不可修改規格、快速測試）
+- Emoji 輔助的清晰輸出格式
+
 ## 🛠️ 除錯
 
 ### MCP Inspector
@@ -151,3 +183,9 @@ pnpm run start:mcp
 
 4. **查看報表**：
    "請使用 getReport 工具以摘要格式顯示最新的測試結果"
+
+5. **檢查規格的 operationId**：
+   "請使用 checkOperationIds 工具檢查 specs/user-management-api.yaml 是否缺少 operationId"
+
+6. **解決 operationId 問題後產生測試**：
+   "根據 checkOperationIds 的建議，使用 'POST /auth/login' 格式重新執行 generateFlow"

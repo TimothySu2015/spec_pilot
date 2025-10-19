@@ -3,7 +3,16 @@
  * 解析 OpenAPI 規格提取端點、Schema、範例等資訊
  */
 
-import type { EndpointInfo, DependencyGraph, AuthFlowInfo, SpecAnalyzerConfig, JSONSchema } from './types.js';
+import type {
+  EndpointInfo,
+  DependencyGraph,
+  AuthFlowInfo,
+  SpecAnalyzerConfig,
+  JSONSchema,
+  SpecDetectionResult,
+  MissingOperationIdInfo,
+} from './types.js';
+import { accessSync, constants } from 'node:fs';
 
 export class SpecAnalyzer {
   constructor(private config: SpecAnalyzerConfig) {}
@@ -353,5 +362,70 @@ export class SpecAnalyzer {
     };
 
     return body.content?.['application/json']?.examples;
+  }
+
+  /**
+   * 檢測 OpenAPI 規格中缺少 operationId 的端點
+   *
+   * @returns 檢測結果，包含缺少 operationId 的端點清單
+   */
+  detectIssues(): SpecDetectionResult {
+    const missingOperationIds: MissingOperationIdInfo[] = [];
+    const paths = this.config.spec.paths || {};
+    let totalEndpoints = 0;
+
+    // 遍歷所有路徑和方法
+    for (const [path, pathItem] of Object.entries(paths)) {
+      if (!pathItem || typeof pathItem !== 'object') continue;
+
+      for (const [method, operation] of Object.entries(pathItem)) {
+        if (typeof operation !== 'object' || !operation) continue;
+
+        const op = operation as {
+          operationId?: string;
+          summary?: string;
+          description?: string;
+        };
+
+        // 只處理 HTTP 方法
+        const httpMethods = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'];
+        if (!httpMethods.includes(method.toLowerCase())) continue;
+
+        totalEndpoints++;
+
+        // 檢查是否缺少 operationId
+        if (!op.operationId) {
+          const suggestedId = this.generateOperationId(method, path);
+          missingOperationIds.push({
+            method: method.toUpperCase(),
+            path,
+            suggestedId,
+          });
+        }
+      }
+    }
+
+    return {
+      missingOperationIds,
+      totalEndpoints,
+      hasIssues: missingOperationIds.length > 0,
+    };
+  }
+
+  /**
+   * 檢查規格檔案是否可修改
+   *
+   * @param specPath - OpenAPI 規格檔案路徑
+   * @returns 是否可修改（可寫入）
+   */
+  checkIfModifiable(specPath: string): boolean {
+    try {
+      // 檢查檔案是否有寫入權限
+      accessSync(specPath, constants.W_OK);
+      return true;
+    } catch {
+      // 沒有寫入權限或檔案不存在
+      return false;
+    }
   }
 }

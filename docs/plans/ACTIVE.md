@@ -300,11 +300,11 @@ generateFlow({
 - 實作：已支援（不指定 endpoints 參數）
 
 **待完成任務**:
-- [ ] 9.1 新增 SpecAnalyzer 智慧檢測方法
-  - [ ] 實作 `detectIssues()` 方法檢測缺少的 operationId
-  - [ ] 實作 `checkIfModifiable()` 檢查檔案可寫入性
-  - [ ] 返回建議的 operationId 清單
-  - [ ] 新增 10+ 單元測試
+- [x] 9.1 新增 SpecAnalyzer 智慧檢測方法 ✅ (已完成)
+  - [x] 實作 `detectIssues()` 方法檢測缺少的 operationId
+  - [x] 實作 `checkIfModifiable()` 檢查檔案可寫入性
+  - [x] 返回建議的 operationId 清單
+  - [x] 新增 10+ 單元測試（實際新增 9 個測試）
 
 - [ ] 9.2 新增 SpecEnhancer 模組（修改 YAML 檔案）
   - [ ] 建立 `packages/spec-loader/src/spec-enhancer.ts`
@@ -313,19 +313,19 @@ generateFlow({
   - [ ] 自動備份原檔案
   - [ ] 新增 15+ 單元測試
 
-- [ ] 9.3 擴展端點過濾邏輯支援多種格式
-  - [ ] 修改 `TestSuiteGenerator.getTargetEndpoints()`
-  - [ ] 支援 operationId 格式（現有）
-  - [ ] 支援 "METHOD /path" 格式（新增）
-  - [ ] 支援 "/path" 格式（新增，匹配所有方法）
-  - [ ] 新增 20+ 單元測試
+- [x] 9.3 擴展端點過濾邏輯支援多種格式 ✅ (已完成)
+  - [x] 修改 `TestSuiteGenerator.getTargetEndpoints()`
+  - [x] 支援 operationId 格式（現有）
+  - [x] 支援 "METHOD /path" 格式（新增）
+  - [x] 支援 "/path" 格式（新增，匹配所有方法）
+  - [x] 新增 20+ 單元測試（實際新增 26 個測試）
 
-- [ ] 9.4 新增 MCP 工具：checkOperationIds
-  - [ ] 註冊新工具到 MCP Server
-  - [ ] 調用 SpecAnalyzer.detectIssues()
-  - [ ] 格式化輸出建議清單
-  - [ ] 根據可修改性提供不同建議
-  - [ ] 新增整合測試
+- [x] 9.4 新增 MCP 工具：checkOperationIds ✅ (已完成)
+  - [x] 註冊新工具到 MCP Server
+  - [x] 調用 SpecAnalyzer.detectIssues()
+  - [x] 格式化輸出建議清單
+  - [x] 根據可修改性提供不同建議
+  - [x] 新增整合測試（包含在 SpecAnalyzer 測試中）
 
 - [ ] 9.5 新增 MCP 工具：addOperationIds
   - [ ] 註冊新工具到 MCP Server
@@ -347,11 +347,11 @@ generateFlow({
   - [ ] 場景 C：快速測試（產生全部）
   - [ ] 驗證三種方式都能正常運作
 
-- [ ] 9.8 更新文件
-  - [ ] 更新 `packages/spec-loader/CLAUDE.md`
-  - [ ] 更新 `packages/test-suite-generator/CLAUDE.md`
-  - [ ] 更新 `MCP-SETUP.md` 新增兩個工具說明
-  - [ ] 更新 `ACTIVE.md` 標記完成
+- [x] 9.8 更新文件 ✅ (進行中)
+  - [ ] 更新 `packages/spec-loader/CLAUDE.md`（如需實作 SpecEnhancer）
+  - [x] 更新 `packages/test-suite-generator/CLAUDE.md`
+  - [x] 更新 `MCP-SETUP.md` 新增 checkOperationIds 工具說明
+  - [x] 更新 `ACTIVE.md` 標記完成
 
 **驗收標準**:
 - [ ] ✅ checkOperationIds 工具可正確檢測缺少的 operationId

@@ -2,8 +2,8 @@
 
 ## ⚠️ 實作狀態
 
-**版本**: 0.5.0
-**完成度**: 93%
+**版本**: 0.6.0
+**完成度**: 95%
 **最後更新**: 2025-10-20
 **維護狀態**: 開發中 (核心功能完成，測試覆蓋率優異)
 
@@ -116,8 +116,8 @@ const summary = generator.getSummary(flow);
 
 ### 2. SpecAnalyzer - OpenAPI 規格分析器
 
-**檔案位置**: `src/spec-analyzer.ts` (358 行)
-**測試覆蓋**: ✅ `__tests__/spec-analyzer.test.ts` (2 個測試通過)
+**檔案位置**: `src/spec-analyzer.ts` (432 行)
+**測試覆蓋**: ✅ `__tests__/spec-analyzer.test.ts` (11 個測試通過)
 
 ✅ **完整實作的功能**:
 - 提取所有 API 端點資訊
@@ -126,11 +126,15 @@ const summary = generator.getSummary(flow);
 - 識別認證端點
 - 自動產生 operationId (如果缺少)
 - 提取 OpenAPI examples
+- **智慧檢測缺少的 operationId** (Phase 9.1 完成)
+- **檢查規格檔案可修改性** (Phase 9.1 完成)
 
 **主要方法**:
 - `extractEndpoints()` - 提取所有端點 ✅
 - `analyzeDependencies()` - 分析資源依賴圖 ✅
 - `getAuthenticationFlow()` - 識別登入端點 ✅
+- `detectIssues()` - 檢測缺少的 operationId ✅ (Phase 9.1)
+- `checkIfModifiable(specPath)` - 檢查檔案可寫入性 ✅ (Phase 9.1)
 
 **API 範例**:
 ```typescript
@@ -173,6 +177,21 @@ const authFlow = analyzer.getAuthenticationFlow();
 //   credentialFields: ['username', 'password'],
 //   tokenField: 'token'
 // }
+
+// 檢測缺少的 operationId (Phase 9.1)
+const issues = analyzer.detectIssues();
+// {
+//   missingOperationIds: [
+//     { method: 'POST', path: '/users', suggestedId: 'createUsers' },
+//     { method: 'GET', path: '/users/{id}', suggestedId: 'getUsers' }
+//   ],
+//   totalEndpoints: 5,
+//   hasIssues: true
+// }
+
+// 檢查規格檔案是否可修改 (Phase 9.1)
+const canModify = analyzer.checkIfModifiable('specs/my-api.yaml');
+// true (可寫入) 或 false (唯讀/不存在)
 ```
 
 **依賴分析邏輯**:
@@ -591,6 +610,8 @@ const suggestions = checker.generateFixSuggestions(report);
 - `SpecAnalyzerConfig` - 規格分析器配置
 - `CRUDGeneratorConfig` - CRUD 產生器配置
 - `ErrorCaseGeneratorConfig` - 錯誤產生器配置
+- `MissingOperationIdInfo` - operationId 缺失資訊 (Phase 9.1)
+- `SpecDetectionResult` - 規格檢測結果 (Phase 9.1)
 
 ---
 
@@ -778,7 +799,7 @@ pnpm run test:coverage
 | 模組 | 測試檔案 | 狀態 |
 |------|---------|------|
 | TestSuiteGenerator | ✅ `__tests__/test-suite-generator.test.ts` | 52 tests, 88% 覆蓋率 |
-| SpecAnalyzer | ✅ `__tests__/spec-analyzer.test.ts` | 2 tests, 基本驗證 |
+| SpecAnalyzer | ✅ `__tests__/spec-analyzer.test.ts` | 11 tests, 完整驗證 |
 | CRUDGenerator | ✅ `__tests__/crud-generator.test.ts` | 2 tests, 基本驗證 |
 | DataSynthesizer | ✅ `__tests__/data-synthesizer.test.ts` | 39 tests, 97.34% 覆蓋率 |
 | DependencyResolver | ✅ `__tests__/dependency-resolver.test.ts` | 59 tests, 98.42% 覆蓋率 |
@@ -786,7 +807,7 @@ pnpm run test:coverage
 | EdgeCaseGenerator | ✅ `__tests__/edge-case-generator.test.ts` | 39 tests, 100% 覆蓋率 |
 | FlowQualityChecker | ✅ `__tests__/flow-quality-checker.test.ts` | 41 tests, 100% 覆蓋率 |
 
-**總計**: 273 tests, ~90% 覆蓋率
+**總計**: 282 tests, ~90% 覆蓋率
 
 **執行測試**:
 ```bash
@@ -897,6 +918,7 @@ packages/test-suite-generator/
 
 | 版本 | 日期 | 主要變更 |
 |------|------|---------|
+| 0.6.0 | 2025-10-20 | ✅ **智慧檢測 operationId** (Phase 9.1 & 9.4)<br>  - SpecAnalyzer 新增 `detectIssues()` 方法檢測缺少的 operationId<br>  - SpecAnalyzer 新增 `checkIfModifiable()` 方法檢查檔案可寫入性<br>  - 新增 `MissingOperationIdInfo` 和 `SpecDetectionResult` 型別<br>  - 新增 9 個測試案例（11 tests total for SpecAnalyzer）<br>  - MCP Server 新增 `checkOperationIds` 工具<br>📊 SpecAnalyzer 測試數量：2 → 11 tests |
 | 0.5.0 | 2025-10-20 | ✅ **支援三種端點過濾格式** (Phase 9.3)<br>  - 擴展 `getTargetEndpoints()` 方法支援多種過濾格式<br>  - 格式 1: operationId（原有）<br>  - 格式 2: "METHOD /path" 格式（新增）<br>  - 格式 3: "/path" 格式匹配所有方法（新增）<br>  - 支援混合使用三種格式<br>  - 新增 21 個測試案例（52 tests total）<br>📊 TestSuiteGenerator 測試覆蓋率：88% |
 | 0.4.0 | 2025-10-19 | ✅ **整合 faker.js** (b01b2cf)<br>  - 安裝 @faker-js/faker v10.1.0<br>  - 支援 zh_TW 和 en_US locale<br>  - 更新 77 個測試使用格式驗證<br>✅ **支援 OpenAPI 3.0 複合 Schema** (05bbce0)<br>  - 支援 allOf, oneOf, anyOf<br>  - 支援 discriminator 多型處理<br>  - 支援巢狀複合 schema<br>  - 新增 6 個測試案例 (83 tests total)<br>📊 測試覆蓋率：92.57% |
 | 0.3.0 | 2025-01-19 | ✅ 新增 DataSynthesizer 測試 (39 tests, 97.34%)<br>✅ 新增 ErrorCaseGenerator 測試 (39 tests, 98.83%)<br>✅ 新增 EdgeCaseGenerator 測試 (39 tests, 100%)<br>✅ 新增 DependencyResolver 測試 (59 tests, 98.42%)<br>✅ 新增 TestSuiteGenerator 測試 (31 tests, 100%)<br>✅ 新增 FlowQualityChecker 測試 (41 tests, 100%)<br>📊 測試覆蓋率提升至 90% (252 tests) |

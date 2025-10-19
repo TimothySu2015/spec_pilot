@@ -29,6 +29,8 @@ export type {
   SpecAnalyzerConfig,
   CRUDGeneratorConfig,
   ErrorCaseGeneratorConfig,
+  MissingOperationIdInfo,
+  SpecDetectionResult,
 } from './types.js';
 
 export type {
