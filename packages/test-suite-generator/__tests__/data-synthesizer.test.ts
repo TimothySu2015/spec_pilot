@@ -23,13 +23,17 @@ describe('DataSynthesizer', () => {
     it('應該支援自訂 locale (zh-TW)', () => {
       const synth = new DataSynthesizer({ locale: 'zh-TW' });
       const result = synth.synthesize({ type: 'string', format: 'email' });
-      expect(result).toBe('test@example.tw');
+      // 使用 faker.js 後，驗證格式而不是精確值
+      expect(typeof result).toBe('string');
+      expect(result).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/); // 驗證 email 格式
     });
 
     it('應該支援自訂 locale (en-US)', () => {
       const synth = new DataSynthesizer({ locale: 'en-US' });
       const result = synth.synthesize({ type: 'string', format: 'email' });
-      expect(result).toBe('test@example.com');
+      // 使用 faker.js 後，驗證格式而不是精確值
+      expect(typeof result).toBe('string');
+      expect(result).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/); // 驗證 email 格式
     });
 
     it('應該支援停用 examples', () => {
@@ -114,28 +118,33 @@ describe('DataSynthesizer', () => {
       it('應該產生 email (zh-TW)', () => {
         const synth = new DataSynthesizer({ locale: 'zh-TW' });
         const result = synth.synthesize({ type: 'string', format: 'email' });
-        expect(result).toBe('test@example.tw');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       });
 
       it('應該產生 email (en-US)', () => {
         const synth = new DataSynthesizer({ locale: 'en-US' });
         const result = synth.synthesize({ type: 'string', format: 'email' });
-        expect(result).toBe('test@example.com');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       });
 
       it('應該產生 uri', () => {
         const result = synthesizer.synthesize({ type: 'string', format: 'uri' });
-        expect(result).toBe('https://example.com');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^https?:\/\//);
       });
 
       it('應該產生 url', () => {
         const result = synthesizer.synthesize({ type: 'string', format: 'url' });
-        expect(result).toBe('https://example.com');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^https?:\/\//);
       });
 
       it('應該產生 uuid', () => {
         const result = synthesizer.synthesize({ type: 'string', format: 'uuid' });
-        expect(result).toBe('123e4567-e89b-12d3-a456-426614174000');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
       });
 
       it('應該產生 date', () => {
@@ -150,34 +159,40 @@ describe('DataSynthesizer', () => {
 
       it('應該產生 time', () => {
         const result = synthesizer.synthesize({ type: 'string', format: 'time' });
-        expect(result).toBe('12:00:00');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^\d{2}:\d{2}:\d{2}$/);
       });
 
       it('應該產生 ipv4', () => {
         const result = synthesizer.synthesize({ type: 'string', format: 'ipv4' });
-        expect(result).toBe('192.168.1.1');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/);
       });
 
       it('應該產生 ipv6', () => {
         const result = synthesizer.synthesize({ type: 'string', format: 'ipv6' });
-        expect(result).toBe('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^[0-9a-f:]+$/i);
       });
 
       it('應該產生 hostname', () => {
         const result = synthesizer.synthesize({ type: 'string', format: 'hostname' });
-        expect(result).toBe('example.com');
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i);
       });
 
       it('應該產生 phone (zh-TW)', () => {
         const synth = new DataSynthesizer({ locale: 'zh-TW' });
         const result = synth.synthesize({ type: 'string', format: 'phone' });
-        expect(result).toBe('0912345678');
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
       });
 
       it('應該產生 phone (en-US)', () => {
         const synth = new DataSynthesizer({ locale: 'en-US' });
         const result = synth.synthesize({ type: 'string', format: 'phone' });
-        expect(result).toBe('+1-555-123-4567');
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
       });
     });
 
@@ -189,7 +204,8 @@ describe('DataSynthesizer', () => {
           required: ['username']
         };
         const result = synthesizer.synthesize(schema) as Record<string, unknown>;
-        expect(result.username).toBe('testuser');
+        expect(typeof result.username).toBe('string');
+        expect((result.username as string).length).toBeGreaterThan(0);
       });
 
       it('應該產生 password', () => {
@@ -199,7 +215,8 @@ describe('DataSynthesizer', () => {
           required: ['password']
         };
         const result = synthesizer.synthesize(schema) as Record<string, unknown>;
-        expect(result.password).toBe('password123');
+        expect(typeof result.password).toBe('string');
+        expect((result.password as string).length).toBeGreaterThan(0);
       });
 
       it('應該產生 email', () => {
@@ -210,7 +227,8 @@ describe('DataSynthesizer', () => {
           required: ['email']
         };
         const result = synth.synthesize(schema) as Record<string, unknown>;
-        expect(result.email).toBe('test@example.tw');
+        expect(typeof result.email).toBe('string');
+        expect(result.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       });
 
       it('應該產生 name (zh-TW)', () => {
@@ -221,7 +239,8 @@ describe('DataSynthesizer', () => {
           required: ['name']
         };
         const result = synth.synthesize(schema) as Record<string, unknown>;
-        expect(result.name).toBe('測試使用者');
+        expect(typeof result.name).toBe('string');
+        expect((result.name as string).length).toBeGreaterThan(0);
       });
 
       it('應該產生 name (en-US)', () => {
@@ -232,7 +251,8 @@ describe('DataSynthesizer', () => {
           required: ['name']
         };
         const result = synth.synthesize(schema) as Record<string, unknown>;
-        expect(result.name).toBe('Test User');
+        expect(typeof result.name).toBe('string');
+        expect((result.name as string).length).toBeGreaterThan(0);
       });
 
       it('應該產生 title (zh-TW)', () => {
@@ -243,7 +263,8 @@ describe('DataSynthesizer', () => {
           required: ['title']
         };
         const result = synth.synthesize(schema) as Record<string, unknown>;
-        expect(result.title).toBe('測試標題');
+        expect(typeof result.title).toBe('string');
+        expect((result.title as string).length).toBeGreaterThan(0);
       });
 
       it('應該產生 description (zh-TW)', () => {
@@ -254,7 +275,8 @@ describe('DataSynthesizer', () => {
           required: ['description']
         };
         const result = synth.synthesize(schema) as Record<string, unknown>;
-        expect(result.description).toBe('這是測試描述');
+        expect(typeof result.description).toBe('string');
+        expect((result.description as string).length).toBeGreaterThan(0);
       });
 
       it('應該產生 address (zh-TW)', () => {
@@ -265,7 +287,8 @@ describe('DataSynthesizer', () => {
           required: ['address']
         };
         const result = synth.synthesize(schema) as Record<string, unknown>;
-        expect(result.address).toBe('台北市信義區');
+        expect(typeof result.address).toBe('string');
+        expect((result.address as string).length).toBeGreaterThan(0);
       });
 
       it('應該產生 phone', () => {
@@ -276,7 +299,8 @@ describe('DataSynthesizer', () => {
           required: ['phone']
         };
         const result = synth.synthesize(schema) as Record<string, unknown>;
-        expect(result.phone).toBe('0912345678');
+        expect(typeof result.phone).toBe('string');
+        expect((result.phone as string).length).toBeGreaterThan(0);
       });
     });
 
@@ -600,8 +624,10 @@ describe('DataSynthesizer', () => {
 
       const result = synth.synthesize(schema) as Record<string, unknown>;
 
-      expect(result.username).toBe('testuser');
-      expect(result.email).toBe('test@example.tw');
+      expect(typeof result.username).toBe('string');
+      expect((result.username as string).length).toBeGreaterThan(0);
+      expect(typeof result.email).toBe('string');
+      expect(result.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       expect(result.age).toBeUndefined(); // 非 required
       expect(result.phone).toBeUndefined(); // 非 required
       expect(result.address).toBeUndefined(); // 非 required
@@ -620,8 +646,10 @@ describe('DataSynthesizer', () => {
 
       const result = synth.synthesize(schema) as Record<string, unknown>;
 
-      expect(result.name).toBe('Test User');
-      expect(result.email).toBe('test@example.com');
+      expect(typeof result.name).toBe('string');
+      expect((result.name as string).length).toBeGreaterThan(0);
+      expect(typeof result.email).toBe('string');
+      expect(result.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     });
 
     it('應該處理複雜的巢狀結構', () => {

@@ -3,6 +3,8 @@
  * 根據 JSON Schema 產生合理的測試資料
  */
 
+import { faker } from '@faker-js/faker';
+import { zh_TW, en_US } from '@faker-js/faker';
 import type { JSONSchema } from './types.js';
 
 /**
@@ -21,6 +23,9 @@ export class DataSynthesizer {
     this.options.useDefaults = options.useDefaults ?? true;
     this.options.useEnums = options.useEnums ?? true;
     this.options.locale = options.locale ?? 'zh-TW';
+
+    // 設定 faker locale
+    faker.locale = this.options.locale === 'zh-TW' ? zh_TW : en_US;
   }
 
   /**
@@ -81,75 +86,106 @@ export class DataSynthesizer {
       return String(schema.enum[0]);
     }
 
-    // 2. 根據 format 產生
+    // 2. 根據 format 產生（使用 faker.js）
     if (schema.format) {
       switch (schema.format) {
         case 'email':
-          return this.options.locale === 'zh-TW' ? 'test@example.tw' : 'test@example.com';
+          return faker.internet.email();
         case 'uri':
         case 'url':
-          return 'https://example.com';
+          return faker.internet.url();
         case 'uuid':
-          return '123e4567-e89b-12d3-a456-426614174000';
+          return faker.string.uuid();
         case 'date':
-          return new Date().toISOString().split('T')[0];
+          return faker.date.recent().toISOString().split('T')[0];
         case 'date-time':
-          return new Date().toISOString();
+          return faker.date.recent().toISOString();
         case 'time':
-          return '12:00:00';
+          return faker.date.recent().toTimeString().split(' ')[0];
         case 'ipv4':
-          return '192.168.1.1';
+          return faker.internet.ipv4();
         case 'ipv6':
-          return '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
+          return faker.internet.ipv6();
         case 'hostname':
-          return 'example.com';
+          return faker.internet.domainName();
         case 'phone':
-          return this.options.locale === 'zh-TW' ? '0912345678' : '+1-555-123-4567';
+          return faker.phone.number();
       }
     }
 
-    // 3. 根據欄位名稱產生合理的測試資料
+    // 3. 根據欄位名稱產生合理的測試資料（使用 faker.js）
     if (fieldName) {
       const lowerName = fieldName.toLowerCase();
 
       // 使用者名稱相關
       if (lowerName.includes('username') || lowerName === 'user') {
-        return 'testuser';
+        return faker.internet.username();
       }
 
       // 密碼相關
       if (lowerName.includes('password') || lowerName.includes('pwd')) {
-        return 'password123';
+        return faker.internet.password();
       }
 
       // Email 相關
       if (lowerName.includes('email') || lowerName.includes('mail')) {
-        return this.options.locale === 'zh-TW' ? 'test@example.tw' : 'test@example.com';
+        return faker.internet.email();
       }
 
       // 名稱相關
       if (lowerName === 'name' || lowerName.includes('fullname')) {
-        return this.options.locale === 'zh-TW' ? '測試使用者' : 'Test User';
+        return faker.person.fullName();
+      }
+
+      if (lowerName.includes('firstname')) {
+        return faker.person.firstName();
+      }
+
+      if (lowerName.includes('lastname')) {
+        return faker.person.lastName();
       }
 
       // 標題相關
       if (lowerName === 'title' || lowerName.includes('subject')) {
-        return this.options.locale === 'zh-TW' ? '測試標題' : 'Test Title';
+        return faker.lorem.sentence({ min: 3, max: 6 });
       }
 
       // 描述相關
       if (lowerName.includes('description') || lowerName.includes('desc')) {
-        return this.options.locale === 'zh-TW' ? '這是測試描述' : 'This is a test description';
+        return faker.lorem.paragraph(1);
       }
 
       // 地址相關
       if (lowerName.includes('address')) {
-        return this.options.locale === 'zh-TW' ? '台北市信義區' : '123 Test Street';
+        return faker.location.streetAddress();
+      }
+
+      if (lowerName.includes('city')) {
+        return faker.location.city();
+      }
+
+      if (lowerName.includes('country')) {
+        return faker.location.country();
       }
 
       // 電話相關
       if (lowerName.includes('phone') || lowerName.includes('tel')) {
-        return this.options.locale === 'zh-TW' ? '0912345678' : '+1-555-123-4567';
+        return faker.phone.number();
+      }
+
+      // 公司相關
+      if (lowerName.includes('company')) {
+        return faker.company.name();
+      }
+
+      // 網址相關
+      if (lowerName.includes('url') || lowerName.includes('website')) {
+        return faker.internet.url();
+      }
+
+      // 圖片相關
+      if (lowerName.includes('avatar') || lowerName.includes('image') || lowerName.includes('photo')) {
+        return faker.image.avatar();
       }
     }
 
@@ -164,16 +200,29 @@ export class DataSynthesizer {
       }
     }
 
-    // 5. 根據長度限制產生
+    // 5. 根據長度限制產生（使用 faker.js）
     const minLength = schema.minLength || 1;
-    // 確保至少產生 3 個字元,避免過短的測試資料
-    const targetLength = Math.max(minLength, 3);
+    const maxLength = schema.maxLength;
 
-    const baseValue = this.options.locale === 'zh-TW' ? '測試資料' : 'testdata';
-    if (targetLength <= baseValue.length) {
-      return baseValue.substring(0, targetLength);
+    // 使用 faker 產生隨機字串
+    if (maxLength && maxLength < 10) {
+      // 如果最大長度很小，使用字母字串
+      return faker.string.alpha({ length: { min: minLength, max: maxLength } });
     }
-    return baseValue.repeat(Math.ceil(targetLength / baseValue.length)).substring(0, targetLength);
+
+    // 產生隨機單詞組合
+    const words = faker.lorem.words({ min: 1, max: 3 });
+
+    // 調整長度符合要求
+    if (maxLength && words.length > maxLength) {
+      return words.substring(0, maxLength);
+    }
+
+    if (words.length < minLength) {
+      return words + faker.string.alpha(minLength - words.length);
+    }
+
+    return words;
   }
 
   /**

@@ -24,10 +24,11 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@specpilot/shared": "workspace:*",
-    "@specpilot/spec-loader": "workspace:*",
+    "@faker-js/faker": "^10.1.0",
     "@specpilot/flow-parser": "workspace:*",
     "@specpilot/schemas": "workspace:*",
+    "@specpilot/shared": "workspace:*",
+    "@specpilot/spec-loader": "workspace:*",
     "yaml": "^2.4.3"
   },
   "devDependencies": {
