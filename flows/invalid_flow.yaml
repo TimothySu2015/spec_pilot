@@ -5,8 +5,8 @@ steps:
   - name: "缺少 method 的步驟"
     request:
       path: "/api/users"
-    expectations:
-      status: 200
+    expect:
+      statusCode: 200
       
   - name: "無效 HTTP 方法"
     request:
@@ -17,5 +17,5 @@ steps:
     request:
       method: "GET"
       path: "/api/users"
-    expectations:
-      status: 999
+    expect:
+      statusCode: 999

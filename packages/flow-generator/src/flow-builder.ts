@@ -28,6 +28,8 @@ export class FlowBuilder {
 
   /**
    * 新增測試步驟
+   *
+   * ⚠️ 重要：使用 @specpilot/schemas 定義的格式（expect + statusCode）
    */
   addStep(stepConfig: FlowStepConfig): this {
     const step: FlowStep = {
@@ -36,8 +38,8 @@ export class FlowBuilder {
         method: stepConfig.method || 'GET',
         path: stepConfig.path,
       },
-      expectations: {
-        status: stepConfig.expectedStatusCode || 200,
+      expect: {
+        statusCode: stepConfig.expectedStatusCode || 200,
       },
     };
 

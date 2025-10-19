@@ -1,11 +1,11 @@
-name: 登入後查詢使用者資料測試
-description: 完整的認證流程 - 登入取得 token 後查詢使用者資料
+name: 登入後查詢使用者測試
+description: 測試使用者登入後取得使用者列表的完整流程
 version: 1.0.0
 baseUrl: http://localhost:3000
 
 steps:
-  - name: 使用者登入
-    description: 使用預設管理者帳號登入並取得 JWT token
+  # 步驟 1: 使用預設管理者帳號登入
+  - name: 使用管理者帳號登入
     request:
       method: POST
       path: /auth/login
@@ -15,38 +15,64 @@ steps:
     capture:
       - variableName: authToken
         path: token
+      - variableName: tokenType
+        path: tokenType
     expectations:
       status: 200
-      schema: AuthResponse
+      schema:
+        type: object
+        required:
+          - token
+          - expiresIn
+          - tokenType
+          - user
 
-  - name: 查詢使用者列表
-    description: 使用登入取得的 token 查詢所有使用者
+  # 步驟 2: 使用取得的 token 查詢使用者列表
+  - name: 查詢所有使用者列表
     request:
       method: GET
       path: /api/users
       headers:
-        Authorization: "Bearer {{authToken}}"
+        Authorization: "{{tokenType}} {{authToken}}"
     expectations:
       status: 200
-      schema: UsersListResponse
+      schema:
+        type: object
+        required:
+          - users
+          - total
+        properties:
+          users:
+            type: array
+          total:
+            type: integer
 
+  # 步驟 3: 查詢特定使用者詳情（假設查詢 ID=1）
   - name: 查詢特定使用者詳情
-    description: 使用 token 查詢 ID 為 1 的使用者詳細資料
     request:
       method: GET
       path: /api/users/1
       headers:
-        Authorization: "Bearer {{authToken}}"
+        Authorization: "{{tokenType}} {{authToken}}"
     expectations:
       status: 200
-      schema: User
+      schema:
+        type: object
+        required:
+          - id
+          - name
+          - email
+          - role
+          - status
+          - createdAt
+          - updatedAt
 
 metadata:
   summary:
     totalTests: 3
-    description: 驗證認證機制與使用者資料查詢功能
-    tags:
-      - 認證流程
-      - JWT Token
-      - 使用者管理
-      - API 安全性
+    description: 完整的登入與查詢使用者流程測試
+    features:
+      - JWT 認證流程
+      - Token 自動注入
+      - 使用者列表查詢
+      - 使用者詳情查詢

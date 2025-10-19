@@ -21,6 +21,8 @@
 
 **當前開發計畫**: 查看 `docs/plans/ACTIVE.md` 了解進行中的任務
 
+**🔒 Schema 權威標準**: 詳見 `SCHEMA-AUTHORITY.md` - **所有 YAML 格式定義必須遵循 @specpilot/schemas**
+
 ---
 
 ## 語言與溝通規範

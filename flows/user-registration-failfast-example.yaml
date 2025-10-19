@@ -25,8 +25,8 @@ steps:
       path: /api/auth/send-verification-code
       body:
         phone: "+886912345678"
-    expectations:
-      status: 200
+    expect:
+      statusCode: 200
       custom:
         - type: notNull
           field: verificationId
@@ -43,8 +43,8 @@ steps:
       body:
         verificationId: "${verificationId}"
         code: "123456"
-    expectations:
-      status: 200
+    expect:
+      statusCode: 200
       custom:
         - type: notNull
           field: token
@@ -64,8 +64,8 @@ steps:
         name: "測試使用者"
         email: "test@example.com"
         phone: "+886912345678"
-    expectations:
-      status: 201
+    expect:
+      statusCode: 201
       custom:
         - type: notNull
           field: id
@@ -83,8 +83,8 @@ steps:
         Authorization: "Bearer ${authToken}"
       body:
         userId: "${userId}"
-    expectations:
-      status: 200
+    expect:
+      statusCode: 200
       custom:
         - type: notNull
           field: emailSent

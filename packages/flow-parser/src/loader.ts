@@ -148,11 +148,13 @@ export class FlowLoader {
 
   /**
    * 轉換單一 Step
+   *
+   * ⚠️ 重要：欄位名稱使用 expect（與 @specpilot/schemas 一致）
    */
   private convertStep(schemaStep: UnifiedFlowStep, executionId?: string): FlowStep {
     const method = this.normalizeHttpMethod(schemaStep.request.method, schemaStep.name, executionId);
 
-    const expectations = this.convertExpectations(schemaStep.expect, schemaStep.validation);
+    const expect = this.convertExpectations(schemaStep.expect, schemaStep.validation);
     const capture = this.convertCapture(schemaStep.capture);
 
     return {
@@ -166,7 +168,7 @@ export class FlowLoader {
         body: schemaStep.request.body,
         query: schemaStep.request.query,
       },
-      expectations,
+      expect,
       capture,
       auth: schemaStep.auth,
       retryPolicy: schemaStep.retryPolicy,
@@ -175,6 +177,10 @@ export class FlowLoader {
 
   /**
    * 轉換 expectations 結構
+   *
+   * ⚠️ 重要：此方法不再進行欄位名稱轉換
+   * 直接使用 @specpilot/schemas 定義的欄位名稱（expect, statusCode）
+   * 確保內部型別與 Schema 完全一致
    */
   private convertExpectations(
     expect: UnifiedFlowStep['expect'],
@@ -182,8 +188,9 @@ export class FlowLoader {
   ): FlowExpectations {
     const expectations: FlowExpectations = {};
 
+    // 直接使用 statusCode，不再轉換為 status
     if (expect.statusCode !== undefined) {
-      expectations.status = expect.statusCode;
+      expectations.statusCode = expect.statusCode;
     }
 
     if (expect.body !== undefined) {

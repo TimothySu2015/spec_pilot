@@ -6,5 +6,5 @@ steps:
     request:
       method: "GET"
       path: "/api/health"
-    expectations:
-      status: 200
+    expect:
+      statusCode: 200

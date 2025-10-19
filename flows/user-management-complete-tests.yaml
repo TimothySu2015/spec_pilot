@@ -12,7 +12,7 @@ steps:
     request:
       method: GET
       path: /api/health
-    expectations:
+    expect:
       statusCode: 200
       schema:
         type: object
@@ -35,7 +35,7 @@ steps:
       body:
         username: admin
         password: "123456"
-    expectations:
+    expect:
       statusCode: 200
       schema:
         type: object
@@ -51,7 +51,7 @@ steps:
       body:
         username: wronguser
         password: "123456"
-    expectations:
+    expect:
       statusCode: 401
 
   - name: 登入 - 密碼錯誤
@@ -61,7 +61,7 @@ steps:
       body:
         username: admin
         password: "wrongpass"
-    expectations:
+    expect:
       statusCode: 401
 
   - name: 登入 - 缺少 username
@@ -70,7 +70,7 @@ steps:
       path: /auth/login
       body:
         password: "123456"
-    expectations:
+    expect:
       statusCode: 400
 
   - name: 登入 - 缺少 password
@@ -79,7 +79,7 @@ steps:
       path: /auth/login
       body:
         username: admin
-    expectations:
+    expect:
       statusCode: 400
 
   # ========================================
@@ -98,7 +98,7 @@ steps:
         email: testuser@example.com
         role: user
         status: active
-    expectations:
+    expect:
       statusCode: 201
       schema:
         type: object
@@ -114,7 +114,7 @@ steps:
       path: /api/users/{{userId}}
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200
       schema:
         type: object
@@ -136,7 +136,7 @@ steps:
         email: updated@example.com
         role: admin
         status: active
-    expectations:
+    expect:
       statusCode: 200
       schema:
         type: object
@@ -151,7 +151,7 @@ steps:
         Authorization: "Bearer {{authToken}}"
       body:
         status: inactive
-    expectations:
+    expect:
       statusCode: 200
       customRules:
         - field: status
@@ -165,7 +165,7 @@ steps:
       path: /api/users
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200
       schema:
         type: object
@@ -183,7 +183,7 @@ steps:
       path: /api/users/{{userId}}
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200
       schema:
         type: object
@@ -201,7 +201,7 @@ steps:
       body:
         name: 測試使用者2
         email: test2@example.com
-    expectations:
+    expect:
       statusCode: 401
 
   - name: 建立使用者 - 缺少必填欄位 name
@@ -212,7 +212,7 @@ steps:
         Authorization: "Bearer {{authToken}}"
       body:
         email: test3@example.com
-    expectations:
+    expect:
       statusCode: 400
 
   - name: 建立使用者 - 缺少必填欄位 email
@@ -223,7 +223,7 @@ steps:
         Authorization: "Bearer {{authToken}}"
       body:
         name: 測試使用者4
-    expectations:
+    expect:
       statusCode: 400
 
   - name: 建立使用者 - 無效 email 格式
@@ -235,7 +235,7 @@ steps:
       body:
         name: 測試使用者5
         email: invalid-email
-    expectations:
+    expect:
       statusCode: 400
 
   - name: 建立使用者 - Email 重複
@@ -247,7 +247,7 @@ steps:
       body:
         name: 重複使用者1
         email: duplicate@example.com
-    expectations:
+    expect:
       statusCode: 201
     capture:
       - variableName: duplicateUserId1
@@ -262,7 +262,7 @@ steps:
       body:
         name: 重複使用者2
         email: duplicate@example.com
-    expectations:
+    expect:
       statusCode: 409
 
   # 讀取使用者錯誤案例
@@ -270,7 +270,7 @@ steps:
     request:
       method: GET
       path: /api/users/1
-    expectations:
+    expect:
       statusCode: 401
 
   - name: 取得使用者 - 不存在的 ID
@@ -279,7 +279,7 @@ steps:
       path: /api/users/99999
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 404
 
   # 更新使用者錯誤案例
@@ -292,7 +292,7 @@ steps:
         email: newemail@example.com
         role: user
         status: active
-    expectations:
+    expect:
       statusCode: 401
 
   - name: 更新使用者 - 不存在的 ID
@@ -306,7 +306,7 @@ steps:
         email: newemail@example.com
         role: user
         status: active
-    expectations:
+    expect:
       statusCode: 404
 
   - name: 更新使用者 - 缺少必填欄位
@@ -317,7 +317,7 @@ steps:
         Authorization: "Bearer {{authToken}}"
       body:
         name: 只有名稱
-    expectations:
+    expect:
       statusCode: 400
 
   # 刪除使用者錯誤案例
@@ -325,7 +325,7 @@ steps:
     request:
       method: DELETE
       path: /api/users/{{duplicateUserId1}}
-    expectations:
+    expect:
       statusCode: 401
 
   - name: 刪除使用者 - 不存在的 ID
@@ -334,7 +334,7 @@ steps:
       path: /api/users/99999
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 404
 
   # ========================================
@@ -350,7 +350,7 @@ steps:
       body:
         name: A
         email: minname@example.com
-    expectations:
+    expect:
       statusCode: 201
     capture:
       - variableName: minNameUserId
@@ -365,7 +365,7 @@ steps:
       body:
         name: "這是一個非常非常非常非常非常非常非常非常非常非常長的使用者名稱測試案例用來測試系統對於極長字串的處理能力"
         email: longname@example.com
-    expectations:
+    expect:
       statusCode: 201
     capture:
       - variableName: longNameUserId
@@ -381,7 +381,7 @@ steps:
         name: 管理員測試
         email: admin-test@example.com
         role: admin
-    expectations:
+    expect:
       statusCode: 201
     capture:
       - variableName: adminRoleUserId
@@ -397,7 +397,7 @@ steps:
         name: 停用使用者
         email: inactive-test@example.com
         status: inactive
-    expectations:
+    expect:
       statusCode: 201
     capture:
       - variableName: inactiveUserId
@@ -413,7 +413,7 @@ steps:
       path: /api/users/{{minNameUserId}}
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200
 
   - name: 清理 - 刪除長名稱使用者
@@ -422,7 +422,7 @@ steps:
       path: /api/users/{{longNameUserId}}
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200
 
   - name: 清理 - 刪除管理員角色使用者
@@ -431,7 +431,7 @@ steps:
       path: /api/users/{{adminRoleUserId}}
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200
 
   - name: 清理 - 刪除停用狀態使用者
@@ -440,7 +440,7 @@ steps:
       path: /api/users/{{inactiveUserId}}
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200
 
   - name: 清理 - 刪除重複 Email 使用者
@@ -449,5 +449,5 @@ steps:
       path: /api/users/{{duplicateUserId1}}
       headers:
         Authorization: "Bearer {{authToken}}"
-    expectations:
+    expect:
       statusCode: 200

@@ -54,7 +54,7 @@ steps:
       expect(result.steps).toHaveLength(1);
       expect(result.steps[0].request.method).toBe('GET');
       expect(result.steps[0].request.path).toBe('/api/test');
-      expect(result.steps[0].expectations.status).toBe(200);
+      expect(result.steps[0].expect.statusCode).toBe(200);
       expect(result.rawContent).toBe(yaml);
     });
 
@@ -85,8 +85,8 @@ steps:
 
       expect(result.id).toBe('字串流程');
       expect(result.steps[0].request.method).toBe('POST');
-      expect(result.steps[0].expectations.custom).toHaveLength(1);
-      expect(result.steps[0].expectations.custom?.[0]).toMatchObject({ type: 'notNull', field: 'id' });
+      expect(result.steps[0].expect.custom).toHaveLength(1);
+      expect(result.steps[0].expect.custom?.[0]).toMatchObject({ type: 'notNull', field: 'id' });
       expect(result.steps[0].capture).toEqual({ created_id: 'id' });
     });
 
@@ -217,10 +217,10 @@ steps:
       const result = await loader.loadFlowFromContent(yaml, 'convert-1');
       const step = result.steps[0];
 
-      expect(step.expectations.status).toBe(201);
-      expect(step.expectations.custom).toHaveLength(2);
-      expect(step.expectations.custom?.[0]).toMatchObject({ type: 'notNull', field: 'data.id' });
-      expect(step.expectations.custom?.[1]).toEqual({ type: 'contains', field: 'message', value: 'success' });
+      expect(step.expect.statusCode).toBe(201);
+      expect(step.expect.custom).toHaveLength(2);
+      expect(step.expect.custom?.[0]).toMatchObject({ type: 'notNull', field: 'data.id' });
+      expect(step.expect.custom?.[1]).toEqual({ type: 'contains', field: 'message', value: 'success' });
       expect(step.capture).toEqual({ data_id: 'data.id' });
     });
 

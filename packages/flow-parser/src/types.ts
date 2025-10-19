@@ -71,10 +71,13 @@ export interface ReportingOptions {
 
 /**
  * 回應驗證設定
+ *
+ * ⚠️ 重要：此型別必須與 @specpilot/schemas 的 FlowExpectSchema 保持一致
+ * 所有欄位名稱與結構都應遵循 Schema 定義，不可自行變更
  */
 export interface FlowExpectations {
   /** 預期的 HTTP 狀態碼 */
-  status?: number;
+  statusCode?: number;
   /** JSON Schema 名稱 */
   schema?: string;
   /** 預期的回應 body (JSON 深度比對驗證) */
@@ -118,6 +121,9 @@ export interface FlowAuth {
 
 /**
  * Flow 步驟定義
+ *
+ * ⚠️ 重要：此型別必須與 @specpilot/schemas 的 FlowStepSchema 保持一致
+ * 所有欄位名稱與結構都應遵循 Schema 定義，不可自行變更
  */
 export interface FlowStep {
   /** 步驟名稱 */
@@ -127,7 +133,7 @@ export interface FlowStep {
   /** HTTP 請求設定 */
   request: FlowRequest;
   /** 回應驗證設定 */
-  expectations: FlowExpectations;
+  expect: FlowExpectations;
   /** 重試策略 */
   retryPolicy?: RetryPolicy;
   /** 步驟認證 */
