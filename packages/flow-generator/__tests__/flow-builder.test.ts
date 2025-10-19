@@ -26,7 +26,7 @@ describe('FlowBuilder', () => {
     expect(flow.steps[0].name).toBe('取得使用者');
     expect(flow.steps[0].request.method).toBe('GET');
     expect(flow.steps[0].request.path).toBe('/users/123');
-    expect(flow.steps[0].expect.statusCode).toBe(200);
+    expect(flow.steps[0].expectations.status).toBe(200);
   });
 
   test('應該正確設定步驟名稱', () => {

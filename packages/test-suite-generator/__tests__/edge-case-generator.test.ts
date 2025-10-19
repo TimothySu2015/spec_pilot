@@ -108,7 +108,7 @@ describe('EdgeCaseGenerator', () => {
       const username = (maxLengthStep?.request.body as Record<string, unknown>).username;
       expect(typeof username).toBe('string');
       expect((username as string).length).toBe(20);
-      expect(maxLengthStep?.expect.status).toBe(200);
+      expect(maxLengthStep?.expectations.status).toBe(200);
     });
 
     it('應該產生超過 maxLength 測試', () => {
@@ -129,7 +129,7 @@ describe('EdgeCaseGenerator', () => {
 
       const username = (exceedStep?.request.body as Record<string, unknown>).username;
       expect((username as string).length).toBe(21);
-      expect(exceedStep?.expect.status).toBe(400);
+      expect(exceedStep?.expectations.status).toBe(400);
     });
 
     it('應該產生 minLength 測試', () => {
@@ -150,7 +150,7 @@ describe('EdgeCaseGenerator', () => {
 
       const password = (minLengthStep?.request.body as Record<string, unknown>).password;
       expect((password as string).length).toBe(8);
-      expect(minLengthStep?.expect.status).toBe(200);
+      expect(minLengthStep?.expectations.status).toBe(200);
     });
 
     it('應該同時產生 minLength 和 maxLength 測試', () => {
@@ -232,7 +232,7 @@ describe('EdgeCaseGenerator', () => {
 
       const age = (minStep?.request.body as Record<string, unknown>).age;
       expect(age).toBe(0);
-      expect(minStep?.expect.status).toBe(200);
+      expect(minStep?.expectations.status).toBe(200);
     });
 
     it('應該產生 integer maximum 測試', () => {
@@ -253,7 +253,7 @@ describe('EdgeCaseGenerator', () => {
 
       const age = (maxStep?.request.body as Record<string, unknown>).age;
       expect(age).toBe(150);
-      expect(maxStep?.expect.status).toBe(200);
+      expect(maxStep?.expectations.status).toBe(200);
     });
 
     it('應該產生 number minimum 測試', () => {
@@ -372,11 +372,11 @@ describe('EdgeCaseGenerator', () => {
       expect(step).toHaveProperty('name');
       expect(step).toHaveProperty('operationId');
       expect(step).toHaveProperty('request');
-      expect(step).toHaveProperty('expect');
+      expect(step).toHaveProperty('expectations');
 
       expect(step.operationId).toBe('createUser');
       expect(step.request).toHaveProperty('body');
-      expect(step.expect).toHaveProperty('status');
+      expect(step.expectations).toHaveProperty('status');
     });
 
     it('應該使用 summary 作為測試名稱前綴', () => {
@@ -572,8 +572,8 @@ describe('EdgeCaseGenerator', () => {
       // 所有測試都應該有完整的資料
       steps.forEach((step) => {
         expect(step.request.body).toBeDefined();
-        expect(step.expect.status).toBeGreaterThanOrEqual(200);
-        expect(step.expect.status).toBeLessThan(500);
+        expect(step.expectations.status).toBeGreaterThanOrEqual(200);
+        expect(step.expectations.status).toBeLessThan(500);
       });
     });
 

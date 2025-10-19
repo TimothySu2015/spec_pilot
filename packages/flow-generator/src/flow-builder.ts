@@ -36,8 +36,8 @@ export class FlowBuilder {
         method: stepConfig.method || 'GET',
         path: stepConfig.path,
       },
-      expect: {
-        statusCode: stepConfig.expectedStatusCode || 200,
+      expectations: {
+        status: stepConfig.expectedStatusCode || 200,
       },
     };
 

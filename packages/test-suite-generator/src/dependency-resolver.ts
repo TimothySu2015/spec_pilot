@@ -139,8 +139,8 @@ export class DependencyResolver {
           path: isLoginEndpoint ? 'token' : 'id',
         },
       ],
-      expect: {
-        statusCode: this.getExpectedStatusFromSpec(node.endpoint),
+      expectations: {
+        status: this.getExpectedStatusFromSpec(node.endpoint),
       },
     };
   }
@@ -172,8 +172,8 @@ export class DependencyResolver {
         path,
         ...additionalRequest,
       },
-      expect: {
-        statusCode: this.getExpectedStatusFromSpec(node.endpoint),
+      expectations: {
+        status: this.getExpectedStatusFromSpec(node.endpoint),
       },
     };
 

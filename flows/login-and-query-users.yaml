@@ -1,0 +1,52 @@
+name: 登入後查詢使用者資料測試
+description: 完整的認證流程 - 登入取得 token 後查詢使用者資料
+version: 1.0.0
+baseUrl: http://localhost:3000
+
+steps:
+  - name: 使用者登入
+    description: 使用預設管理者帳號登入並取得 JWT token
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: admin
+        password: "123456"
+    capture:
+      - variableName: authToken
+        path: token
+    expectations:
+      status: 200
+      schema: AuthResponse
+
+  - name: 查詢使用者列表
+    description: 使用登入取得的 token 查詢所有使用者
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      status: 200
+      schema: UsersListResponse
+
+  - name: 查詢特定使用者詳情
+    description: 使用 token 查詢 ID 為 1 的使用者詳細資料
+    request:
+      method: GET
+      path: /api/users/1
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      status: 200
+      schema: User
+
+metadata:
+  summary:
+    totalTests: 3
+    description: 驗證認證機制與使用者資料查詢功能
+    tags:
+      - 認證流程
+      - JWT Token
+      - 使用者管理
+      - API 安全性

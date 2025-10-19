@@ -55,8 +55,8 @@ describe('CRUDGenerator', () => {
     const steps = generator.generateSuccessCases(endpoint);
     const body = steps[0].request.body as { email?: string; age?: number };
 
-    // DataSynthesizer 會根據 locale 產生不同的值
-    expect(body.email).toMatch(/@example\.(com|tw)/);
+    // DataSynthesizer 使用 faker.js 產生真實的 email
+    expect(body.email).toMatch(/^[^@]+@[^@]+\.[^@]+$/);
     expect(body.age).toBeGreaterThanOrEqual(0);
   });
 });

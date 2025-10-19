@@ -1,0 +1,453 @@
+name: 使用者管理 API 完整測試套件
+description: |
+  針對 SpecPilot 使用者管理 API 的完整測試案例
+  包含：成功案例、錯誤測試、邊界測試、完整流程測試
+baseUrl: http://localhost:3000
+
+steps:
+  # ========================================
+  # 健康檢查
+  # ========================================
+  - name: 健康檢查
+    request:
+      method: GET
+      path: /api/health
+    expectations:
+      statusCode: 200
+      schema:
+        type: object
+        required: [status, timestamp, environment, features]
+        properties:
+          status:
+            type: string
+            enum: [ok]
+          features:
+            type: object
+            required: [auth, userManagement]
+
+  # ========================================
+  # 認證流程
+  # ========================================
+  - name: 登入 - 成功案例
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: admin
+        password: "123456"
+    expectations:
+      statusCode: 200
+      schema:
+        type: object
+        required: [token, expiresIn, tokenType, user]
+    capture:
+      - variableName: authToken
+        path: token
+
+  - name: 登入 - 帳號錯誤
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: wronguser
+        password: "123456"
+    expectations:
+      statusCode: 401
+
+  - name: 登入 - 密碼錯誤
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: admin
+        password: "wrongpass"
+    expectations:
+      statusCode: 401
+
+  - name: 登入 - 缺少 username
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        password: "123456"
+    expectations:
+      statusCode: 400
+
+  - name: 登入 - 缺少 password
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: admin
+    expectations:
+      statusCode: 400
+
+  # ========================================
+  # 使用者管理 - CRUD 完整流程
+  # ========================================
+
+  # 1. 建立使用者
+  - name: 建立使用者 - 成功案例
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 測試使用者
+        email: testuser@example.com
+        role: user
+        status: active
+    expectations:
+      statusCode: 201
+      schema:
+        type: object
+        required: [id, name, email, role, status, createdAt, updatedAt]
+    capture:
+      - variableName: userId
+        path: id
+
+  # 2. 讀取使用者
+  - name: 取得使用者詳情 - 成功案例
+    request:
+      method: GET
+      path: /api/users/{{userId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200
+      schema:
+        type: object
+        required: [id, name, email, role, status]
+      customRules:
+        - field: email
+          rule: equals
+          expected: testuser@example.com
+
+  # 3. 更新使用者 (PUT)
+  - name: 完整更新使用者 - 成功案例
+    request:
+      method: PUT
+      path: /api/users/{{userId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 更新後的使用者
+        email: updated@example.com
+        role: admin
+        status: active
+    expectations:
+      statusCode: 200
+      schema:
+        type: object
+        required: [id, name, email, role, status]
+
+  # 4. 部分更新使用者 (PATCH)
+  - name: 部分更新使用者 - 成功案例
+    request:
+      method: PATCH
+      path: /api/users/{{userId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        status: inactive
+    expectations:
+      statusCode: 200
+      customRules:
+        - field: status
+          rule: equals
+          expected: inactive
+
+  # 5. 取得使用者列表
+  - name: 取得使用者列表 - 成功案例
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200
+      schema:
+        type: object
+        required: [users, total]
+        properties:
+          users:
+            type: array
+          total:
+            type: integer
+
+  # 6. 刪除使用者
+  - name: 刪除使用者 - 成功案例
+    request:
+      method: DELETE
+      path: /api/users/{{userId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200
+      schema:
+        type: object
+        required: [message, deletedUser]
+
+  # ========================================
+  # 錯誤測試案例
+  # ========================================
+
+  # 建立使用者錯誤案例
+  - name: 建立使用者 - 無認證
+    request:
+      method: POST
+      path: /api/users
+      body:
+        name: 測試使用者2
+        email: test2@example.com
+    expectations:
+      statusCode: 401
+
+  - name: 建立使用者 - 缺少必填欄位 name
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        email: test3@example.com
+    expectations:
+      statusCode: 400
+
+  - name: 建立使用者 - 缺少必填欄位 email
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 測試使用者4
+    expectations:
+      statusCode: 400
+
+  - name: 建立使用者 - 無效 email 格式
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 測試使用者5
+        email: invalid-email
+    expectations:
+      statusCode: 400
+
+  - name: 建立使用者 - Email 重複
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 重複使用者1
+        email: duplicate@example.com
+    expectations:
+      statusCode: 201
+    capture:
+      - variableName: duplicateUserId1
+        path: id
+
+  - name: 建立使用者 - Email 重複 (應失敗)
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 重複使用者2
+        email: duplicate@example.com
+    expectations:
+      statusCode: 409
+
+  # 讀取使用者錯誤案例
+  - name: 取得使用者 - 無認證
+    request:
+      method: GET
+      path: /api/users/1
+    expectations:
+      statusCode: 401
+
+  - name: 取得使用者 - 不存在的 ID
+    request:
+      method: GET
+      path: /api/users/99999
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 404
+
+  # 更新使用者錯誤案例
+  - name: 更新使用者 - 無認證
+    request:
+      method: PUT
+      path: /api/users/{{duplicateUserId1}}
+      body:
+        name: 更新名稱
+        email: newemail@example.com
+        role: user
+        status: active
+    expectations:
+      statusCode: 401
+
+  - name: 更新使用者 - 不存在的 ID
+    request:
+      method: PUT
+      path: /api/users/99999
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 更新名稱
+        email: newemail@example.com
+        role: user
+        status: active
+    expectations:
+      statusCode: 404
+
+  - name: 更新使用者 - 缺少必填欄位
+    request:
+      method: PUT
+      path: /api/users/{{duplicateUserId1}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 只有名稱
+    expectations:
+      statusCode: 400
+
+  # 刪除使用者錯誤案例
+  - name: 刪除使用者 - 無認證
+    request:
+      method: DELETE
+      path: /api/users/{{duplicateUserId1}}
+    expectations:
+      statusCode: 401
+
+  - name: 刪除使用者 - 不存在的 ID
+    request:
+      method: DELETE
+      path: /api/users/99999
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 404
+
+  # ========================================
+  # 邊界測試案例
+  # ========================================
+
+  - name: 建立使用者 - name 最小長度
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: A
+        email: minname@example.com
+    expectations:
+      statusCode: 201
+    capture:
+      - variableName: minNameUserId
+        path: id
+
+  - name: 建立使用者 - name 非常長
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: "這是一個非常非常非常非常非常非常非常非常非常非常長的使用者名稱測試案例用來測試系統對於極長字串的處理能力"
+        email: longname@example.com
+    expectations:
+      statusCode: 201
+    capture:
+      - variableName: longNameUserId
+        path: id
+
+  - name: 建立使用者 - 各種角色測試 (admin)
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 管理員測試
+        email: admin-test@example.com
+        role: admin
+    expectations:
+      statusCode: 201
+    capture:
+      - variableName: adminRoleUserId
+        path: id
+
+  - name: 建立使用者 - 各種狀態測試 (inactive)
+    request:
+      method: POST
+      path: /api/users
+      headers:
+        Authorization: "Bearer {{authToken}}"
+      body:
+        name: 停用使用者
+        email: inactive-test@example.com
+        status: inactive
+    expectations:
+      statusCode: 201
+    capture:
+      - variableName: inactiveUserId
+        path: id
+
+  # ========================================
+  # 清理測試資料
+  # ========================================
+
+  - name: 清理 - 刪除最小名稱使用者
+    request:
+      method: DELETE
+      path: /api/users/{{minNameUserId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200
+
+  - name: 清理 - 刪除長名稱使用者
+    request:
+      method: DELETE
+      path: /api/users/{{longNameUserId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200
+
+  - name: 清理 - 刪除管理員角色使用者
+    request:
+      method: DELETE
+      path: /api/users/{{adminRoleUserId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200
+
+  - name: 清理 - 刪除停用狀態使用者
+    request:
+      method: DELETE
+      path: /api/users/{{inactiveUserId}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200
+
+  - name: 清理 - 刪除重複 Email 使用者
+    request:
+      method: DELETE
+      path: /api/users/{{duplicateUserId1}}
+      headers:
+        Authorization: "Bearer {{authToken}}"
+    expectations:
+      statusCode: 200

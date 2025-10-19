@@ -560,12 +560,84 @@ async function handleGenerateFlow(params: {
       };
     }
 
+    logger.info('開始載入規格', {
+      method: 'generateFlow',
+      event: 'loading_spec',
+      details: { specPath }
+    });
+
     const specDoc = await loadSpec({ filePath: specPath });
 
+    // 驗證載入的規格
+    if (!specDoc || !specDoc.document) {
+      logger.error('規格載入失敗：document 為空', {
+        method: 'generateFlow',
+        event: 'spec_validation_failed',
+        details: {
+          hasSpecDoc: !!specDoc,
+          hasDocument: !!specDoc?.document
+        }
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: `錯誤：規格載入失敗，document 為空`
+        }]
+      };
+    }
+
+    if (!(specDoc.document as any)?.paths) {
+      logger.error('規格缺少 paths', {
+        method: 'generateFlow',
+        event: 'spec_validation_failed',
+        details: {
+          documentKeys: Object.keys(specDoc.document)
+        }
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: `錯誤：規格文件缺少 paths 定義\n可用的 keys: ${Object.keys(specDoc.document).join(', ')}`
+        }]
+      };
+    }
+
+    logger.info('規格載入完成', {
+      method: 'generateFlow',
+      event: 'spec_loaded',
+      details: {
+        hasDocument: !!specDoc.document,
+        documentType: typeof specDoc.document,
+        documentKeys: specDoc.document ? Object.keys(specDoc.document).slice(0, 15) : [],
+        hasPaths: !!(specDoc.document as any)?.paths,
+        pathsType: typeof (specDoc.document as any)?.paths,
+        pathsKeys: (specDoc.document as any)?.paths ? Object.keys((specDoc.document as any).paths) : []
+      }
+    });
+
     // 2. 分析規格
-    const analyzer = new SpecAnalyzer(specDoc.document);
+    const analyzerConfig = { spec: specDoc.document };
+
+    logger.info('建立分析器', {
+      method: 'generateFlow',
+      event: 'creating_analyzer',
+      details: {
+        hasConfig: !!analyzerConfig,
+        hasSpec: !!analyzerConfig.spec,
+        specType: typeof analyzerConfig.spec
+      }
+    });
+
+    const analyzer = new SpecAnalyzer(analyzerConfig);
 
     // 3. 產生測試套件
+    logger.info('開始產生測試套件', {
+      method: 'generateFlow',
+      event: 'generating_test_suite'
+    });
+
     const generator = new TestSuiteGenerator(analyzer, params.options || {});
     const flow = generator.generate(params.options || {});
 
@@ -592,16 +664,22 @@ async function handleGenerateFlow(params: {
     };
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+    const errorStack = error instanceof Error ? error.stack : '';
+
     logger.error('generateFlow 方法執行失敗', {
       method: 'generateFlow',
       event: 'generate_flow_error',
-      details: { error: error instanceof Error ? error.message : '未知錯誤' }
+      details: {
+        error: errorMessage,
+        stack: errorStack
+      }
     });
 
     return {
       content: [{
         type: "text",
-        text: `產生 Flow 時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`
+        text: `產生 Flow 時發生錯誤：${errorMessage}\n\n堆疊追蹤：\n${errorStack}`
       }]
     };
   }
@@ -927,7 +1005,21 @@ server.registerTool("getReport", {
 // 註冊 generateFlow 工具
 server.registerTool("generateFlow", {
   title: "產生測試 Flow",
-  description: "根據 OpenAPI 規格自動產生測試流程 YAML",
+  description: "根據 OpenAPI 規格自動產生測試流程 YAML。\n\n" +
+               "⚠️ 重要：產生後必須執行驗證與修正流程\n\n" +
+               "標準工作流程（AI 必須自動遵循）：\n" +
+               "1. 調用 generateFlow 產生測試 Flow\n" +
+               "2. 立即在同一個 response 中並行調用：\n" +
+               "   - validateFlow：檢查格式與語義\n" +
+               "   - checkFlowQuality：檢查品質與合理性\n" +
+               "3. 分析驗證結果：\n" +
+               "   - 若 validateFlow 失敗，修正 YAML 格式問題\n" +
+               "   - 若 checkFlowQuality 分數 < 80，修正品質問題\n" +
+               "4. 若有問題，修正後重複步驟 2-3，直到：\n" +
+               "   - validateFlow 通過（valid: true）\n" +
+               "   - checkFlowQuality 分數 ≥ 80\n" +
+               "5. 驗證通過後，使用 saveFlow 儲存最終版本\n\n" +
+               "注意：validateFlow 和 checkFlowQuality 必須並行調用以提升效率。",
   inputSchema: {
     specPath: z.string().describe("OpenAPI 規格檔案路徑（相對於專案根目錄）"),
     options: z.object({

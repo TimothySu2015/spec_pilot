@@ -66,9 +66,9 @@ export class SpecAnalyzer {
       .filter(Boolean)
       .map(seg => seg.replace(/\{.*?\}/g, '')) // 移除 {id} 等參數
       .filter(Boolean)
-      .map((seg, i) => {
-        // 首字母大寫（第一個除外）
-        return i === 0 ? seg.toLowerCase() : seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase();
+      .map((seg) => {
+        // 每個 segment 都首字母大寫
+        return seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase();
       });
 
     const methodPrefix = this.getMethodPrefix(method);
