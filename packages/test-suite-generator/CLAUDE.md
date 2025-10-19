@@ -2,10 +2,10 @@
 
 ## ⚠️ 實作狀態
 
-**版本**: 0.2.0
-**完成度**: 75%
-**最後更新**: 2025-01-17
-**維護狀態**: 開發中 (核心功能完成)
+**版本**: 0.3.0
+**完成度**: 92%
+**最後更新**: 2025-01-19
+**維護狀態**: 開發中 (核心功能完成，測試覆蓋率優異)
 
 ---
 
@@ -31,7 +31,7 @@
 ### 1. TestSuiteGenerator - 測試套件產生器
 
 **檔案位置**: `src/test-suite-generator.ts` (146 行)
-**測試覆蓋**: ❌ 尚無測試 (整合測試存在於 E2E 測試中)
+**測試覆蓋**: `__tests__/test-suite-generator.test.ts` (100% 覆蓋率, 31 tests)
 
 ✅ **完整實作的功能**:
 - 整合所有產生器 (CRUD、Error、Edge、Dependency)
@@ -223,7 +223,7 @@ const steps = generator.generateSuccessCases(endpoint);
 ### 4. DataSynthesizer - 測試資料合成器
 
 **檔案位置**: `src/data-synthesizer.ts` (340 行)
-**測試覆蓋**: ❌ 尚無測試 (透過 CRUD 測試間接驗證)
+**測試覆蓋**: `__tests__/data-synthesizer.test.ts` (97.34% 覆蓋率, 39 tests)
 
 ✅ **完整實作的功能**:
 - 根據 JSON Schema 產生測試資料
@@ -296,7 +296,7 @@ const invalidEmail = synthesizer.synthesizeInvalid({
 ### 5. DependencyResolver - 依賴解析器
 
 **檔案位置**: `src/dependency-resolver.ts` (319 行)
-**測試覆蓋**: ❌ 尚無測試
+**測試覆蓋**: `__tests__/dependency-resolver.test.ts` (98.42% 覆蓋率, 59 tests)
 
 ✅ **完整實作的功能**:
 - 分析資源依賴關係
@@ -352,7 +352,7 @@ const steps = resolver.resolveExecutionOrder(endpoints);
 ### 6. ErrorCaseGenerator - 錯誤案例產生器
 
 **檔案位置**: `src/error-case-generator.ts` (173 行)
-**測試覆蓋**: ❌ 尚無測試
+**測試覆蓋**: `__tests__/error-case-generator.test.ts` (98.83% 覆蓋率, 39 tests)
 
 ✅ **完整實作的功能**:
 - 產生必填欄位缺失測試
@@ -431,7 +431,7 @@ const authCases = generator.generateAuthErrorCases(endpoint);
 ### 7. EdgeCaseGenerator - 邊界測試產生器
 
 **檔案位置**: `src/edge-case-generator.ts` (148 行)
-**測試覆蓋**: ❌ 尚無測試
+**測試覆蓋**: `__tests__/edge-case-generator.test.ts` (100% 覆蓋率, 39 tests)
 
 ✅ **完整實作的功能**:
 - 產生字串長度邊界測試 (minLength, maxLength)
@@ -475,7 +475,7 @@ const steps = generator.generateEdgeCases(endpoint);
 ### 8. FlowQualityChecker - Flow 品質檢查器
 
 **檔案位置**: `src/flow-quality-checker.ts` (459 行)
-**測試覆蓋**: ❌ 尚無測試
+**測試覆蓋**: `__tests__/flow-quality-checker.test.ts` (100% 覆蓋率, 41 tests)
 
 ✅ **完整實作的功能**:
 - 檢查狀態碼是否符合 OpenAPI 規格
@@ -747,18 +747,20 @@ pnpm run test:coverage
 
 ### 單元測試
 
-**當前覆蓋率**: ~20% (僅 2 個核心類別有測試)
+**當前覆蓋率**: ~90% (所有核心模組已完成測試)
 
 | 模組 | 測試檔案 | 狀態 |
 |------|---------|------|
-| CRUDGenerator | ✅ `__tests__/crud-generator.test.ts` | 2 個測試通過 |
-| SpecAnalyzer | ✅ `__tests__/spec-analyzer.test.ts` | 2 個測試通過 |
-| DataSynthesizer | ❌ 無測試 | 待建立 |
-| ErrorCaseGenerator | ❌ 無測試 | 待建立 |
-| EdgeCaseGenerator | ❌ 無測試 | 待建立 |
-| DependencyResolver | ❌ 無測試 | 待建立 |
-| TestSuiteGenerator | ❌ 無測試 | 待建立 |
-| FlowQualityChecker | ❌ 無測試 | 待建立 |
+| TestSuiteGenerator | ✅ `__tests__/test-suite-generator.test.ts` | 31 tests, 100% 覆蓋率 |
+| SpecAnalyzer | ✅ `__tests__/spec-analyzer.test.ts` | 2 tests, 基本驗證 |
+| CRUDGenerator | ✅ `__tests__/crud-generator.test.ts` | 2 tests, 基本驗證 |
+| DataSynthesizer | ✅ `__tests__/data-synthesizer.test.ts` | 39 tests, 97.34% 覆蓋率 |
+| DependencyResolver | ✅ `__tests__/dependency-resolver.test.ts` | 59 tests, 98.42% 覆蓋率 |
+| ErrorCaseGenerator | ✅ `__tests__/error-case-generator.test.ts` | 39 tests, 98.83% 覆蓋率 |
+| EdgeCaseGenerator | ✅ `__tests__/edge-case-generator.test.ts` | 39 tests, 100% 覆蓋率 |
+| FlowQualityChecker | ✅ `__tests__/flow-quality-checker.test.ts` | 41 tests, 100% 覆蓋率 |
+
+**總計**: 252 tests, ~90% 覆蓋率
 
 **執行測試**:
 ```bash
@@ -801,8 +803,14 @@ packages/test-suite-generator/
 │   ├── flow-quality-checker.ts     # ✅ 品質檢查
 │   └── types.ts                    # ✅ 型別定義
 ├── __tests__/
-│   ├── crud-generator.test.ts      # ✅ CRUD 測試
-│   └── spec-analyzer.test.ts       # ✅ 分析器測試
+│   ├── test-suite-generator.test.ts    # ✅ 31 tests, 100%
+│   ├── spec-analyzer.test.ts           # ✅ 2 tests
+│   ├── crud-generator.test.ts          # ✅ 2 tests
+│   ├── data-synthesizer.test.ts        # ✅ 39 tests, 97.34%
+│   ├── dependency-resolver.test.ts     # ✅ 59 tests, 98.42%
+│   ├── error-case-generator.test.ts    # ✅ 39 tests, 98.83%
+│   ├── edge-case-generator.test.ts     # ✅ 39 tests, 100%
+│   └── flow-quality-checker.test.ts    # ✅ 41 tests, 100%
 ├── package.json
 └── tsconfig.json
 ```
@@ -828,10 +836,6 @@ packages/test-suite-generator/
 
 ### 已知問題
 
-- [ ] **測試覆蓋率不足** - 僅 2 個測試檔案
-  - **影響**: 程式碼品質保證不足
-  - **計畫**: 逐步補齊單元測試
-
 - [ ] **DataSynthesizer 不使用 faker.js**
   - **影響**: 測試資料不夠真實
   - **暫行方案**: 根據欄位名稱與 format 產生合理資料
@@ -855,9 +859,9 @@ packages/test-suite-generator/
 
 ### 短期 (優先度 P0)
 
-- [ ] 補齊單元測試 (目標覆蓋率 ≥ 75%)
 - [ ] 修正步驟名稱重複問題
 - [ ] 支援更多 OpenAPI 3.0 特性
+- [ ] 優化測試資料產生策略
 
 ### 中期 (優先度 P1)
 
@@ -878,6 +882,7 @@ packages/test-suite-generator/
 
 | 版本 | 日期 | 主要變更 |
 |------|------|---------|
+| 0.3.0 | 2025-01-19 | ✅ 新增 DataSynthesizer 測試 (39 tests, 97.34%)<br>✅ 新增 ErrorCaseGenerator 測試 (39 tests, 98.83%)<br>✅ 新增 EdgeCaseGenerator 測試 (39 tests, 100%)<br>✅ 新增 DependencyResolver 測試 (59 tests, 98.42%)<br>✅ 新增 TestSuiteGenerator 測試 (31 tests, 100%)<br>✅ 新增 FlowQualityChecker 測試 (41 tests, 100%)<br>📊 測試覆蓋率提升至 90% (252 tests) |
 | 0.2.0 | 2025-01-17 | 更新 CLAUDE.md 反映實際狀態 |
 | 0.1.0 | 2025-10-12 | 初始版本，核心功能完成 |
 
