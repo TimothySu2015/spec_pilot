@@ -1,6 +1,6 @@
 # SpecPilot 當前開發計畫
 
-**狀態**: ✅ 主計畫已完成，P1 優先任務已完成，P2 中期任務已完成，Phase 8 (MCP Server 進階功能) 已完成 (2025-10-19)
+**狀態**: 🚧 Phase 9 (智慧檢測 operationId + 多種解決方式) 進行中 (2025-10-20)
 **建立日期**: 2025-10-19
 **主計畫完成日期**: 2025-01-19
 **P1 任務完成日期**: 2025-01-19
@@ -8,7 +8,7 @@
 
 ---
 
-## 🎉 當前階段：P2 完成，Phase 8 (MCP Server 進階功能) 完成
+## 🚧 當前階段：Phase 9 (智慧檢測 operationId + 多種解決方式) 進行中
 
 ### ✅ 已完成的階段
 
@@ -248,6 +248,152 @@
 
 ---
 
+### 🚧 進行中的階段
+
+#### Phase 9: 智慧檢測 operationId + 多種解決方式 - 🚧 進行中
+
+**目標**: 解決 OpenAPI 規格缺少 operationId 時的端點過濾問題，提供智慧檢測與多種靈活的解決方案
+
+**優先度**: P0 (短期)
+
+**背景**:
+在使用 `generateFlow` 時發現，當 OpenAPI 規格未定義 operationId（這在規範中是可選的），系統會自動產生 operationId，但用戶無法預知產生的名稱，導致使用 `endpoints` 參數過濾時失敗。
+
+**問題案例**:
+```yaml
+# user-management-api.yaml 沒有定義 operationId
+/auth/login:
+  post:
+    summary: 使用者登入
+    # ❌ 沒有 operationId
+```
+
+```javascript
+// 用戶嘗試過濾端點
+generateFlow({
+  endpoints: ["login", "getUsers"]  // ❌ 找不到，實際是 "createAuthLogin"
+})
+// 結果：產生 0 個步驟（過濾失敗）
+```
+
+**根本原因**:
+1. OpenAPI 規範中 operationId 是可選的
+2. SpecAnalyzer 自動產生 operationId，但用戶無法預知命名規則
+3. 端點過濾邏輯只支援 operationId，不支援 "METHOD /path" 格式
+4. 第三方 API 規格通常無法修改
+
+**解決方案**: 智慧檢測 + 三種解決方式
+
+**方式 1: 自動修改 Spec 檔案**
+- 適用場景：自己維護的規格
+- 優點：永久解決，後續使用方便
+- 實作：新增 `addOperationIds` MCP 工具
+
+**方式 2: 支援 "METHOD /path" 格式**
+- 適用場景：第三方規格、不可修改的規格
+- 優點：不需修改原檔案
+- 實作：擴展 `TestSuiteGenerator.getTargetEndpoints()` 過濾邏輯
+
+**方式 3: 產生所有端點**
+- 適用場景：快速測試、完整覆蓋
+- 優點：不需指定端點
+- 實作：已支援（不指定 endpoints 參數）
+
+**待完成任務**:
+- [ ] 9.1 新增 SpecAnalyzer 智慧檢測方法
+  - [ ] 實作 `detectIssues()` 方法檢測缺少的 operationId
+  - [ ] 實作 `checkIfModifiable()` 檢查檔案可寫入性
+  - [ ] 返回建議的 operationId 清單
+  - [ ] 新增 10+ 單元測試
+
+- [ ] 9.2 新增 SpecEnhancer 模組（修改 YAML 檔案）
+  - [ ] 建立 `packages/spec-loader/src/spec-enhancer.ts`
+  - [ ] 實作 `addOperationIds()` 方法
+  - [ ] 使用 `yaml.parseDocument()` 保留格式
+  - [ ] 自動備份原檔案
+  - [ ] 新增 15+ 單元測試
+
+- [ ] 9.3 擴展端點過濾邏輯支援多種格式
+  - [ ] 修改 `TestSuiteGenerator.getTargetEndpoints()`
+  - [ ] 支援 operationId 格式（現有）
+  - [ ] 支援 "METHOD /path" 格式（新增）
+  - [ ] 支援 "/path" 格式（新增，匹配所有方法）
+  - [ ] 新增 20+ 單元測試
+
+- [ ] 9.4 新增 MCP 工具：checkOperationIds
+  - [ ] 註冊新工具到 MCP Server
+  - [ ] 調用 SpecAnalyzer.detectIssues()
+  - [ ] 格式化輸出建議清單
+  - [ ] 根據可修改性提供不同建議
+  - [ ] 新增整合測試
+
+- [ ] 9.5 新增 MCP 工具：addOperationIds
+  - [ ] 註冊新工具到 MCP Server
+  - [ ] 支援 dryRun 預覽模式
+  - [ ] 調用 SpecEnhancer.addOperationIds()
+  - [ ] 返回修改結果與備份路徑
+  - [ ] 新增整合測試
+
+- [ ] 9.6 修改 generateFlow 工具整合智慧檢測
+  - [ ] 新增 `autoCheck` 選項（預設 true）
+  - [ ] 檢測到問題時返回建議訊息
+  - [ ] 清楚說明三種解決方式
+  - [ ] 更新工具描述與範例
+  - [ ] 新增端對端測試
+
+- [ ] 9.7 新增 E2E 測試場景
+  - [ ] 場景 A：自己規格（可修改）
+  - [ ] 場景 B：第三方規格（不可修改）
+  - [ ] 場景 C：快速測試（產生全部）
+  - [ ] 驗證三種方式都能正常運作
+
+- [ ] 9.8 更新文件
+  - [ ] 更新 `packages/spec-loader/CLAUDE.md`
+  - [ ] 更新 `packages/test-suite-generator/CLAUDE.md`
+  - [ ] 更新 `MCP-SETUP.md` 新增兩個工具說明
+  - [ ] 更新 `ACTIVE.md` 標記完成
+
+**驗收標準**:
+- [ ] ✅ checkOperationIds 工具可正確檢測缺少的 operationId
+- [ ] ✅ addOperationIds 工具可自動修改 spec 檔案並備份
+- [ ] ✅ generateFlow 支援 "METHOD /path" 格式過濾端點
+- [ ] ✅ generateFlow 可智慧檢測並提供三種解決建議
+- [ ] ✅ 所有新增功能有完整測試（目標覆蓋率 ≥ 85%）
+- [ ] ✅ 測試覆蓋率維持在整體目標水準
+- [ ] ✅ 更新相關文件反映新功能
+
+**實作架構**:
+```
+apps/mcp-server/src/index.ts
+  ├─ checkOperationIds (新增工具)
+  ├─ addOperationIds (新增工具)
+  └─ generateFlow (修改，整合智慧檢測)
+        ↓
+packages/test-suite-generator/src/
+  ├─ spec-analyzer.ts (新增檢測方法)
+  └─ test-suite-generator.ts (擴展過濾邏輯)
+        ↓
+packages/spec-loader/src/
+  └─ spec-enhancer.ts (新增模組)
+```
+
+**影響的模組**:
+- `packages/spec-loader` - 新增 SpecEnhancer 模組
+- `packages/test-suite-generator` - SpecAnalyzer 新增檢測、TestSuiteGenerator 擴展過濾
+- `apps/mcp-server` - 新增兩個工具、修改 generateFlow
+
+**工作量估計**: 3-4 天
+
+**開始日期**: 2025-10-20
+**預計完成日期**: 2025-10-23
+
+**相關討論**:
+- 問題發現：generateFlow 指定 endpoints 參數產生 0 個步驟
+- 根本原因：OpenAPI 規格缺少 operationId，自動產生的名稱無法預測
+- 解決方案：智慧檢測 + 提供三種靈活的解決方式
+
+---
+
 ## 🏗️ 架構決策記錄
 
 ### MCP 與 NLP 的分離 (2025-01-19)
@@ -373,8 +519,9 @@
 
 ### 🔄 後續建議任務
 
-**短期 (P0)** - ✅ 已全部完成:
+**短期 (P0)** - 🚧 進行中:
 - ✅ 實作 runFlow 的 failFast/retryCount/timeout 選項 - Phase 8 完成
+- 🚧 智慧檢測 operationId + 多種解決方式 - Phase 9 進行中
 - [ ] 修正 Legacy MCP Server 測試失敗 (可選，如需保留)
 - [ ] 修正 CLI 整合測試退出碼問題 (可選)
 
@@ -427,6 +574,6 @@ pnpm -w run test packages/test-suite-generator/__tests__/ --coverage
 
 ---
 
-**最後更新**: 2025-10-19 (Phase 8 完成)
+**最後更新**: 2025-10-20 (Phase 9 開始)
 **維護者**: 專案團隊
-**狀態**: ✅ 主計畫完成，P1/P2 任務完成，Phase 8 (MCP Server 進階功能) 完成
+**狀態**: 🚧 主計畫完成，P1/P2 任務完成，Phase 8 完成，Phase 9 (智慧檢測 operationId + 多種解決方式) 進行中
