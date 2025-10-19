@@ -540,6 +540,7 @@ async function handleGenerateFlow(params: {
     includeErrorCases?: boolean;
     includeEdgeCases?: boolean;
     generateFlows?: boolean;
+    autoCheck?: boolean; // Phase 9.6: 自動檢測 operationId 問題
   };
 }): Promise<{ content: Array<{ type: string; text: string }> }> {
   logger.info('generateFlow 方法開始執行', {
@@ -631,6 +632,94 @@ async function handleGenerateFlow(params: {
     });
 
     const analyzer = new SpecAnalyzer(analyzerConfig);
+
+    // 2.5 智慧檢測 operationId 問題 (Phase 9.6)
+    const autoCheck = params.options?.autoCheck ?? true; // 預設啟用
+    if (autoCheck && params.options?.endpoints && params.options.endpoints.length > 0) {
+      logger.info('執行 operationId 智慧檢測', {
+        method: 'generateFlow',
+        event: 'auto_check_operation_ids',
+        details: { endpointsCount: params.options.endpoints.length }
+      });
+
+      const issues = analyzer.detectIssues();
+      if (issues.hasIssues) {
+        // 檢查使用者指定的 endpoints 是否包含 operationId 格式
+        const hasOperationIdFormat = params.options.endpoints.some(ep =>
+          !ep.includes('/') && !ep.includes(' ')
+        );
+
+        if (hasOperationIdFormat) {
+          // 使用者可能使用了 operationId 格式，但規格缺少 operationId
+          const isModifiable = analyzer.checkIfModifiable(specPath);
+
+          let warningText = `⚠️ 檢測到潛在問題\n\n`;
+          warningText += `此 OpenAPI 規格有 ${issues.missingOperationIds.length} 個端點缺少 operationId。\n`;
+          warningText += `你指定的 endpoints 參數可能無法正確過濾端點。\n\n`;
+
+          warningText += `🔍 缺少 operationId 的端點：\n`;
+          issues.missingOperationIds.slice(0, 3).forEach((item, i) => {
+            warningText += `${i + 1}. ${item.method} ${item.path}\n`;
+            warningText += `   💡 建議 operationId: ${item.suggestedId}\n`;
+          });
+          if (issues.missingOperationIds.length > 3) {
+            warningText += `... 還有 ${issues.missingOperationIds.length - 3} 個端點\n`;
+          }
+
+          warningText += `\n💡 建議解決方案：\n\n`;
+
+          if (isModifiable) {
+            warningText += `**方案 1（推薦）：自動補充 operationId**\n`;
+            warningText += `- 使用 \`addOperationIds\` 工具自動修改規格檔案\n`;
+            warningText += `- 先用 dryRun 模式預覽變更\n`;
+            warningText += `- 範例：addOperationIds({ specPath: "${params.specPath}", dryRun: true })\n\n`;
+
+            warningText += `**方案 2：使用 "METHOD /path" 格式**\n`;
+            warningText += `- 修改 endpoints 參數使用 "METHOD /path" 格式\n`;
+            warningText += `- 範例：endpoints: ['POST /users', 'GET /users/{id}']\n\n`;
+
+            warningText += `**方案 3：使用 "/path" 格式**\n`;
+            warningText += `- 匹配指定路徑的所有 HTTP 方法\n`;
+            warningText += `- 範例：endpoints: ['/users', '/products']\n\n`;
+
+            warningText += `**方案 4：產生所有端點**\n`;
+            warningText += `- 移除 endpoints 參數，產生所有端點的測試\n`;
+          } else {
+            warningText += `⚠️ 此規格檔案為唯讀，無法自動修改。\n\n`;
+
+            warningText += `**方案 1（推薦）：使用 "METHOD /path" 格式**\n`;
+            warningText += `- 修改 endpoints 參數使用 "METHOD /path" 格式\n`;
+            warningText += `- 範例：endpoints: ['POST /users', 'GET /users/{id}']\n\n`;
+
+            warningText += `**方案 2：使用 "/path" 格式**\n`;
+            warningText += `- 匹配指定路徑的所有 HTTP 方法\n`;
+            warningText += `- 範例：endpoints: ['/users', '/products']\n\n`;
+
+            warningText += `**方案 3：產生所有端點**\n`;
+            warningText += `- 移除 endpoints 參數，產生所有端點的測試\n`;
+          }
+
+          warningText += `\n💡 提示：設定 autoCheck: false 可停用此檢測\n`;
+
+          logger.warn('檢測到 operationId 問題', {
+            method: 'generateFlow',
+            event: 'operation_id_issues_detected',
+            details: {
+              missingCount: issues.missingOperationIds.length,
+              isModifiable,
+              hasOperationIdFormat
+            }
+          });
+
+          return {
+            content: [{
+              type: "text",
+              text: warningText
+            }]
+          };
+        }
+      }
+    }
 
     // 3. 產生測試套件
     logger.info('開始產生測試套件', {
@@ -1229,6 +1318,10 @@ server.registerTool("getReport", {
 server.registerTool("generateFlow", {
   title: "產生測試 Flow",
   description: "根據 OpenAPI 規格自動產生測試流程 YAML。\n\n" +
+               "✨ 智慧檢測：自動偵測 operationId 問題並提供解決方案（Phase 9.6）\n" +
+               "- 當使用 endpoints 參數過濾端點時，自動檢查規格是否缺少 operationId\n" +
+               "- 若偵測到問題，會提供 3-4 種解決方式（依檔案可修改性而定）\n" +
+               "- 可透過 autoCheck: false 關閉自動檢測\n\n" +
                "⚠️ 重要：產生後必須執行驗證與修正流程\n\n" +
                "標準工作流程（AI 必須自動遵循）：\n" +
                "1. 調用 generateFlow 產生測試 Flow\n" +
@@ -1250,7 +1343,8 @@ server.registerTool("generateFlow", {
       includeSuccessCases: z.boolean().optional().describe("是否包含成功案例（預設：true）"),
       includeErrorCases: z.boolean().optional().describe("是否包含錯誤案例（預設：false）"),
       includeEdgeCases: z.boolean().optional().describe("是否包含邊界測試（預設：false）"),
-      generateFlows: z.boolean().optional().describe("是否產生流程串接測試（預設：false）")
+      generateFlows: z.boolean().optional().describe("是否產生流程串接測試（預設：false）"),
+      autoCheck: z.boolean().optional().describe("自動檢測 operationId 問題（預設：true，Phase 9.6）")
     }).optional()
   }
 }, async (params) => {

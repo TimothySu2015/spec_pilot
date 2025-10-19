@@ -236,3 +236,11 @@ pnpm run start:mcp
 
 8. **解決 operationId 問題後產生測試**：
    "operationId 補充完成後，使用 generateFlow 產生測試流程"
+
+9. **使用 generateFlow 的智慧檢測功能** ✨ NEW (Phase 9.6)：
+   "使用 generateFlow 產生測試時，如果指定了 endpoints 參數使用 operationId 格式，系統會自動檢測規格是否缺少 operationId 並提供解決建議"
+
+   **自動檢測行為**：
+   - 預設啟用（autoCheck: true）
+   - 檢測到問題時返回警告訊息，說明三種解決方式
+   - 可透過 autoCheck: false 關閉自動檢測
