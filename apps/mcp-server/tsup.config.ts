@@ -38,6 +38,7 @@ export default defineConfig({
     'tls',
     'dns',
     'zlib',
+    '@faker-js/faker',  // 外部依賴：測試資料產生器
   ],
   esbuildOptions(options) {
     options.banner = {

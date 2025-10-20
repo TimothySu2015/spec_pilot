@@ -1,0 +1,88 @@
+name: 登入後查詢使用者詳情
+description: 先登入取得 TOKEN，然後使用 TOKEN 查詢 ID 1 的使用者詳細資料
+version: 1.0.0
+baseUrl: http://localhost:3000
+
+steps:
+  - name: 使用者登入
+    description: 使用預設管理者帳號登入系統
+    request:
+      method: POST
+      path: /auth/login
+      headers:
+        Content-Type: application/json
+      body:
+        username: admin
+        password: "123456"
+    expect:
+      statusCode: 200
+      schema:
+        type: object
+        required:
+          - token
+          - expiresIn
+          - tokenType
+          - user
+        properties:
+          token:
+            type: string
+          expiresIn:
+            type: integer
+          tokenType:
+            type: string
+            enum: [Bearer]
+          user:
+            type: object
+    extract:
+      authToken: $.token
+
+  - name: 查詢使用者詳情
+    description: 使用登入取得的 TOKEN 查詢 ID 1 的使用者資料
+    request:
+      method: GET
+      path: /api/users/1
+      headers:
+        Authorization: Bearer ${authToken}
+    expect:
+      statusCode: 200
+      schema:
+        type: object
+        required:
+          - id
+          - name
+          - email
+          - role
+          - status
+          - createdAt
+          - updatedAt
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+          email:
+            type: string
+            format: email
+          role:
+            type: string
+            enum: [admin, user]
+          status:
+            type: string
+            enum: [active, inactive]
+          createdAt:
+            type: string
+            format: date-time
+          updatedAt:
+            type: string
+            format: date-time
+      rules:
+        - field: id
+          rule: equals
+          value: 1
+
+metadata:
+  tags:
+    - 認證
+    - 使用者管理
+  author: SpecPilot
+  createdAt: "2025-10-20"
