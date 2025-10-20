@@ -76,6 +76,11 @@ export const FlowStepSchema = z.object({
   description: z.string().optional(),
   request: FlowRequestSchema,
   expect: FlowExpectSchema,
+  /**
+   * @deprecated 請使用 expect.body.customRules 代替
+   * 此欄位將在下一個主版本中移除
+   * 向後相容：FlowParser 會自動轉換為 customRules 格式
+   */
   validation: z.array(ValidationRuleSchema).optional(),
   capture: z.array(CaptureSchema).optional(),
   auth: StepAuthSchema.optional(),

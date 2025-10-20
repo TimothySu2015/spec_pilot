@@ -48,13 +48,16 @@ export class CustomValidator implements Validator {
         const startRuleTime = Date.now();
 
         try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ruleOptions = rule as any;
+          const fieldPath = this.getFieldPath(ruleOptions);
+
           const ruleResult = await this.executeRule({
             payload: response.data,
             ruleName: rule.type,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ruleOptions: rule as any, // 傳遞完整的規則物件,包含 value, expected, min, max 等欄位
+            ruleOptions, // 傳遞完整的規則物件,包含 value, expected, min, max 等欄位
             schemas,
-            field: rule.field,
+            field: fieldPath, // 使用統一的欄位路徑
             logger,
             executionId,
           });
@@ -65,9 +68,9 @@ export class CustomValidator implements Validator {
               category: 'custom',
               severity: 'error',
               message: ruleResult.message || `自訂規則 ${rule.type} 驗證失敗`,
-              field: rule.field,
+              field: fieldPath,
               expected: rule.value,
-              actual: this.getValueByPath(response.data, rule.field),
+              actual: this.getValueByPath(response.data, fieldPath),
               ruleName: rule.type,
             });
           }
@@ -79,7 +82,7 @@ export class CustomValidator implements Validator {
             stepName: step.name,
             validator: 'custom',
             rule: rule.type,
-            field: rule.field,
+            field: fieldPath,
             status: ruleResult.isValid ? 'success' : 'failure',
             message: ruleResult.message || (ruleResult.isValid ? '規則驗證通過' : '規則驗證失敗'),
             durationMs: ruleDurationMs,
@@ -87,12 +90,14 @@ export class CustomValidator implements Validator {
 
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const fieldPath = this.getFieldPath(rule as any);
           isValid = false;
           issues.push({
             category: 'custom',
             severity: 'error',
             message: `執行自訂規則 ${rule.type} 時發生錯誤：${errorMessage}`,
-            field: rule.field,
+            field: fieldPath,
             ruleName: rule.type,
           });
 
@@ -173,6 +178,18 @@ export class CustomValidator implements Validator {
    */
   listRules(): string[] {
     return Array.from(this.ruleHandlers.keys());
+  }
+
+  /**
+   * 統一獲取欄位路徑（支援 field 與 path 參數）
+   * @param ruleOptions - 規則選項物件
+   * @returns 欄位路徑字串
+   */
+  private getFieldPath(ruleOptions: Record<string, unknown>): string {
+    // 優先使用 field，若無則使用 path（向後相容）
+    const field = ruleOptions.field as string | undefined;
+    const path = ruleOptions.path as string | undefined;
+    return field || path || '';
   }
 
   /**
