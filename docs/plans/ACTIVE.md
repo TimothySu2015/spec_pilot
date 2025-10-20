@@ -263,50 +263,189 @@ const flow = builder.addStep({
 
 ---
 
-### Phase 4: 執行測試 ✅
+### Phase 4: UI 調整 (Flow Builder App) ✅
+
+**目標**: 更新 Flow Builder UI 支援 customRules 與所有 8 種驗證規則
+
+#### 背景分析
+
+**當前 UI 問題**:
+1. **ValidationEditor.tsx (Line 18)**: 使用舊格式 `steps.${stepIndex}.validation`
+2. **ValidationEditor.tsx (Line 224-227)**: 只支援 3 個規則 (notNull, regex, contains)
+3. **ExpectEditor.tsx**: 缺少 `expect.body.customRules` 的 UI 編輯器
+4. **缺少 Phase 10 新增的 5 個規則**: equals, notContains, greaterThan, lessThan, length
+
+**方案選擇**:
+
+**選項 A：保留 ValidationEditor，新增 CustomRulesEditor（推薦）**
+- 保留舊 UI 向後相容
+- 新增專門的 CustomRulesEditor 元件
+- 使用者可以選擇使用哪一個
+
+**選項 B：完全替換 ValidationEditor**
+- 移除舊 UI
+- 強制使用新格式
+- 不推薦（破壞性變更）
+
+#### Task 4.1: 建立 CustomRulesEditor 元件
+- [ ] 建立 `apps/flow-builder/src/components/validation/CustomRulesEditor.tsx`
+- [ ] 使用 `steps.${stepIndex}.expect.body.customRules` 欄位
+- [ ] 支援所有 8 種驗證規則
+- [ ] 支援 `field` 參數（推薦）與 `path` 參數（向後相容）
+
+**新元件架構**:
+```typescript
+// CustomRulesEditor.tsx
+interface CustomRulesEditorProps {
+  stepIndex: number;
+}
+
+// 使用 react-hook-form 管理
+useFieldArray({
+  control,
+  name: `steps.${stepIndex}.expect.body.customRules`
+});
+
+// 規則選擇器
+<select>
+  <option value="notNull">notNull - 欄位不可為 null</option>
+  <option value="regex">regex - 正則表達式驗證</option>
+  <option value="contains">contains - 包含特定值</option>
+  <option value="equals">equals - 精確值比對</option>
+  <option value="notContains">notContains - 不包含特定值</option>
+  <option value="greaterThan">greaterThan - 數值大於</option>
+  <option value="lessThan">lessThan - 數值小於</option>
+  <option value="length">length - 長度驗證</option>
+</select>
+```
+
+#### Task 4.2: 更新 ExpectEditor 整合 CustomRulesEditor
+- [ ] 在 ExpectEditor.tsx 中引入 CustomRulesEditor
+- [ ] 加入切換選項（新格式 vs 舊格式）
+- [ ] 預設使用新格式
+
+**整合方式**:
+```typescript
+// ExpectEditor.tsx
+import CustomRulesEditor from '../validation/CustomRulesEditor';
+
+// 在 ExpectEditor 中加入 CustomRules 區塊
+<div className="space-y-4">
+  {/* 現有的 statusCode 和 bodyFields */}
+
+  {/* 新增: CustomRules 驗證 */}
+  <div className="border border-gray-200 rounded-lg">
+    <div className="p-4 border-b bg-gray-50">
+      <h4 className="font-medium text-gray-900">自訂驗證規則 (Custom Rules)</h4>
+      <p className="text-xs text-gray-600 mt-1">
+        定義進階驗證規則（推薦使用新格式）
+      </p>
+    </div>
+    <div className="p-4">
+      <CustomRulesEditor stepIndex={stepIndex} />
+    </div>
+  </div>
+</div>
+```
+
+#### Task 4.3: 標記舊 ValidationEditor 為不推薦
+- [ ] 在 ValidationEditor.tsx 加入棄用警告 UI
+- [ ] 提供遷移指引連結
+
+**UI 警告**:
+```typescript
+// ValidationEditor.tsx 頂部加入
+<div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+  <p className="text-sm text-yellow-800">
+    ⚠️ <strong>此驗證格式已過時</strong>，建議使用「自訂驗證規則 (Custom Rules)」（在 Expect 編輯器中）
+  </p>
+</div>
+```
+
+#### Task 4.4: 更新 Schema 型別定義
+- [ ] 確認 `@specpilot/schemas` 的型別匯出正確
+- [ ] 更新 UI 使用的型別定義
+
+**檔案位置**:
+- `apps/flow-builder/src/components/validation/CustomRulesEditor.tsx` (新建)
+- `apps/flow-builder/src/components/step/ExpectEditor.tsx` (修改)
+- `apps/flow-builder/src/components/validation/ValidationEditor.tsx` (加入警告)
+
+---
+
+### Phase 5: 執行測試 ✅
 
 **目標**: 確保所有變更通過測試
 
-#### Task 4.1: 執行 FlowBuilder 測試
+#### Task 5.1: 執行 FlowBuilder 測試
 ```bash
 pnpm -w run test packages/flow-generator/__tests__/flow-builder.test.ts --run
 ```
 
 **預期結果**: 所有測試通過（預計 15+ tests）
 
-#### Task 4.2: 執行完整測試套件
+#### Task 5.2: 執行完整測試套件
 ```bash
 pnpm -w run test packages/flow-generator/__tests__/ --run
 ```
 
 **預期結果**: 所有測試通過（預計 160+ tests）
 
+#### Task 5.3: 測試 UI 功能
+- [ ] 啟動 Flow Builder App
+- [ ] 測試 CustomRulesEditor 元件
+- [ ] 測試所有 8 種驗證規則
+- [ ] 測試新舊格式並存
+- [ ] 驗證 YAML 輸出正確
+
+```bash
+cd apps/flow-builder
+pnpm run dev
+```
+
 ---
 
-### Phase 5: 文件更新 ✅
+### Phase 6: 文件更新 ✅
 
 **目標**: 同步所有相關文件
 
-#### Task 5.1: 更新 packages/flow-generator/CLAUDE.md
+#### Task 6.1: 更新 packages/flow-generator/CLAUDE.md
 - [ ] 新增 v0.6.0 版本記錄
 - [ ] 說明 customRules 測試覆蓋完整
 - [ ] 說明向後相容實作細節
 
-#### Task 5.2: 更新 ACTIVE.md
+#### Task 6.2: 更新 apps/flow-builder/README.md
+- [ ] 說明 CustomRulesEditor 新元件
+- [ ] 說明如何使用新格式
+- [ ] 標註舊格式已不推薦
+
+#### Task 6.3: 更新 ACTIVE.md
 - [ ] 標記 Phase 12 完成
 - [ ] 記錄測試數量變化
 - [ ] 記錄程式碼變更摘要
+- [ ] 記錄 UI 變更
 
 ---
 
 ## 🎯 完成標準
 
+**Backend (FlowBuilder)**:
 - [ ] FlowBuilder 有 15+ 個測試（當前只有 4 個）
 - [ ] 所有 8 種驗證規則都有專門測試
 - [ ] 向後相容測試涵蓋舊格式轉換
 - [ ] FlowBuilder 不再產生 `step.validation` 格式
 - [ ] 所有測試通過（預計 160+ tests）
+
+**Frontend (UI)**:
+- [ ] CustomRulesEditor 元件建立完成
+- [ ] 支援所有 8 種驗證規則
+- [ ] 整合到 ExpectEditor 中
+- [ ] ValidationEditor 加入棄用警告
+- [ ] UI 功能測試通過
+
+**文件與範例**:
 - [ ] 文件完整更新（CLAUDE.md + 範例）
+- [ ] Flow Builder App README 更新
 - [ ] 無破壞性變更
 
 ---
@@ -318,13 +457,20 @@ pnpm -w run test packages/flow-generator/__tests__/ --run
 - **After**: 15+ tests
 
 ### 程式碼變更
+
+**Backend**:
 - 修改檔案: 1 個 (flow-builder.ts)
 - 新增測試: 11+ 個
 - 新增範例: 1 個
 
+**Frontend**:
+- 新增元件: 1 個 (CustomRulesEditor.tsx)
+- 修改元件: 2 個 (ExpectEditor.tsx, ValidationEditor.tsx)
+
 ### 文件更新
 - packages/flow-generator/CLAUDE.md
 - packages/flow-generator/examples/ (新增)
+- apps/flow-builder/README.md
 - docs/plans/ACTIVE.md
 
 ---
