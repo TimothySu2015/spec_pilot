@@ -1,4 +1,4 @@
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray, useWatch } from 'react-hook-form';
 import { IFlowDefinition } from '@specpilot/schemas';
 import { useToast } from '../../contexts/ToastContext';
 import { useOpenAPI } from '../../contexts/OpenAPIContext';
@@ -16,7 +16,7 @@ interface CustomRulesEditorProps {
  * 支援所有 8 種驗證規則
  */
 export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps) {
-  const { control, register, watch } = useFormContext<IFlowDefinition>();
+  const { control, register, watch, setValue } = useFormContext<IFlowDefinition>();
   const { showToast } = useToast();
   const { openApiSpec } = useOpenAPI();
 
@@ -223,6 +223,7 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
         <div className="space-y-3">
           {fields.map((field, index) => {
             const ruleType = watch(`steps.${stepIndex}.expect.body.customRules.${index}.rule`);
+            const [expectedError, setExpectedError] = useState<string>('');
 
             return (
               <div key={field.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -264,45 +265,135 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                       </p>
                     </div>
 
-                    {/* Value 欄位 (需要 value 的規則) */}
+                    {/* Value/Expected 欄位 (需要值的規則) */}
                     {(ruleType === 'regex' ||
                       ruleType === 'contains' ||
-                      ruleType === 'equals' ||
-                      ruleType === 'notContains' ||
                       ruleType === 'greaterThan' ||
-                      ruleType === 'lessThan' ||
-                      ruleType === 'length') && (
+                      ruleType === 'lessThan') && (
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           {ruleType === 'regex' && '正則表達式'}
                           {ruleType === 'contains' && '包含的值'}
-                          {ruleType === 'equals' && '預期的值'}
-                          {ruleType === 'notContains' && '不應包含的值'}
                           {ruleType === 'greaterThan' && '最小值（不含）'}
                           {ruleType === 'lessThan' && '最大值（不含）'}
-                          {ruleType === 'length' && '預期長度'}
                         </label>
                         <input
                           {...register(`steps.${stepIndex}.expect.body.customRules.${index}.value` as const)}
                           type={
-                            ruleType === 'greaterThan' ||
-                            ruleType === 'lessThan' ||
-                            ruleType === 'length'
+                            ruleType === 'greaterThan' || ruleType === 'lessThan'
                               ? 'number'
                               : 'text'
                           }
                           placeholder={
                             ruleType === 'regex' ? '例如: ^.+@.+\\..+$' :
                             ruleType === 'contains' ? '例如: success' :
-                            ruleType === 'equals' ? '例如: active' :
-                            ruleType === 'notContains' ? '例如: error' :
                             ruleType === 'greaterThan' ? '例如: 0' :
                             ruleType === 'lessThan' ? '例如: 100' :
-                            ruleType === 'length' ? '例如: 5' :
                             ''
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                         />
+                      </div>
+                    )}
+
+                    {/* Expected 欄位 (equals, notContains - 支援簡單值或 JSON) */}
+                    {(ruleType === 'equals' || ruleType === 'notContains') && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          {ruleType === 'equals' && '預期的值 (Expected)'}
+                          {ruleType === 'notContains' && '不應包含的值 (Expected)'}
+                        </label>
+                        <textarea
+                          {...register(`steps.${stepIndex}.expect.body.customRules.${index}.expected` as const, {
+                            setValueAs: (value: string) => {
+                              if (!value || value.trim() === '') return undefined;
+
+                              // 嘗試解析為 JSON
+                              const trimmed = value.trim();
+
+                              // 如果看起來像 JSON (以 { 或 [ 開頭)
+                              if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                                try {
+                                  const parsed = JSON.parse(trimmed);
+                                  setExpectedError('');
+                                  return parsed;
+                                } catch (error) {
+                                  setExpectedError('JSON 格式錯誤');
+                                  return value; // 保留原始字串
+                                }
+                              }
+
+                              // 嘗試解析為數字
+                              const num = Number(value);
+                              if (!isNaN(num) && value === num.toString()) {
+                                setExpectedError('');
+                                return num;
+                              }
+
+                              // 布林值
+                              if (value === 'true') return true;
+                              if (value === 'false') return false;
+                              if (value === 'null') return null;
+
+                              // 否則當作字串
+                              setExpectedError('');
+                              return value;
+                            }
+                          })}
+                          rows={3}
+                          placeholder={
+                            ruleType === 'equals'
+                              ? '簡單值: 2\n或 JSON: {"id": 2, "name": "John"}'
+                              : '簡單值: error\n或 JSON: {"id": 2}\n驗證陣列不包含此物件'
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none font-mono text-sm"
+                        />
+                        {expectedError && (
+                          <p className="text-xs text-red-600 mt-1">
+                            ❌ {expectedError}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          💡 提示：可輸入簡單值（字串、數字、布林）或 JSON 物件
+                          {ruleType === 'notContains' && ' - 用於驗證陣列不包含特定物件'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Length 規則 - min 和 max */}
+                    {ruleType === 'length' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            最小長度 (min)
+                          </label>
+                          <input
+                            {...register(`steps.${stepIndex}.expect.body.customRules.${index}.min` as const, {
+                              valueAsNumber: true,
+                            })}
+                            type="number"
+                            min="0"
+                            placeholder="選填"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            最大長度 (max)
+                          </label>
+                          <input
+                            {...register(`steps.${stepIndex}.expect.body.customRules.${index}.max` as const, {
+                              valueAsNumber: true,
+                            })}
+                            type="number"
+                            min="0"
+                            placeholder="選填"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                          />
+                        </div>
+                        <p className="col-span-2 text-xs text-gray-500 mt-1">
+                          💡 提示：至少需要填寫 min 或 max 其中一個
+                        </p>
                       </div>
                     )}
                   </div>
@@ -327,14 +418,22 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
         <p className="font-medium mb-2">📚 8 種驗證規則說明:</p>
         <ul className="space-y-1 text-xs text-blue-700">
           <li>• <strong>notNull</strong>: 欄位必須存在且不為 null</li>
-          <li>• <strong>regex</strong>: 使用正則表達式驗證欄位值</li>
-          <li>• <strong>contains</strong>: 欄位值必須包含指定字串</li>
-          <li>• <strong>equals</strong>: 欄位值必須完全等於指定值</li>
-          <li>• <strong>notContains</strong>: 欄位值不可包含指定字串</li>
-          <li>• <strong>greaterThan</strong>: 數值必須大於指定值</li>
-          <li>• <strong>lessThan</strong>: 數值必須小於指定值</li>
-          <li>• <strong>length</strong>: 字串/陣列長度必須等於指定值</li>
+          <li>• <strong>regex</strong>: 使用正則表達式驗證欄位值（參數: value）</li>
+          <li>• <strong>contains</strong>: 字串/陣列必須包含指定值（參數: value）</li>
+          <li>• <strong>equals</strong>: 欄位值必須完全等於指定值（參數: expected，支援 JSON 物件）</li>
+          <li>• <strong>notContains</strong>: 陣列不可包含指定物件（參數: expected，支援 JSON 物件）</li>
+          <li>• <strong>greaterThan</strong>: 數值必須大於指定值（參數: value）</li>
+          <li>• <strong>lessThan</strong>: 數值必須小於指定值（參數: value）</li>
+          <li>• <strong>length</strong>: 字串/陣列長度驗證（參數: min 和/或 max）</li>
         </ul>
+        <div className="mt-3 pt-3 border-t border-blue-200">
+          <p className="font-medium mb-1">💡 進階功能:</p>
+          <ul className="space-y-1 text-xs text-blue-700">
+            <li>• <strong>JSON 物件支援</strong>: equals 和 notContains 可輸入 JSON 物件</li>
+            <li>• <strong>自動型別轉換</strong>: 數字、布林、null 會自動轉換</li>
+            <li>• <strong>物件比對</strong>: notContains 支援物件屬性比對（用於驗證刪除操作）</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
