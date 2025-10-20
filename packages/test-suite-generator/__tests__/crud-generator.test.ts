@@ -30,7 +30,7 @@ describe('CRUDGenerator', () => {
 
     expect(steps).toHaveLength(1);
     expect(steps[0].name).toContain('建立使用者');
-    expect(steps[0].expectations.status).toBe(201);
+    expect(steps[0].expect.statusCode).toBe(201);
     expect(steps[0].request.body).toBeDefined();
   });
 

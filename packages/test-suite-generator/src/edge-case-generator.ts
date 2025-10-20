@@ -41,8 +41,8 @@ export class EdgeCaseGenerator {
           request: {
             body: testData,
           },
-          expectations: {
-            status: edgeCase.expectedStatus,
+          expect: {
+            statusCode: edgeCase.expectedStatus,
           },
         });
       }

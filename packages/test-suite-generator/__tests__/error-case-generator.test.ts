@@ -157,7 +157,7 @@ describe('ErrorCaseGenerator', () => {
 
       const steps = generator.generateMissingFieldCases(endpoint);
 
-      expect(steps[0].expectations.status).toBe(400);
+      expect(steps[0].expect.statusCode).toBe(400);
     });
 
     it('應該正確設定請求方法與路徑', () => {
@@ -293,7 +293,7 @@ describe('ErrorCaseGenerator', () => {
       });
 
       const steps = generator.generateFormatValidationCases(endpoint);
-      expect(steps[0].expectations.status).toBe(400);
+      expect(steps[0].expect.statusCode).toBe(400);
     });
 
     it('應該正確設定請求方法與路徑', () => {
@@ -415,7 +415,7 @@ describe('ErrorCaseGenerator', () => {
       });
 
       const steps = generator.generateAuthErrorCases(endpoint);
-      expect(steps[0].expectations.status).toBe(401);
+      expect(steps[0].expect.statusCode).toBe(401);
     });
 
     it('應該正確設定請求方法與路徑', () => {

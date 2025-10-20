@@ -31,8 +31,8 @@ export class CRUDGenerator {
         method: endpoint.method.toUpperCase() as HttpMethod,
         path: endpoint.path,
       },
-      expectations: {
-        status: expectedStatus,
+      expect: {
+        statusCode: expectedStatus,
       },
     };
 

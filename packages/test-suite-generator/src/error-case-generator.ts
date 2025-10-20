@@ -42,8 +42,8 @@ export class ErrorCaseGenerator {
           path: endpoint.path,
           body: testData,
         },
-        expectations: {
-          status: 400,
+        expect: {
+          statusCode: 400,
         },
       });
     }
@@ -79,8 +79,8 @@ export class ErrorCaseGenerator {
             path: endpoint.path,
             body: testData,
           },
-          expectations: {
-            status: 400,
+          expect: {
+            statusCode: 400,
           },
         });
       }
@@ -104,8 +104,8 @@ export class ErrorCaseGenerator {
           method: endpoint.method.toUpperCase() as HttpMethod,
           path: endpoint.path,
         },
-        expectations: {
-          status: 401,
+        expect: {
+          statusCode: 401,
         },
       },
     ];

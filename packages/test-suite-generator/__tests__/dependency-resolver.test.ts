@@ -132,10 +132,10 @@ describe('DependencyResolver', () => {
 
       const steps = resolver.resolveExecutionOrder(endpoints);
 
-      expect(steps[0].expectations.status).toBe(201); // POST
-      expect(steps[1].expectations.status).toBe(200); // GET
-      expect(steps[2].expectations.status).toBe(200); // PUT
-      expect(steps[3].expectations.status).toBe(204); // DELETE
+      expect(steps[0].expect.statusCode).toBe(201); // POST
+      expect(steps[1].expect.statusCode).toBe(200); // GET
+      expect(steps[2].expect.statusCode).toBe(200); // PUT
+      expect(steps[3].expect.statusCode).toBe(204); // DELETE
     });
 
     it('應該使用 OpenAPI responses 中的狀態碼', () => {
@@ -151,7 +151,7 @@ describe('DependencyResolver', () => {
       const steps = resolver.resolveExecutionOrder(endpoints);
 
       // 應該選擇最小的 2xx 狀態碼（200）
-      expect(steps[0].expectations.status).toBe(200);
+      expect(steps[0].expect.statusCode).toBe(200);
     });
 
     it('應該避免步驟名稱重複動作詞', () => {
@@ -492,10 +492,10 @@ describe('DependencyResolver', () => {
       expect(steps[2].request.body).toBeDefined();
 
       // 檢查狀態碼
-      expect(steps[0].expectations.status).toBe(201);
-      expect(steps[1].expectations.status).toBe(200);
-      expect(steps[2].expectations.status).toBe(200);
-      expect(steps[3].expectations.status).toBe(204);
+      expect(steps[0].expect.statusCode).toBe(201);
+      expect(steps[1].expect.statusCode).toBe(200);
+      expect(steps[2].expect.statusCode).toBe(200);
+      expect(steps[3].expect.statusCode).toBe(204);
     });
 
     it('應該處理多個資源的複雜流程', () => {
