@@ -2,10 +2,10 @@
 
 ## ⚠️ 實作狀態
 
-**版本**: 0.3.0
-**完成度**: 85%
-**最後更新**: 2025-01-19
-**維護狀態**: 開發中 (核心功能已實作)
+**版本**: 0.6.0 (Phase 12)
+**完成度**: 90%
+**最後更新**: 2025-10-20
+**維護狀態**: 穩定 (核心功能已完成，測試覆蓋完整)
 
 ---
 
@@ -93,7 +93,10 @@ specpilot generate --natural "我想測試使用者登入功能，使用 POST /a
 - 建立基本 Flow 結構
 - 新增測試步驟 (支援完整的 request 配置)
 - 支援變數提取 (使用新的 `capture` 格式)
-- 支援驗證規則 (使用新的 `validation` 格式)
+- **支援驗證規則 (使用 `expect.body.customRules` 格式)** ⭐ Phase 12 完成
+  - 所有 8 種驗證規則：notNull, regex, contains, equals, notContains, greaterThan, lessThan, length
+  - 向後相容舊格式 `validations` (自動轉換)
+  - 完整測試覆蓋（20 個測試）
 - 設定全域配置 (globals)
 - 鏈式呼叫 API (Fluent Interface)
 - 重置建構器狀態
@@ -115,9 +118,13 @@ const flow = builder
     extractVariables: {
       userId: 'id'  // 提取變數
     },
-    validations: [
-      { field: 'email', rule: 'notNull' }
+    // ✅ 推薦：使用 customRules（新格式）
+    customRules: [
+      { field: 'email', rule: 'notNull' },
+      { field: 'email', rule: 'regex', value: '^[^@]+@[^@]+$' }
     ]
+    // ⚠️ 舊格式（仍支援但不推薦）:
+    // validations: [{ field: 'email', rule: 'notNull' }]
   })
   .build();
 
@@ -125,9 +132,18 @@ console.log(flow);
 // {
 //   name: '測試流程',
 //   description: '測試描述',
-//   steps: [...]
+//   steps: [{
+//     expect: {
+//       statusCode: 200,
+//       body: {
+//         customRules: [...]
+//       }
+//     }
+//   }]
 // }
 ```
+
+**完整範例**: 請參考 `examples/custom-rules-example.ts`
 
 ---
 
@@ -535,13 +551,13 @@ pnpm run test:coverage
 
 | 模組 | 測試檔案 | 狀態 |
 |------|---------|------|
-| FlowBuilder | ✅ `__tests__/flow-builder.test.ts` | 4 tests, 100% 覆蓋率 |
+| FlowBuilder | ✅ `__tests__/flow-builder.test.ts` | **20 tests** (Phase 12 擴充), 100% 覆蓋率 |
 | NLPFlowParser | ✅ `__tests__/nlp-parser.test.ts` | 41 tests, 100% 覆蓋率 |
 | IntentRecognizer | ✅ `__tests__/intent-recognizer.test.ts` | 37 tests, 100% 覆蓋率 |
 | ContextManager | ✅ `__tests__/context-manager.test.ts` | 40 tests, 100% 覆蓋率 |
 | SuggestionEngine | ✅ `__tests__/suggestion-engine.test.ts` | 34 tests, 100% 覆蓋率 |
 
-**總計**: 156 tests, ~85% 覆蓋率
+**總計**: **172 tests** (+16 from Phase 12), ~85% 覆蓋率
 
 **執行測試**:
 ```bash
@@ -649,6 +665,7 @@ packages/flow-generator/
 
 | 版本 | 日期 | 主要變更 |
 |------|------|---------|
+| 0.6.0 | 2025-10-20 | ✅ **Phase 12: FlowBuilder customRules 完整支援**<br>  - 修正 FlowBuilder 舊格式自動轉換邏輯<br>  - `validations` 現在自動轉換為 `expect.body.customRules`<br>  - 不再產生舊的 `step.validation` 欄位<br>  - 新增 16 個測試（4 → 20 tests）:<br>    • 4 個 customRules 基礎測試<br>    • 3 個向後相容測試<br>    • 9 個驗證規則測試（所有 8 種 + 混合）<br>  - 新增範例檔案 `examples/custom-rules-example.ts`<br>  - 更新文件與 API 範例<br>  - 總測試數：156 → 172 tests |
 | 0.5.0 | 2025-10-20 | ✅ **Phase 11: 統一驗證格式**<br>  - 更新 `FlowStepConfig` 新增 `customRules` 欄位<br>  - 標記 `validations` 為 @deprecated<br>  - FlowBuilder 優先使用 `customRules` 格式<br>  - 支援 `expect.body.customRules` 結構<br>  - 向後相容舊 `validation` 格式<br>  - 測試更新使用正確的 `expect.statusCode` 欄位<br>  - 4 個測試通過 |
 | 0.4.0 | 2025-10-19 | ✅ **優化 NLP 解析支援複雜語句（階段 1）** (db81b52)<br>  - 實作簡易中文分詞器 ChineseTokenizer<br>  - 改善 HTTP Method 識別（支援英文）<br>  - 改善 URL 路徑識別（多層級、路徑參數）<br>  - 改善參數提取（布林、null、陣列）<br>  - 新增 164 個測試 (41 → 205 tests)<br>  - NLPFlowParser 覆蓋率：89.97%<br>  - ChineseTokenizer 覆蓋率：95.42%<br>✅ **新增 MCP 與 NLP 架構決策記錄** (e2643ac)<br>  - 明確 MCP Server 不使用 NLP 解析<br>  - NLP 為未來 CLI 介面保留 |
 | 0.3.0 | 2025-01-19 | ✅ 完成 NLPFlowParser 實作 (41 tests)<br>✅ 新增 IntentRecognizer 測試 (37 tests)<br>✅ 新增 ContextManager 測試 (40 tests)<br>✅ 新增 SuggestionEngine 測試 (34 tests)<br>📊 測試覆蓋率提升至 85% (156 tests) |

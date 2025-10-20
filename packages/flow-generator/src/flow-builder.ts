@@ -79,12 +79,18 @@ export class FlowBuilder {
         step.expect.body.customRules = stepConfig.customRules;
       }
     } else if (stepConfig.validations && stepConfig.validations.length > 0) {
-      // 舊格式：轉換為 validation 欄位 (FlowParser 會自動轉換為 customRules)
-      step.validation = stepConfig.validations.map((v) => ({
-        field: v.field,
-        rule: v.rule,
-        value: v.value,
-      }));
+      // Phase 12: 向後相容 - 自動轉換舊格式為新格式
+      // 將 validations 轉換為 expect.body.customRules，不再產生 step.validation
+      if (!step.expect.body) {
+        step.expect.body = {};
+      }
+      if (typeof step.expect.body === 'object' && !Array.isArray(step.expect.body)) {
+        step.expect.body.customRules = stepConfig.validations.map((v) => ({
+          field: v.field,
+          rule: v.rule as any,
+          value: v.value,
+        }));
+      }
     }
 
     this.flow.steps?.push(step);
