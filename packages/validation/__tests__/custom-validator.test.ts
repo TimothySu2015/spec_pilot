@@ -394,6 +394,459 @@ describe('CustomValidator', () => {
     });
   });
 
+  describe('equals 規則 (Phase 10)', () => {
+    it('應該通過數值相等驗證', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'equals' as const,
+              field: '$.data.id',
+              expected: 1,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該通過字串相等驗證', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'equals' as const,
+              field: '$.data.name',
+              expected: 'test user',
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該通過布林值相等驗證', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'equals' as const,
+              field: '$.data.profile.active',
+              expected: true,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該失敗不相等的值', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'equals' as const,
+              field: '$.data.id',
+              expected: 2,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('值為 1');
+      expect(result.issues[0].message).toContain('預期為 2');
+    });
+  });
+
+  describe('notContains 規則 (Phase 10)', () => {
+    it('應該通過陣列不包含物件驗證', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              users: [
+                { id: 1, name: 'User 1' },
+                { id: 3, name: 'User 3' },
+              ],
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'notContains' as const,
+              field: '$.data.users',
+              expected: { id: 2 },
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該失敗陣列包含物件驗證', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              users: [
+                { id: 1, name: 'User 1' },
+                { id: 2, name: 'User 2' },
+              ],
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'notContains' as const,
+              field: '$.data.users',
+              expected: { id: 2 },
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('包含不應存在的值');
+    });
+
+    it('應該失敗非陣列類型', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'notContains' as const,
+              field: '$.data.name',
+              expected: 'test',
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('必須是陣列類型');
+    });
+  });
+
+  describe('greaterThan 規則 (Phase 10)', () => {
+    it('應該通過數值大於驗證', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              count: 10,
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'greaterThan' as const,
+              field: '$.data.count',
+              value: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該失敗數值不大於驗證', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              count: 3,
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'greaterThan' as const,
+              field: '$.data.count',
+              value: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('未大於 5');
+    });
+
+    it('應該失敗非數值類型', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'greaterThan' as const,
+              field: '$.data.name',
+              value: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('必須是數值類型');
+    });
+  });
+
+  describe('lessThan 規則 (Phase 10)', () => {
+    it('應該通過數值小於驗證', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              count: 3,
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'lessThan' as const,
+              field: '$.data.count',
+              value: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該失敗數值不小於驗證', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              count: 10,
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'lessThan' as const,
+              field: '$.data.count',
+              value: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('未小於 5');
+    });
+  });
+
+  describe('length 規則 (Phase 10)', () => {
+    it('應該通過字串長度驗證(僅 min)', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'length' as const,
+              field: '$.data.name',
+              min: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該通過字串長度驗證(min 與 max)', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'length' as const,
+              field: '$.data.name',
+              min: 5,
+              max: 20,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該通過陣列長度驗證', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'length' as const,
+              field: '$.data.roles',
+              min: 1,
+              max: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(true);
+      expect(result.issues).toHaveLength(0);
+    });
+
+    it('應該失敗字串太短', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              name: 'ab',
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'length' as const,
+              field: '$.data.name',
+              min: 5,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('長度 2');
+      expect(result.issues[0].message).toContain('至少 5');
+    });
+
+    it('應該失敗字串太長', async () => {
+      const context = {
+        ...baseContext,
+        response: {
+          ...baseContext.response,
+          data: {
+            data: {
+              name: 'very long name here',
+            },
+          },
+        },
+        expectations: {
+          custom: [
+            {
+              type: 'length' as const,
+              field: '$.data.name',
+              max: 10,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('最多 10');
+    });
+
+    it('應該失敗非字串/陣列類型', async () => {
+      const context = {
+        ...baseContext,
+        expectations: {
+          custom: [
+            {
+              type: 'length' as const,
+              field: '$.data.id',
+              min: 1,
+            },
+          ],
+        },
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.isValid).toBe(false);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toContain('必須是字串或陣列類型');
+    });
+  });
+
   describe('邊界情況', () => {
     it('應該在沒有自訂規則時通過驗證', async () => {
       const context = {

@@ -44,6 +44,7 @@ export {
   RequestBodySchema,
   FlowRequestSchema,
   ExpectBodyFieldSchema,
+  ExpectBodySchema,
   FlowExpectSchema,
   CaptureSchema,
   FlowStepSchema,
@@ -66,6 +67,31 @@ export {
   type RegexRule,
   type ContainsRule,
 } from './validation-schema';
+
+// Custom Rules Schema (NEW - Phase 10)
+export {
+  CustomRuleSchema,
+  NotNullRuleSchema as CustomNotNullRuleSchema,
+  RegexRuleSchema as CustomRegexRuleSchema,
+  ContainsRuleSchema as CustomContainsRuleSchema,
+  EqualsRuleSchema,
+  NotContainsRuleSchema,
+  GreaterThanRuleSchema,
+  LessThanRuleSchema,
+  LengthRuleSchema,
+  AVAILABLE_RULES,
+  RULE_DESCRIPTIONS,
+  type CustomRule,
+  type NotNullRule as CustomNotNullRule,
+  type RegexRule as CustomRegexRule,
+  type ContainsRule as CustomContainsRule,
+  type EqualsRule,
+  type NotContainsRule,
+  type GreaterThanRule,
+  type LessThanRule,
+  type LengthRule,
+  type RuleName,
+} from './custom-rules';
 
 // 實用函式
 export { exportToYaml } from './utils/export-yaml';

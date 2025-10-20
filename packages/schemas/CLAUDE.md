@@ -302,11 +302,169 @@ const ExtendedSchema = BaseSchema.extend({
 const CombinedSchema = z.intersection(SchemaA, SchemaB);
 ```
 
+## 自訂驗證規則 (Phase 10 - 新增)
+
+### 概述
+
+`custom-rules.ts` 提供統一的自訂驗證規則定義,作為單一權威來源 (SSOT) 管理所有驗證規則。
+
+### 可用規則
+
+| 規則名稱 | 說明 | 參數 | 版本 |
+|---------|------|------|------|
+| `notNull` | 檢查值是否不為 null/undefined | `field` | v0.1.0 |
+| `regex` | 使用正則表達式驗證 | `field`, `value` (pattern) | v0.1.0 |
+| `contains` | 檢查字串/陣列是否包含特定值 | `field`, `value` | v0.1.0 |
+| **`equals`** | **檢查值是否等於預期值** | `field`, `expected` | **v0.2.0 (Phase 10)** |
+| **`notContains`** | **檢查陣列不包含特定物件** | `field`, `expected` | **v0.2.0 (Phase 10)** |
+| **`greaterThan`** | **數值大於** | `field`, `value` | **v0.2.0 (Phase 10)** |
+| **`lessThan`** | **數值小於** | `field`, `value` | **v0.2.0 (Phase 10)** |
+| **`length`** | **字串/陣列長度驗證** | `field`, `min?`, `max?` | **v0.2.0 (Phase 10)** |
+
+### 使用範例
+
+```typescript
+import { CustomRuleSchema, AVAILABLE_RULES } from '@specpilot/schemas';
+
+// equals 規則 - 精確值比對
+const equalsRule = {
+  field: 'id',
+  rule: 'equals',
+  expected: 2
+};
+
+// notContains 規則 - 驗證刪除操作
+const notContainsRule = {
+  field: 'users',
+  rule: 'notContains',
+  expected: { id: 2 }  // 物件屬性比對
+};
+
+// greaterThan 規則 - 數值範圍驗證
+const greaterThanRule = {
+  field: 'count',
+  rule: 'greaterThan',
+  value: 5
+};
+
+// length 規則 - 長度驗證
+const lengthRule = {
+  field: 'name',
+  rule: 'length',
+  min: 1,
+  max: 100
+};
+
+// Zod 驗證
+const result = CustomRuleSchema.parse(equalsRule);
+```
+
+### 在 Flow YAML 中使用
+
+```yaml
+steps:
+  - name: 查詢使用者
+    request:
+      method: GET
+      path: /users/2
+    expect:
+      statusCode: 200
+      body:
+        schema:
+          $ref: '#/components/schemas/User'
+        customRules:
+          - field: id
+            rule: equals      # 確認回傳正確的使用者
+            expected: 2
+          - field: age
+            rule: greaterThan # 年齡驗證
+            value: 0
+          - field: name
+            rule: length      # 名稱長度驗證
+            min: 1
+            max: 100
+
+  - name: 驗證刪除結果
+    request:
+      method: GET
+      path: /users
+    expect:
+      statusCode: 200
+      body:
+        customRules:
+          - field: users
+            rule: notContains # 確認使用者已刪除
+            expected:
+              id: 2
+```
+
+### Schema 定義
+
+```typescript
+// custom-rules.ts 定義所有規則
+export const EqualsRuleSchema = CustomRuleBaseSchema.extend({
+  rule: z.literal('equals'),
+  expected: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+});
+
+export const NotContainsRuleSchema = CustomRuleBaseSchema.extend({
+  rule: z.literal('notContains'),
+  expected: z.any(),
+});
+
+export const CustomRuleSchema = z.discriminatedUnion('rule', [
+  NotNullRuleSchema,
+  RegexRuleSchema,
+  ContainsRuleSchema,
+  EqualsRuleSchema,       // NEW
+  NotContainsRuleSchema,  // NEW
+  GreaterThanRuleSchema,  // NEW
+  LessThanRuleSchema,     // NEW
+  LengthRuleSchema,       // NEW
+]);
+```
+
+### 規則描述對照表
+
+```typescript
+import { RULE_DESCRIPTIONS } from '@specpilot/schemas';
+
+console.log(RULE_DESCRIPTIONS.equals);
+// 輸出: "檢查值是否等於預期值"
+
+console.log(RULE_DESCRIPTIONS.notContains);
+// 輸出: "檢查陣列不包含特定物件"
+```
+
+## 版本歷史
+
+### v0.2.0 (Phase 10 - 2025-10-20)
+
+**重大更新**: 統一驗證規則管理
+
+- ✅ 新增 `custom-rules.ts` 作為規則管理中心
+- ✅ 新增 5 個驗證規則:
+  - `equals` - 精確值比對
+  - `notContains` - 陣列不包含驗證
+  - `greaterThan` - 數值大於
+  - `lessThan` - 數值小於
+  - `length` - 長度驗證
+- ✅ 新增 `AVAILABLE_RULES` 常數
+- ✅ 新增 `RULE_DESCRIPTIONS` 對照表
+- ✅ 更新 `step-schema.ts` 支援 `customRules` 欄位
+- ✅ 擴充 `ExpectBodySchema` 結構
+
+### v0.1.0 (初始版本)
+
+- 基礎 Schema 定義
+- Flow、Step、Auth、Globals Schema
+- 3 個基本驗證規則: `notNull`, `regex`, `contains`
+
 ## 未來擴充方向
 
 1. 自動產生 API 文件
 2. Schema 版本管理與相容性檢查
-3. 自訂驗證器擴充
+3. ~~自訂驗證器擴充~~ ✅ 完成 (Phase 10)
 4. Schema 視覺化工具
 5. 多語言錯誤訊息
 6. Schema 效能優化

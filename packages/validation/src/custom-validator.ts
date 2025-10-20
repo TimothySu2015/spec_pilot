@@ -51,7 +51,8 @@ export class CustomValidator implements Validator {
           const ruleResult = await this.executeRule({
             payload: response.data,
             ruleName: rule.type,
-            ruleOptions: { value: rule.value, message: rule.message },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ruleOptions: rule as any, // 傳遞完整的規則物件,包含 value, expected, min, max 等欄位
             schemas,
             field: rule.field,
             logger,
@@ -314,6 +315,171 @@ export class CustomValidator implements Validator {
         message: isValid ?
           `欄位 ${context.field} 包含 "${searchString}"` :
           `欄位 ${context.field} 未包含 "${searchString}"`,
+      };
+    });
+
+    // equals 規則 (NEW - Phase 10)
+    this.registerRule('equals', (context: CustomRuleContext): CustomRuleResult => {
+      const value = this.getValueByPath(context.payload, context.field);
+      const expected = context.ruleOptions.expected;
+
+      if (expected === undefined) {
+        return {
+          isValid: false,
+          message: 'equals 規則需要提供預期值 (expected)',
+        };
+      }
+
+      const isValid = value === expected;
+
+      return {
+        isValid,
+        message: isValid ?
+          `欄位 ${context.field} 等於預期值 ${JSON.stringify(expected)}` :
+          `欄位 ${context.field} 值為 ${JSON.stringify(value)}，預期為 ${JSON.stringify(expected)}`,
+      };
+    });
+
+    // notContains 規則 (NEW - Phase 10)
+    this.registerRule('notContains', (context: CustomRuleContext): CustomRuleResult => {
+      const value = this.getValueByPath(context.payload, context.field);
+      const expected = context.ruleOptions.expected;
+
+      if (expected === undefined) {
+        return {
+          isValid: false,
+          message: 'notContains 規則需要提供預期值 (expected)',
+        };
+      }
+
+      if (!Array.isArray(value)) {
+        return {
+          isValid: false,
+          message: `欄位 ${context.field} 必須是陣列類型`,
+        };
+      }
+
+      // 檢查陣列中是否包含符合條件的物件
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const contains = value.some((item: any) => {
+        if (typeof expected === 'object' && expected !== null && !Array.isArray(expected)) {
+          // 物件比對：檢查所有指定的屬性是否匹配
+          return Object.keys(expected).every((key) => item[key] === expected[key]);
+        } else {
+          // 基本型別比對
+          return item === expected;
+        }
+      });
+
+      const isValid = !contains;
+
+      return {
+        isValid,
+        message: isValid ?
+          `欄位 ${context.field} 不包含指定值 ${JSON.stringify(expected)}` :
+          `欄位 ${context.field} 包含不應存在的值 ${JSON.stringify(expected)}`,
+      };
+    });
+
+    // greaterThan 規則 (NEW - Phase 10)
+    this.registerRule('greaterThan', (context: CustomRuleContext): CustomRuleResult => {
+      const value = this.getValueByPath(context.payload, context.field);
+      const threshold = context.ruleOptions.value;
+
+      if (typeof threshold !== 'number') {
+        return {
+          isValid: false,
+          message: 'greaterThan 規則需要提供數值型態的 value',
+        };
+      }
+
+      if (typeof value !== 'number') {
+        return {
+          isValid: false,
+          message: `欄位 ${context.field} 必須是數值類型`,
+        };
+      }
+
+      const isValid = value > threshold;
+
+      return {
+        isValid,
+        message: isValid ?
+          `欄位 ${context.field} 值 ${value} 大於 ${threshold}` :
+          `欄位 ${context.field} 值 ${value} 未大於 ${threshold}`,
+      };
+    });
+
+    // lessThan 規則 (NEW - Phase 10)
+    this.registerRule('lessThan', (context: CustomRuleContext): CustomRuleResult => {
+      const value = this.getValueByPath(context.payload, context.field);
+      const threshold = context.ruleOptions.value;
+
+      if (typeof threshold !== 'number') {
+        return {
+          isValid: false,
+          message: 'lessThan 規則需要提供數值型態的 value',
+        };
+      }
+
+      if (typeof value !== 'number') {
+        return {
+          isValid: false,
+          message: `欄位 ${context.field} 必須是數值類型`,
+        };
+      }
+
+      const isValid = value < threshold;
+
+      return {
+        isValid,
+        message: isValid ?
+          `欄位 ${context.field} 值 ${value} 小於 ${threshold}` :
+          `欄位 ${context.field} 值 ${value} 未小於 ${threshold}`,
+      };
+    });
+
+    // length 規則 (NEW - Phase 10)
+    this.registerRule('length', (context: CustomRuleContext): CustomRuleResult => {
+      const value = this.getValueByPath(context.payload, context.field);
+      const min = context.ruleOptions.min;
+      const max = context.ruleOptions.max;
+
+      if (min === undefined && max === undefined) {
+        return {
+          isValid: false,
+          message: 'length 規則需要提供 min 或 max 至少一個',
+        };
+      }
+
+      let length: number;
+      if (typeof value === 'string' || Array.isArray(value)) {
+        length = value.length;
+      } else {
+        return {
+          isValid: false,
+          message: `欄位 ${context.field} 必須是字串或陣列類型`,
+        };
+      }
+
+      const isValid =
+        (min === undefined || length >= min) &&
+        (max === undefined || length <= max);
+
+      let rangeText = '';
+      if (min !== undefined && max !== undefined) {
+        rangeText = `範圍 ${min}-${max}`;
+      } else if (min !== undefined) {
+        rangeText = `至少 ${min}`;
+      } else {
+        rangeText = `最多 ${max}`;
+      }
+
+      return {
+        isValid,
+        message: isValid ?
+          `欄位 ${context.field} 長度 ${length} 符合${rangeText}` :
+          `欄位 ${context.field} 長度 ${length} 不符合${rangeText}`,
       };
     });
   }

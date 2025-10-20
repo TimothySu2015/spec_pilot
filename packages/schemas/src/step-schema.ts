@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { StepAuthSchema } from './auth-schema';
 import { HeadersSchema, RetryPolicySchema } from './globals-schema';
 import { ValidationRuleSchema } from './validation-schema';
+import { CustomRuleSchema } from './custom-rules';
 
 /**
  * HTTP 方法列舉
@@ -38,12 +39,25 @@ export const ExpectBodyFieldSchema = z.object({
 });
 
 /**
+ * Expect Body Schema（支援 schema 參照與 customRules）
+ */
+export const ExpectBodySchema = z.object({
+  schema: z.object({
+    $ref: z.string().min(1, 'schema 參照不可為空'),
+  }).optional(),
+  customRules: z.array(CustomRuleSchema).optional(),
+}).optional();
+
+/**
  * 回應預期設定 Schema
  */
 export const FlowExpectSchema = z.object({
   statusCode: z.number().int().min(100).max(599),
   bodyFields: z.array(ExpectBodyFieldSchema).optional(),
-  body: z.any().optional(),
+  body: z.union([
+    z.any(),  // 允許舊格式：直接指定 body 內容
+    ExpectBodySchema  // 新格式：包含 schema 與 customRules
+  ]).optional(),
 });
 
 /**

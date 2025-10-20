@@ -76,7 +76,9 @@ class CustomRuleValidator {
   // 執行自訂規則
   validate(data: any, rules: ValidationRule[]): ValidationResult;
 
-  // 內建規則: notNull, regex, contains, range, length
+  // 內建規則 (Phase 10 更新):
+  // - notNull, regex, contains (v0.1.0)
+  // - equals, notContains, greaterThan, lessThan, length (v0.2.0 - Phase 10)
 }
 ```
 
@@ -161,26 +163,75 @@ const result = engine.validateSchema({
 { tags: ['urgent', 'todo'] }
 ```
 
-#### range 規則
+#### equals 規則 (Phase 10 - 新增)
 
 ```typescript
-// 驗證數值在指定範圍內
+// 驗證值是否等於預期值
 {
-  field: 'age',
-  rule: 'range',
-  min: 0,
-  max: 150
+  field: 'id',
+  rule: 'equals',
+  expected: 2
 }
 
 // ✅ 通過
-{ age: 25 }
+{ id: 2 }
 
 // ❌ 失敗
-{ age: 200 }
-{ age: -5 }
+{ id: 1 }
 ```
 
-#### length 規則
+#### notContains 規則 (Phase 10 - 新增)
+
+```typescript
+// 驗證陣列不包含特定物件(用於驗證刪除操作)
+{
+  field: 'users',
+  rule: 'notContains',
+  expected: { id: 2 }
+}
+
+// ✅ 通過
+{ users: [{ id: 1 }, { id: 3 }] }
+
+// ❌ 失敗
+{ users: [{ id: 1 }, { id: 2 }] }
+```
+
+#### greaterThan 規則 (Phase 10 - 新增)
+
+```typescript
+// 驗證數值大於指定值
+{
+  field: 'count',
+  rule: 'greaterThan',
+  value: 5
+}
+
+// ✅ 通過
+{ count: 10 }
+
+// ❌ 失敗
+{ count: 3 }
+```
+
+#### lessThan 規則 (Phase 10 - 新增)
+
+```typescript
+// 驗證數值小於指定值
+{
+  field: 'count',
+  rule: 'lessThan',
+  value: 100
+}
+
+// ✅ 通過
+{ count: 50 }
+
+// ❌ 失敗
+{ count: 150 }
+```
+
+#### length 規則 (Phase 10 - 新增)
 
 ```typescript
 // 驗證字串或陣列長度
