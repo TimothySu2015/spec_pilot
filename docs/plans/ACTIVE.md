@@ -1,6 +1,6 @@
 # SpecPilot 當前開發計畫
 
-**狀態**: 🚧 Phase 11 (統一驗證格式 - FlowBuilder 與 Schema 對齊) 進行中
+**狀態**: ✅ Phase 11 已完成 | 🎯 待規劃下一階段
 **建立日期**: 2025-10-20
 **最後更新**: 2025-10-20
 
@@ -8,7 +8,7 @@
 
 ---
 
-## 🚧 進行中：Phase 11 - 統一驗證格式（FlowBuilder 與 Schema 對齊）
+## ✅ 已完成：Phase 11 - 統一驗證格式（FlowBuilder 與 Schema 對齊）
 
 ### 📌 目標
 
@@ -530,6 +530,36 @@ pnpm -w run test packages/test-suite-generator/__tests__/ --coverage
 
 ---
 
+## 📊 Phase 11 完成總結
+
+**完成日期**: 2025-10-20
+**Commits**: 3 個提交
+- `2afd2d0` - Phase 11 Task 1-2: 更新 @specpilot/schemas 與 @specpilot/validation
+- `f901fb1` - Phase 11 Task 4: 更新 @specpilot/flow-generator 的 FlowBuilder
+- `c538959` - Phase 11 Task 5: 遷移 user-management-basic-flow.yaml 至新格式
+
+**測試結果**: 160 個測試全部通過
+- packages/schemas: 35 tests ✅
+- packages/validation: 89 tests ✅
+- packages/flow-parser: 32 tests ✅
+- packages/flow-generator: 4 tests ✅
+
+**文件更新**:
+- ✅ packages/schemas/CLAUDE.md (v0.3.0)
+- ✅ packages/validation/CLAUDE.md (v0.3.0)
+- ✅ packages/flow-generator/CLAUDE.md (v0.5.0)
+- ✅ docs/plans/ACTIVE.md
+
+**主要成果**:
+1. 標記 `step.validation` 為 @deprecated
+2. CustomRuleSchema 支援 `field` 與 `path` 雙參數
+3. ValidationEngine 統一欄位路徑處理
+4. FlowBuilder 優先使用 customRules 格式
+5. YAML 範例檔案遷移至新格式
+6. 完整向後相容，無破壞性變更
+
+---
+
 **最後更新**: 2025-10-20
 **維護者**: 專案團隊
-**狀態**: 🚧 Phase 11 進行中（統一驗證格式）
+**狀態**: ✅ Phase 11 已完成

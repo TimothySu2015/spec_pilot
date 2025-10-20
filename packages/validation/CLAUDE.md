@@ -527,3 +527,40 @@ pnpm run test:coverage
 8. 差異化驗證 (比較兩個版本的資料)
 9. 部分驗證 (只驗證特定欄位)
 10. 條件式驗證 (if-then-else)
+
+## 版本歷史
+
+### v0.3.0 (Phase 11 - 2025-10-20)
+
+**重大更新**: 統一欄位路徑處理
+
+- ✅ 新增 `getFieldPath()` 方法統一處理 `field` 與 `path` 參數
+- ✅ 優先使用 `field`，若無則使用 `path`（向後相容）
+- ✅ 所有自訂驗證規則支援雙參數
+- ✅ 89 個測試通過
+
+**技術細節**:
+```typescript
+private getFieldPath(ruleOptions: Record<string, unknown>): string {
+  const field = ruleOptions.field as string | undefined;
+  const path = ruleOptions.path as string | undefined;
+  return field || path || '';
+}
+```
+
+### v0.2.0 (Phase 10 - 2025-10-20)
+
+**重大更新**: 新增 5 個驗證規則
+
+- ✅ `equals` - 精確值比對
+- ✅ `notContains` - 陣列不包含驗證
+- ✅ `greaterThan` - 數值大於
+- ✅ `lessThan` - 數值小於
+- ✅ `length` - 長度驗證
+
+### v0.1.0 (初始版本)
+
+- ValidationEngine 核心引擎
+- CustomValidator 自訂規則驗證器
+- SchemaValidator JSON Schema 驗證器
+- 3 個基本驗證規則: `notNull`, `regex`, `contains`

@@ -438,6 +438,22 @@ console.log(RULE_DESCRIPTIONS.notContains);
 
 ## 版本歷史
 
+### v0.3.0 (Phase 11 - 2025-10-20)
+
+**重大更新**: 統一驗證格式與向後相容
+
+- ✅ 標記 `step.validation` 為 @deprecated
+- ✅ CustomRuleSchema 支援 `field` 與 `path` 雙參數（向後相容）
+- ✅ 改用 `z.union()` 替代 `z.discriminatedUnion()`（因 refine() 限制）
+- ✅ 所有 8 個規則支援向後相容
+- ✅ FlowParser 自動轉換舊格式為 customRules
+- ✅ 35 個測試通過
+
+**技術細節**:
+- 每個規則獨立使用 `refine()` 驗證 "field 或 path 至少需提供一個"
+- 改用一般 `union` 而非 `discriminatedUnion`（refined schemas 不相容）
+- 推薦使用新格式 `expect.body.customRules`，但舊格式仍可使用
+
 ### v0.2.0 (Phase 10 - 2025-10-20)
 
 **重大更新**: 統一驗證規則管理

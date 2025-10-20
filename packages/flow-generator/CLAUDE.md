@@ -649,6 +649,7 @@ packages/flow-generator/
 
 | 版本 | 日期 | 主要變更 |
 |------|------|---------|
+| 0.5.0 | 2025-10-20 | ✅ **Phase 11: 統一驗證格式**<br>  - 更新 `FlowStepConfig` 新增 `customRules` 欄位<br>  - 標記 `validations` 為 @deprecated<br>  - FlowBuilder 優先使用 `customRules` 格式<br>  - 支援 `expect.body.customRules` 結構<br>  - 向後相容舊 `validation` 格式<br>  - 測試更新使用正確的 `expect.statusCode` 欄位<br>  - 4 個測試通過 |
 | 0.4.0 | 2025-10-19 | ✅ **優化 NLP 解析支援複雜語句（階段 1）** (db81b52)<br>  - 實作簡易中文分詞器 ChineseTokenizer<br>  - 改善 HTTP Method 識別（支援英文）<br>  - 改善 URL 路徑識別（多層級、路徑參數）<br>  - 改善參數提取（布林、null、陣列）<br>  - 新增 164 個測試 (41 → 205 tests)<br>  - NLPFlowParser 覆蓋率：89.97%<br>  - ChineseTokenizer 覆蓋率：95.42%<br>✅ **新增 MCP 與 NLP 架構決策記錄** (e2643ac)<br>  - 明確 MCP Server 不使用 NLP 解析<br>  - NLP 為未來 CLI 介面保留 |
 | 0.3.0 | 2025-01-19 | ✅ 完成 NLPFlowParser 實作 (41 tests)<br>✅ 新增 IntentRecognizer 測試 (37 tests)<br>✅ 新增 ContextManager 測試 (40 tests)<br>✅ 新增 SuggestionEngine 測試 (34 tests)<br>📊 測試覆蓋率提升至 85% (156 tests) |
 | 0.2.0 | 2025-01-17 | 更新 CLAUDE.md 反映實際狀態 |
