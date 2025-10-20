@@ -1,10 +1,192 @@
 # SpecPilot 當前開發計畫
 
-**狀態**: ✅ Phase 10 (統一驗證規則管理) 已完成
+**狀態**: 🚧 Phase 11 (統一驗證格式 - FlowBuilder 與 Schema 對齊) 進行中
 **建立日期**: 2025-10-20
 **最後更新**: 2025-10-20
 
 > 📋 **查看歷史進度**: [專案進度總覽](./SUMMARY.md) | [Phase 1-8 總結](../archive/plans/phase-1-8-summary-2025-01-19.md)
+
+---
+
+## 🚧 進行中：Phase 11 - 統一驗證格式（FlowBuilder 與 Schema 對齊）
+
+### 📌 目標
+
+統一所有驗證格式為 `expect.customRules`，消除 `validation` 與 `customRules` 雙軌制，確保 FlowBuilder、MCP、CLI 產生的 Flow 使用相同的標準格式。
+
+### 優先度
+
+**P0** (短期) - 架構統一與維護性改善
+
+### 📖 背景
+
+在 Phase 10 完成後，發現專案中存在兩種不同的驗證格式：
+
+**問題現況**:
+1. **雙軌制驗證系統**
+   - `step.validation` (舊格式) - 使用 `path`，只支援 3 個規則
+   - `expect.customRules` (新格式) - 使用 `field`，支援 8 個規則 (Phase 10)
+
+2. **實際使用情況**
+   - ✅ `user-management-complete-tests.yaml` 等使用 `customRules` (6 處)
+   - ⚠️ `user-management-basic-flow.yaml` 使用 `validation` (6 處)
+
+3. **FlowBuilder 不一致**
+   - FlowBuilder 產生 `step.validation` (舊格式)
+   - 實際執行只使用 `expect.customRules` (新格式)
+   - 導致 FlowBuilder 產生的驗證規則不會被執行
+
+**根本問題**:
+- 違反 SCHEMA-AUTHORITY.md 規範：應以 @specpilot/schemas 為唯一權威標準
+- FlowBuilder、MCP、CLI 產生的 Flow 格式不一致
+- 維護兩套系統增加複雜度
+
+### 💡 解決方案
+
+**核心策略**: 統一為 `expect.customRules`，同時保留向後相容
+
+#### `path` vs `field` 差異分析
+
+**結論**: 命名不同，功能完全相同
+
+- 兩者都使用 `getValueByPath()` 方法處理
+- 支援相同的路徑語法：
+  - ✅ 簡單屬性: `name`
+  - ✅ 巢狀屬性: `user.profile.email`
+  - ✅ 陣列索引: `users[0].name`
+  - ✅ JSON Path: `$.data.items[0].id`
+
+**統一方向**: 使用語義化的 `field`，Schema 層面支援 `path` (向後相容)
+
+---
+
+## 📋 實作任務清單
+
+### Phase 1: Schema 調整 (保持向後相容)
+
+- [ ] **1.1** step-schema.ts 標記 `validation` 為 deprecated
+  - 加入 JSDoc `@deprecated` 註解
+  - 保留欄位但發出棄用警告
+
+- [ ] **1.2** custom-rules.ts 支援 `path` 欄位
+  ```typescript
+  const CustomRuleBaseSchema = z.object({
+    field: z.string().optional(),
+    path: z.string().optional(),  // 向後相容
+  }).refine(
+    data => Boolean(data.field || data.path),
+    { message: 'field 或 path 至少需提供一個' }
+  );
+  ```
+
+### Phase 2: ValidationEngine 調整
+
+- [ ] **2.1** custom-validator.ts 統一 path/field 處理
+  - 自動轉換 `path` → `field`
+  - 所有規則處理器使用統一的 `field`
+
+### Phase 3: FlowParser 調整
+
+- [ ] **3.1** loader.ts 自動轉換 validation → customRules
+  - 解析 YAML 時自動轉換舊格式
+  - 發出 deprecation warning
+  - 轉換邏輯：`{ rule, path, value }` → `{ rule, field: path, value }`
+
+### Phase 4: FlowBuilder 調整
+
+- [ ] **4.1** types.ts 更新 FlowStepConfig
+  ```typescript
+  export interface FlowStepConfig {
+    // 其他欄位...
+
+    /** @deprecated 請改用 customRules */
+    validations?: Array<{
+      field: string;
+      rule: string;
+      value?: unknown;
+    }>;
+
+    /** 自訂驗證規則 (推薦) */
+    customRules?: Array<CustomRule>;
+  }
+  ```
+
+- [ ] **4.2** flow-builder.ts 支援 customRules
+  - 移除或標記舊的 `step.validation` 邏輯
+  - 新增 `step.expect.body.customRules` 支援
+
+### Phase 5: YAML 遷移
+
+- [ ] **5.1** 轉換 user-management-basic-flow.yaml
+  - 將 6 處 `validation` 改為 `expect.customRules`
+  - 將 `path` 改為 `field`
+
+### Phase 6: 測試調整
+
+- [ ] **6.1** 新增向後相容測試
+  - 測試 FlowParser 自動轉換功能
+  - 測試 path/field 統一處理
+  - 確保舊格式 YAML 仍可正常運作
+
+- [ ] **6.2** 更新 FlowBuilder 測試
+  - 新增 customRules 使用範例測試
+  - 移除或更新舊的 validations 測試
+
+### Phase 7: 文件更新
+
+- [ ] **7.1** 更新各模組 CLAUDE.md
+  - `packages/schemas/CLAUDE.md` - 標記 ValidationRuleSchema 為 deprecated
+  - `packages/flow-generator/CLAUDE.md` - 更新 FlowStepConfig API 範例
+  - `packages/flow-parser/CLAUDE.md` - 說明自動轉換機制
+  - `packages/validation/CLAUDE.md` - 說明統一處理邏輯
+
+- [ ] **7.2** 更新 SCHEMA-AUTHORITY.md
+  - 說明統一驗證格式的決策
+  - 更新最佳實踐範例
+
+---
+
+## 🎯 驗收標準
+
+- [ ] FlowBuilder 產生的 Flow 使用 `expect.customRules` 格式
+- [ ] 舊的 YAML 檔案（使用 `validation`）仍可正常執行
+- [ ] FlowParser 自動轉換並發出 deprecation warning
+- [ ] ValidationEngine 同時支援 `path` 和 `field`
+- [ ] 所有測試通過（目標覆蓋率 ≥ 85%）
+- [ ] 文件更新完整
+
+---
+
+## 🏗️ 影響範圍
+
+### 需修改的檔案
+
+| 檔案 | 修改類型 | 說明 |
+|------|---------|------|
+| `packages/schemas/src/step-schema.ts` | 標記 deprecated | validation 欄位加註解 |
+| `packages/schemas/src/custom-rules.ts` | 擴充 | 支援 path 參數 |
+| `packages/validation/src/custom-validator.ts` | 邏輯調整 | 統一 path/field 處理 |
+| `packages/flow-parser/src/loader.ts` | 新增轉換 | validation → customRules |
+| `packages/flow-generator/src/types.ts` | 型別更新 | 新增 customRules |
+| `packages/flow-generator/src/flow-builder.ts` | 邏輯調整 | 支援 customRules |
+| `flows/user-management-basic-flow.yaml` | 格式遷移 | 6 處 validation → customRules |
+| 各模組測試檔案 | 測試調整 | 新增向後相容測試 |
+
+---
+
+## 📊 架構決策
+
+### 為什麼統一為 `field` 而非 `path`？
+
+1. **語義化**: `field` 更清楚表達「驗證欄位」的意圖
+2. **Phase 10 已採用**: 6 個 YAML 檔案已使用 `customRules.field`
+3. **擴充性**: 未來可能新增非路徑的驗證方式
+
+### 為什麼保留 `validation` 欄位？
+
+1. **向後相容**: 不破壞現有 YAML
+2. **漸進式遷移**: 給使用者時間適應
+3. **下一版本移除**: 標記為 deprecated，主版本升級時刪除
 
 ---
 
@@ -221,9 +403,15 @@ packages/spec-loader/src/
 
 ## 📅 時間軸
 
+### Phase 11
 - **開始日期**: 2025-10-20
-- **預計完成日期**: 2025-10-23
-- **工作量估計**: 3-4 天
+- **預計完成日期**: 2025-10-21
+- **工作量估計**: 1-2 天
+
+### Phase 9 (已完成)
+- **開始日期**: 2025-10-20
+- **完成日期**: 2025-10-23
+- **實際工作量**: 3 天
 
 ---
 
@@ -280,6 +468,12 @@ packages/spec-loader/src/
     - [x] Phase 10.5: 更新文件與最佳實踐 ✅
   - **測試結果**: ✅ 89 個測試全部通過
   - **Commit**: `fd930d4`
+
+- [ ] **統一驗證格式** 🚧 2025-10-20 (Phase 11 進行中)
+  - **問題**: 存在 `validation` 與 `customRules` 雙軌制
+  - **影響**: FlowBuilder 產生的驗證規則不會被執行
+  - **解決方案**: 統一為 `expect.customRules` 格式，保留向後相容
+  - **預計完成**: 2025-10-21
 
 - [ ] 修正 Legacy MCP Server 測試失敗 (可選，如需保留)
 - [ ] 修正 CLI 整合測試退出碼問題 (可選)
@@ -338,4 +532,4 @@ pnpm -w run test packages/test-suite-generator/__tests__/ --coverage
 
 **最後更新**: 2025-10-20
 **維護者**: 專案團隊
-**狀態**: 🚧 Phase 9 進行中（所有任務已完成，等待歸檔）
+**狀態**: 🚧 Phase 11 進行中（統一驗證格式）
