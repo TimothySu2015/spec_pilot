@@ -30,9 +30,10 @@ steps:
         password: "123456"
     expect:
       statusCode: 200
-    validation:
-      - rule: notNull
-        path: token
+      body:
+        customRules:
+          - field: token
+            rule: notNull
     capture:
       - variableName: admin_token
         path: token
@@ -47,9 +48,10 @@ steps:
         Authorization: Bearer {{admin_token}}
     expect:
       statusCode: 200
-    validation:
-      - rule: notNull
-        path: users
+      body:
+        customRules:
+          - field: users
+            rule: notNull
 
   # 4. 建立新使用者
   - name: 建立測試使用者
@@ -67,9 +69,10 @@ steps:
         status: active
     expect:
       statusCode: 201
-    validation:
-      - rule: notNull
-        path: id
+      body:
+        customRules:
+          - field: id
+            rule: notNull
     capture:
       - variableName: test_user_id
         path: id
@@ -84,10 +87,11 @@ steps:
         Authorization: Bearer {{admin_token}}
     expect:
       statusCode: 200
-    validation:
-      - rule: contains
-        path: name
-        value: 測試流程使用者
+      body:
+        customRules:
+          - field: name
+            rule: contains
+            value: 測試流程使用者
 
   # 6. 更新使用者
   - name: 更新使用者狀態
@@ -102,10 +106,11 @@ steps:
         status: inactive
     expect:
       statusCode: 200
-    validation:
-      - rule: contains
-        path: status
-        value: inactive
+      body:
+        customRules:
+          - field: status
+            rule: contains
+            value: inactive
 
   # 7. 刪除使用者
   - name: 刪除測試使用者
@@ -117,10 +122,11 @@ steps:
         Authorization: Bearer {{admin_token}}
     expect:
       statusCode: 200
-    validation:
-      - rule: contains
-        path: message
-        value: 使用者已成功刪除
+      body:
+        customRules:
+          - field: message
+            rule: contains
+            value: 使用者已成功刪除
 
 options:
   timeout: 3000
