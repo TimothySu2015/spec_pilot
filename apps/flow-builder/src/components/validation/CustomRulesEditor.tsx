@@ -306,7 +306,14 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                           {ruleType === 'notContains' && '不應包含的值 (Expected)'}
                         </label>
                         <textarea
-                          {...register(`steps.${stepIndex}.expect.body.customRules.${index}.expected` as const)}
+                          value={(() => {
+                            const currentValue = watch(`steps.${stepIndex}.expect.body.customRules.${index}.expected`);
+                            if (currentValue === undefined || currentValue === null) return '';
+                            if (typeof currentValue === 'object') {
+                              return JSON.stringify(currentValue, null, 2);
+                            }
+                            return String(currentValue);
+                          })()}
                           rows={3}
                           placeholder={
                             ruleType === 'equals'
