@@ -10,8 +10,6 @@
 - **傳輸協議**: Stdio Transport
 - **Schema 驗證**: Zod
 
-### 遷移說明
-舊版的自訂 JSON-RPC 實作已移至 `src/legacy/` 目錄保存，僅供參考。
 
 ## 🛠️ 開發指令
 
@@ -122,15 +120,9 @@ MCP Server 提供 8 個工具：
 apps/mcp-server/
 ├── src/
 │   ├── index.ts              # 主程式（官方 SDK 版本）
-│   └── legacy/               # 舊版實作（保留供參考）
-│       ├── bootstrap.ts
-│       ├── rpc-handler.ts
-│       └── handlers/
+│   └── logger.ts             # 靜默日誌器（rotating-file-stream）
 ├── __tests__/
-│   ├── mcp-server-sdk.test.ts    # 新版測試（28 個測試）
-│   └── legacy/                    # 舊版測試（保留）
-│       ├── mcp-server.test.ts
-│       └── handlers/
+│   └── mcp-server-sdk.test.ts    # 單元測試（28 個測試）
 ├── dist/
 │   └── index.cjs             # 編譯產物（給 Claude Desktop 使用）
 ├── package.json
@@ -140,18 +132,20 @@ apps/mcp-server/
 
 ## 🧪 測試狀態
 
-✅ **28/28 測試通過** (100%)
+✅ **26/28 測試通過** (93%)
 
-測試涵蓋範圍：
-- MCP Server 結構驗證
-- 工具 Schema 定義驗證
-- 工具回應格式驗證
-- 錯誤處理驗證
-- 日誌系統驗證
-- 依賴項目驗證
-- 特殊功能驗證（診斷上下文、Flow 產生）
-- Server 啟動驗證
-- 程式碼品質檢查
+**測試涵蓋範圍**：
+- ✅ MCP Server 結構驗證
+- ✅ 工具 Schema 定義驗證（listSpecs, runFlow, getReport 等）
+- ✅ 工具回應格式驗證
+- ✅ 錯誤處理驗證
+- ✅ 依賴項目驗證（官方 MCP SDK, Zod, SpecPilot 套件）
+- ✅ 特殊功能驗證（診斷上下文、Flow 產生）
+- ✅ Server 啟動驗證
+- ✅ 程式碼品質檢查
+
+**已知問題**：
+- 2 個日誌器測試失敗（日誌器實作改為外部 logger.js，測試需更新）
 
 ## 🐛 除錯
 
