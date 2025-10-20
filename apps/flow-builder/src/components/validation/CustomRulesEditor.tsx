@@ -306,42 +306,7 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                           {ruleType === 'notContains' && '不應包含的值 (Expected)'}
                         </label>
                         <textarea
-                          {...register(`steps.${stepIndex}.expect.body.customRules.${index}.expected` as const, {
-                            setValueAs: (value: string) => {
-                              if (!value || value.trim() === '') return undefined;
-
-                              // 嘗試解析為 JSON
-                              const trimmed = value.trim();
-
-                              // 如果看起來像 JSON (以 { 或 [ 開頭)
-                              if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-                                try {
-                                  const parsed = JSON.parse(trimmed);
-                                  setExpectedErrors(prev => ({ ...prev, [index]: '' }));
-                                  return parsed;
-                                } catch (error) {
-                                  setExpectedErrors(prev => ({ ...prev, [index]: 'JSON 格式錯誤' }));
-                                  return value; // 保留原始字串
-                                }
-                              }
-
-                              // 嘗試解析為數字
-                              const num = Number(value);
-                              if (!isNaN(num) && value === num.toString()) {
-                                setExpectedErrors(prev => ({ ...prev, [index]: '' }));
-                                return num;
-                              }
-
-                              // 布林值
-                              if (value === 'true') return true;
-                              if (value === 'false') return false;
-                              if (value === 'null') return null;
-
-                              // 否則當作字串
-                              setExpectedErrors(prev => ({ ...prev, [index]: '' }));
-                              return value;
-                            }
-                          })}
+                          {...register(`steps.${stepIndex}.expect.body.customRules.${index}.expected` as const)}
                           rows={3}
                           placeholder={
                             ruleType === 'equals'
@@ -349,6 +314,58 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                               : '簡單值: error\n或 JSON: {"id": 2}\n驗證陣列不包含此物件'
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none font-mono text-sm"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (!value || value.trim() === '') {
+                              setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, undefined);
+                              setExpectedErrors(prev => ({ ...prev, [index]: '' }));
+                              return;
+                            }
+
+                            const trimmed = value.trim();
+
+                            // 如果看起來像 JSON (以 { 或 [ 開頭)
+                            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                              try {
+                                const parsed = JSON.parse(trimmed);
+                                setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, parsed);
+                                setExpectedErrors(prev => ({ ...prev, [index]: '' }));
+                              } catch (error) {
+                                setExpectedErrors(prev => ({ ...prev, [index]: 'JSON 格式錯誤' }));
+                                setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, value);
+                              }
+                              return;
+                            }
+
+                            // 嘗試解析為數字
+                            const num = Number(trimmed);
+                            if (!isNaN(num) && trimmed === num.toString()) {
+                              setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, num);
+                              setExpectedErrors(prev => ({ ...prev, [index]: '' }));
+                              return;
+                            }
+
+                            // 布林值
+                            if (trimmed === 'true') {
+                              setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, true);
+                              setExpectedErrors(prev => ({ ...prev, [index]: '' }));
+                              return;
+                            }
+                            if (trimmed === 'false') {
+                              setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, false);
+                              setExpectedErrors(prev => ({ ...prev, [index]: '' }));
+                              return;
+                            }
+                            if (trimmed === 'null') {
+                              setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, null);
+                              setExpectedErrors(prev => ({ ...prev, [index]: '' }));
+                              return;
+                            }
+
+                            // 否則當作字串
+                            setValue(`steps.${stepIndex}.expect.body.customRules.${index}.expected`, trimmed);
+                            setExpectedErrors(prev => ({ ...prev, [index]: '' }));
+                          }}
                         />
                         {expectedErrors[index] && (
                           <p className="text-xs text-red-600 mt-1">
