@@ -116,6 +116,50 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
     }
   };
 
+  /**
+   * 取得規則的參數名稱（供 UI 顯示）
+   */
+  const getParameterName = (ruleType: string): string => {
+    switch (ruleType) {
+      case 'regex':
+      case 'contains':
+      case 'greaterThan':
+      case 'lessThan':
+        return 'value';
+      case 'equals':
+      case 'notContains':
+        return 'expected';
+      case 'length':
+        return 'min/max';
+      default:
+        return '';
+    }
+  };
+
+  /**
+   * 取得規則的提示文字
+   */
+  const getHintText = (ruleType: string): string => {
+    switch (ruleType) {
+      case 'regex':
+        return '💡 範例: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$';
+      case 'contains':
+        return '💡 範例: active (檢查字串是否包含此值)';
+      case 'equals':
+        return '💡 範例: 數字 2 或物件 {"id": 2, "name": "John"}';
+      case 'notContains':
+        return '💡 範例: {"id": 2} (驗證陣列不包含此物件)';
+      case 'greaterThan':
+        return '💡 範例: 18 (驗證值必須大於 18)';
+      case 'lessThan':
+        return '💡 範例: 100 (驗證值必須小於 100)';
+      case 'length':
+        return '💡 範例: 最小 1 字元，最大 100 字元';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* 智能建議折疊面板 */}
@@ -231,7 +275,7 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
               <div key={field.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex items-start gap-3">
                   <div className="flex-1 space-y-3">
-                    {/* 規則類型選擇 - 支援所有 8 種規則 */}
+                    {/* 規則類型選擇 - 使用分組讓使用者更容易理解 */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
                         規則類型
@@ -240,15 +284,32 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                         {...register(`steps.${stepIndex}.expect.body.customRules.${index}.rule` as const)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                       >
-                        <option value="notNull">notNull - 欄位不可為 null</option>
-                        <option value="regex">regex - 正則表達式驗證</option>
-                        <option value="contains">contains - 包含特定值</option>
-                        <option value="equals">equals - 精確值比對</option>
-                        <option value="notContains">notContains - 不包含特定值</option>
-                        <option value="greaterThan">greaterThan - 數值大於</option>
-                        <option value="lessThan">lessThan - 數值小於</option>
-                        <option value="length">length - 長度驗證</option>
+                        <optgroup label="🔹 基礎驗證">
+                          <option value="notNull">notNull - 欄位不可為 null</option>
+                        </optgroup>
+
+                        <optgroup label="🔹 模式驗證 (使用 value 參數)">
+                          <option value="regex">regex - 正則表達式</option>
+                          <option value="contains">contains - 包含特定值</option>
+                        </optgroup>
+
+                        <optgroup label="🔹 精確比對 (使用 expected 參數)">
+                          <option value="equals">equals - 精確值比對</option>
+                          <option value="notContains">notContains - 不包含特定值</option>
+                        </optgroup>
+
+                        <optgroup label="🔹 數值驗證 (使用 value 參數)">
+                          <option value="greaterThan">greaterThan - 數值大於</option>
+                          <option value="lessThan">lessThan - 數值小於</option>
+                        </optgroup>
+
+                        <optgroup label="🔹 長度驗證 (使用 min/max 參數)">
+                          <option value="length">length - 長度驗證</option>
+                        </optgroup>
                       </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 提示：不同規則使用不同的參數名稱 (value / expected / min,max)
+                      </p>
                     </div>
 
                     {/* Field 欄位 */}
@@ -267,17 +328,17 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                       </p>
                     </div>
 
-                    {/* Value/Expected 欄位 (需要值的規則) */}
+                    {/* Value 欄位 (regex, contains, greaterThan, lessThan) */}
                     {(ruleType === 'regex' ||
                       ruleType === 'contains' ||
                       ruleType === 'greaterThan' ||
                       ruleType === 'lessThan') && (
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          {ruleType === 'regex' && '正則表達式'}
-                          {ruleType === 'contains' && '包含的值'}
-                          {ruleType === 'greaterThan' && '最小值（不含）'}
-                          {ruleType === 'lessThan' && '最大值（不含）'}
+                          驗證值
+                          <span className="ml-2 text-xs font-normal text-gray-500">
+                            (參數名稱: value)
+                          </span>
                         </label>
                         <input
                           {...register(`steps.${stepIndex}.expect.body.customRules.${index}.value` as const)}
@@ -287,14 +348,17 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                               : 'text'
                           }
                           placeholder={
-                            ruleType === 'regex' ? '例如: ^.+@.+\\..+$' :
-                            ruleType === 'contains' ? '例如: success' :
-                            ruleType === 'greaterThan' ? '例如: 0' :
-                            ruleType === 'lessThan' ? '例如: 100' :
+                            ruleType === 'regex' ? '^.+@.+\\..+$' :
+                            ruleType === 'contains' ? 'success' :
+                            ruleType === 'greaterThan' ? '0' :
+                            ruleType === 'lessThan' ? '100' :
                             ''
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          {getHintText(ruleType)}
+                        </p>
                       </div>
                     )}
 
@@ -302,8 +366,10 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                     {(ruleType === 'equals' || ruleType === 'notContains') && (
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          {ruleType === 'equals' && '預期的值 (Expected)'}
-                          {ruleType === 'notContains' && '不應包含的值 (Expected)'}
+                          驗證值
+                          <span className="ml-2 text-xs font-normal text-gray-500">
+                            (參數名稱: expected)
+                          </span>
                         </label>
                         <textarea
                           value={(() => {
@@ -317,8 +383,8 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                           rows={3}
                           placeholder={
                             ruleType === 'equals'
-                              ? '簡單值: 2\n或 JSON: {"id": 2, "name": "John"}'
-                              : '簡單值: error\n或 JSON: {"id": 2}\n驗證陣列不包含此物件'
+                              ? '2 或 {"id": 2, "name": "John"}'
+                              : '{"id": 2}'
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none font-mono text-sm"
                           onChange={(e) => {
@@ -379,46 +445,61 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                             ❌ {expectedErrors[index]}
                           </p>
                         )}
-                        <p className="text-xs text-gray-500 mt-1">
-                          💡 提示：可輸入簡單值（字串、數字、布林）或 JSON 物件
-                          {ruleType === 'notContains' && ' - 用於驗證陣列不包含特定物件'}
+                        {!expectedErrors[index] && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {getHintText(ruleType)}
+                          </p>
+                        )}
+                        <p className="text-xs text-blue-600 mt-1">
+                          ℹ️ 支援格式：數字、字串、布林值、null、JSON 物件
                         </p>
                       </div>
                     )}
 
                     {/* Length 規則 - min 和 max */}
                     {ruleType === 'length' && (
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            最小長度 (min)
-                          </label>
-                          <input
-                            {...register(`steps.${stepIndex}.expect.body.customRules.${index}.min` as const, {
-                              valueAsNumber: true,
-                            })}
-                            type="number"
-                            min="0"
-                            placeholder="選填"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                          />
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          長度範圍
+                          <span className="ml-2 text-xs font-normal text-gray-500">
+                            (參數名稱: min, max)
+                          </span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              最小長度 (min)
+                            </label>
+                            <input
+                              {...register(`steps.${stepIndex}.expect.body.customRules.${index}.min` as const, {
+                                valueAsNumber: true,
+                              })}
+                              type="number"
+                              min="0"
+                              placeholder="1"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">
+                              最大長度 (max)
+                            </label>
+                            <input
+                              {...register(`steps.${stepIndex}.expect.body.customRules.${index}.max` as const, {
+                                valueAsNumber: true,
+                              })}
+                              type="number"
+                              min="0"
+                              placeholder="100"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            最大長度 (max)
-                          </label>
-                          <input
-                            {...register(`steps.${stepIndex}.expect.body.customRules.${index}.max` as const, {
-                              valueAsNumber: true,
-                            })}
-                            type="number"
-                            min="0"
-                            placeholder="選填"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                          />
-                        </div>
-                        <p className="col-span-2 text-xs text-gray-500 mt-1">
-                          💡 提示：至少需要填寫 min 或 max 其中一個
+                        <p className="text-xs text-gray-500 mt-2">
+                          {getHintText(ruleType)}
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          ℹ️ 至少需要填寫 min 或 max 其中一個
                         </p>
                       </div>
                     )}
