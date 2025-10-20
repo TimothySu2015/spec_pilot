@@ -28,6 +28,9 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
   const [suggestions, setSuggestions] = useState<ValidationSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
 
+  // 為每個規則的 expected 欄位追蹤 JSON 錯誤
+  const [expectedErrors, setExpectedErrors] = useState<Record<number, string>>({});
+
   // 監聽當前步驟的 request 資訊
   const method = watch(`steps.${stepIndex}.request.method`);
   const path = watch(`steps.${stepIndex}.request.path`);
@@ -223,7 +226,6 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
         <div className="space-y-3">
           {fields.map((field, index) => {
             const ruleType = watch(`steps.${stepIndex}.expect.body.customRules.${index}.rule`);
-            const [expectedError, setExpectedError] = useState<string>('');
 
             return (
               <div key={field.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -315,10 +317,10 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                               if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
                                 try {
                                   const parsed = JSON.parse(trimmed);
-                                  setExpectedError('');
+                                  setExpectedErrors(prev => ({ ...prev, [index]: '' }));
                                   return parsed;
                                 } catch (error) {
-                                  setExpectedError('JSON 格式錯誤');
+                                  setExpectedErrors(prev => ({ ...prev, [index]: 'JSON 格式錯誤' }));
                                   return value; // 保留原始字串
                                 }
                               }
@@ -326,7 +328,7 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                               // 嘗試解析為數字
                               const num = Number(value);
                               if (!isNaN(num) && value === num.toString()) {
-                                setExpectedError('');
+                                setExpectedErrors(prev => ({ ...prev, [index]: '' }));
                                 return num;
                               }
 
@@ -336,7 +338,7 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                               if (value === 'null') return null;
 
                               // 否則當作字串
-                              setExpectedError('');
+                              setExpectedErrors(prev => ({ ...prev, [index]: '' }));
                               return value;
                             }
                           })}
@@ -348,9 +350,9 @@ export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps)
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none font-mono text-sm"
                         />
-                        {expectedError && (
+                        {expectedErrors[index] && (
                           <p className="text-xs text-red-600 mt-1">
-                            ❌ {expectedError}
+                            ❌ {expectedErrors[index]}
                           </p>
                         )}
                         <p className="text-xs text-gray-500 mt-1">
