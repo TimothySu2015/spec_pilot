@@ -1,21 +1,28 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { IFlowDefinition, IValidationRule } from '@specpilot/schemas';
+import { IFlowDefinition } from '@specpilot/schemas';
 import { useToast } from '../../contexts/ToastContext';
 import { useOpenAPI } from '../../contexts/OpenAPIContext';
 import { analyzeStep, ValidationSuggestion } from '../../services/openapi-analyzer';
 import { useState, useEffect } from 'react';
 
-interface ValidationEditorProps {
+interface CustomRulesEditorProps {
   stepIndex: number;
 }
 
-export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
+/**
+ * CustomRulesEditor - 新格式驗證規則編輯器
+ *
+ * 使用 expect.body.customRules 欄位（Phase 12 新格式）
+ * 支援所有 8 種驗證規則
+ */
+export default function CustomRulesEditor({ stepIndex }: CustomRulesEditorProps) {
   const { control, register, watch } = useFormContext<IFlowDefinition>();
   const { showToast } = useToast();
   const { openApiSpec } = useOpenAPI();
+
   const { fields, append, remove } = useFieldArray({
     control,
-    name: `steps.${stepIndex}.validation` as const,
+    name: `steps.${stepIndex}.expect.body.customRules` as const,
   });
 
   const [suggestions, setSuggestions] = useState<ValidationSuggestion[]>([]);
@@ -37,9 +44,9 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
 
   const handleAddRule = () => {
     append({
+      field: '',
       rule: 'notNull',
-      path: '',
-    } as IValidationRule);
+    } as any);
   };
 
   const handleRemoveRule = (index: number) => {
@@ -49,15 +56,15 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
 
   const handleApplySuggestion = (suggestion: ValidationSuggestion) => {
     const newRule: any = {
+      field: suggestion.path, // 使用 field 而非 path（新格式）
       rule: suggestion.rule,
-      path: suggestion.path,
     };
 
     if (suggestion.value) {
       newRule.value = suggestion.value;
     }
 
-    append(newRule as IValidationRule);
+    append(newRule);
     showToast('success', `已套用建議: ${suggestion.path}`);
   };
 
@@ -66,15 +73,15 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
 
     highPrioritySuggestions.forEach(suggestion => {
       const newRule: any = {
+        field: suggestion.path,
         rule: suggestion.rule,
-        path: suggestion.path,
       };
 
       if (suggestion.value) {
         newRule.value = suggestion.value;
       }
 
-      append(newRule as IValidationRule);
+      append(newRule);
     });
 
     showToast('success', `已批次套用 ${highPrioritySuggestions.length} 個高優先級建議`);
@@ -108,46 +115,24 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
 
   return (
     <div className="space-y-4">
-      {/* ⚠️ Phase 12: 棄用警告 */}
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">⚠️</span>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-yellow-900 mb-2">
-              此驗證格式已過時 (Deprecated)
-            </p>
-            <p className="text-xs text-yellow-800 mb-3">
-              建議使用「自訂驗證規則 (Custom Rules)」（在上方的 Expect 編輯器中），
-              新格式支援 8 種驗證規則，並符合 SpecPilot 最新的 Schema 定義。
-            </p>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="px-2 py-1 bg-yellow-200 text-yellow-900 rounded font-medium">
-                舊格式：steps.validation
-              </span>
-              <span>→</span>
-              <span className="px-2 py-1 bg-green-200 text-green-900 rounded font-medium">
-                新格式：expect.body.customRules
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 智能建議折疊面板 */}
       {openApiSpec && suggestions.length > 0 && (
-        <div className="border border-blue-200 bg-blue-50 rounded-lg overflow-hidden">
+        <div className="border border-green-200 bg-green-50 rounded-lg overflow-hidden">
           <button
             type="button"
             onClick={() => setShowSuggestions(!showSuggestions)}
-            className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-100 transition-colors"
+            className="w-full px-4 py-3 flex items-center justify-between hover:bg-green-100 transition-colors"
           >
             <div className="flex items-center gap-2">
               <span className="text-xl">💡</span>
-              <span className="font-semibold text-blue-900">
+              <span className="font-semibold text-green-900">
                 智能建議 ({suggestions.length} 個)
               </span>
+              <span className="text-xs px-2 py-0.5 bg-green-200 text-green-800 rounded">
+                新格式
+              </span>
             </div>
-            <span className="text-blue-600">
+            <span className="text-green-600">
               {showSuggestions ? '▼' : '▶'}
             </span>
           </button>
@@ -155,13 +140,13 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
           {showSuggestions && (
             <div className="px-4 pb-4 space-y-2">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-green-700">
                   根據 OpenAPI Schema 自動分析的驗證建議
                 </p>
                 <button
                   type="button"
                   onClick={handleApplyAllSuggestions}
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+                  className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
                 >
                   批次套用高優先級
                 </button>
@@ -170,7 +155,7 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
               {suggestions.slice(0, 10).map((suggestion, index) => (
                 <div
                   key={index}
-                  className="bg-white border border-blue-200 rounded p-3 flex items-start justify-between gap-3"
+                  className="bg-white border border-green-200 rounded p-3 flex items-start justify-between gap-3"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -196,7 +181,7 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
                   <button
                     type="button"
                     onClick={() => handleApplySuggestion(suggestion)}
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors whitespace-nowrap"
+                    className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors whitespace-nowrap"
                   >
                     套用
                   </button>
@@ -204,7 +189,7 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
               ))}
 
               {suggestions.length > 10 && (
-                <p className="text-xs text-blue-600 text-center pt-2">
+                <p className="text-xs text-green-600 text-center pt-2">
                   還有 {suggestions.length - 10} 個建議未顯示
                 </p>
               )}
@@ -214,7 +199,12 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
       )}
 
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Validation 驗證規則</h3>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Custom Rules 驗證規則</h3>
+          <p className="text-xs text-gray-600 mt-0.5">
+            ✅ 推薦格式 - 支援所有 8 種驗證規則
+          </p>
+        </div>
         <button
           type="button"
           onClick={handleAddRule}
@@ -227,57 +217,89 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
       {fields.length === 0 ? (
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
           <p className="text-sm text-gray-600">尚未新增驗證規則</p>
+          <p className="text-xs text-gray-500 mt-1">支援 8 種驗證規則</p>
         </div>
       ) : (
         <div className="space-y-3">
           {fields.map((field, index) => {
-            const ruleType = watch(`steps.${stepIndex}.validation.${index}.rule`);
+            const ruleType = watch(`steps.${stepIndex}.expect.body.customRules.${index}.rule`);
 
             return (
               <div key={field.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex items-start gap-3">
                   <div className="flex-1 space-y-3">
-                    {/* 規則類型選擇 */}
+                    {/* 規則類型選擇 - 支援所有 8 種規則 */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
                         規則類型
                       </label>
                       <select
-                        {...register(`steps.${stepIndex}.validation.${index}.rule` as const)}
+                        {...register(`steps.${stepIndex}.expect.body.customRules.${index}.rule` as const)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                       >
                         <option value="notNull">notNull - 欄位不可為 null</option>
                         <option value="regex">regex - 正則表達式驗證</option>
                         <option value="contains">contains - 包含特定值</option>
+                        <option value="equals">equals - 精確值比對</option>
+                        <option value="notContains">notContains - 不包含特定值</option>
+                        <option value="greaterThan">greaterThan - 數值大於</option>
+                        <option value="lessThan">lessThan - 數值小於</option>
+                        <option value="length">length - 長度驗證</option>
                       </select>
                     </div>
 
-                    {/* JSON Path */}
+                    {/* Field 欄位 */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
-                        JSON Path
+                        欄位名稱 (Field)
                       </label>
                       <input
-                        {...register(`steps.${stepIndex}.validation.${index}.path` as const)}
+                        {...register(`steps.${stepIndex}.expect.body.customRules.${index}.field` as const)}
                         type="text"
-                        placeholder="例如: data.user.email"
+                        placeholder="例如: email, age, status"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 提示：也支援巢狀欄位，例如 data.user.email
+                      </p>
                     </div>
 
-                    {/* Value 欄位 (僅 regex 和 contains 需要) */}
-                    {(ruleType === 'regex' || ruleType === 'contains') && (
+                    {/* Value 欄位 (需要 value 的規則) */}
+                    {(ruleType === 'regex' ||
+                      ruleType === 'contains' ||
+                      ruleType === 'equals' ||
+                      ruleType === 'notContains' ||
+                      ruleType === 'greaterThan' ||
+                      ruleType === 'lessThan' ||
+                      ruleType === 'length') && (
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          {ruleType === 'regex' ? '正則表達式' : '預期值'}
+                          {ruleType === 'regex' && '正則表達式'}
+                          {ruleType === 'contains' && '包含的值'}
+                          {ruleType === 'equals' && '預期的值'}
+                          {ruleType === 'notContains' && '不應包含的值'}
+                          {ruleType === 'greaterThan' && '最小值（不含）'}
+                          {ruleType === 'lessThan' && '最大值（不含）'}
+                          {ruleType === 'length' && '預期長度'}
                         </label>
                         <input
-                          {...register(`steps.${stepIndex}.validation.${index}.value` as const)}
-                          type="text"
+                          {...register(`steps.${stepIndex}.expect.body.customRules.${index}.value` as const)}
+                          type={
+                            ruleType === 'greaterThan' ||
+                            ruleType === 'lessThan' ||
+                            ruleType === 'length'
+                              ? 'number'
+                              : 'text'
+                          }
                           placeholder={
-                            ruleType === 'regex'
-                              ? '例如: ^.+@.+\\..+$'
-                              : '例如: success'
+                            ruleType === 'regex' ? '例如: ^.+@.+\\..+$' :
+                            ruleType === 'contains' ? '例如: success' :
+                            ruleType === 'equals' ? '例如: active' :
+                            ruleType === 'notContains' ? '例如: error' :
+                            ruleType === 'greaterThan' ? '例如: 0' :
+                            ruleType === 'lessThan' ? '例如: 100' :
+                            ruleType === 'length' ? '例如: 5' :
+                            ''
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                         />
@@ -299,6 +321,21 @@ export default function ValidationEditor({ stepIndex }: ValidationEditorProps) {
           })}
         </div>
       )}
+
+      {/* 說明區塊 */}
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+        <p className="font-medium mb-2">📚 8 種驗證規則說明:</p>
+        <ul className="space-y-1 text-xs text-blue-700">
+          <li>• <strong>notNull</strong>: 欄位必須存在且不為 null</li>
+          <li>• <strong>regex</strong>: 使用正則表達式驗證欄位值</li>
+          <li>• <strong>contains</strong>: 欄位值必須包含指定字串</li>
+          <li>• <strong>equals</strong>: 欄位值必須完全等於指定值</li>
+          <li>• <strong>notContains</strong>: 欄位值不可包含指定字串</li>
+          <li>• <strong>greaterThan</strong>: 數值必須大於指定值</li>
+          <li>• <strong>lessThan</strong>: 數值必須小於指定值</li>
+          <li>• <strong>length</strong>: 字串/陣列長度必須等於指定值</li>
+        </ul>
+      </div>
     </div>
   );
 }

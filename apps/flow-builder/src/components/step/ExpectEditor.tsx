@@ -3,6 +3,7 @@ import { IFlowDefinition } from '@specpilot/schemas';
 import { useOpenAPI } from '../../contexts/OpenAPIContext';
 import { extractResponseSchema, extractFields, findEndpointInSpec, ResponseField } from '../../services/openapi-analyzer';
 import { useState, useEffect } from 'react';
+import CustomRulesEditor from '../validation/CustomRulesEditor';
 // import Editor from '@monaco-editor/react'; // 暫時註解，body 深度比對驗證目前不需要
 
 interface ExpectEditorProps {
@@ -347,6 +348,28 @@ export default function ExpectEditor({ stepIndex }: ExpectEditorProps) {
               <li>• <strong>精確匹配</strong>: 必須完全相同 (YAML 輸出為具體值)</li>
               <li>• 支援變數插值: <code className="px-1 bg-gray-100 rounded">{'{{variable}}'}</code></li>
             </ul>
+          </div>
+        </div>
+
+        {/* ============================================ */}
+        {/* Phase 12: Custom Rules 驗證 (新格式) */}
+        {/* ============================================ */}
+        <div className="border border-green-200 rounded-lg">
+          <div className="p-4 border-b bg-green-50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  自訂驗證規則 (Custom Rules)
+                  <span className="text-xs px-2 py-0.5 bg-green-600 text-white rounded">推薦</span>
+                </h4>
+                <p className="text-xs text-gray-600 mt-1">
+                  定義進階驗證規則 - 支援 8 種驗證規則（notNull, regex, contains, equals, notContains, greaterThan, lessThan, length）
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4">
+            <CustomRulesEditor stepIndex={stepIndex} />
           </div>
         </div>
       </div>

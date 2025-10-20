@@ -14,6 +14,16 @@
 - ✅ **即時 YAML 預覽**: Monaco Editor 語法高亮顯示
 - ✅ **匯出功能**: 匯出 YAML 檔案與 JSON Schema
 
+### ⭐ Phase 12 新增功能
+
+- ⭐ **Custom Rules 驗證規則編輯器** (推薦使用)
+  - 支援所有 8 種驗證規則
+  - 智能建議功能（基於 OpenAPI Schema）
+  - 使用新格式 `expect.body.customRules`
+- ⚠️ **舊版 Validation 編輯器** (已標記為不推薦)
+  - 仍可使用但建議遷移至 Custom Rules
+  - 顯示棄用警告與遷移指引
+
 ## 快速開始
 
 ### 安裝依賴
@@ -66,6 +76,20 @@ pnpm run dev
   - **驗證模式**:
     - **存在即可**: 只檢查欄位存在,不檢查值
     - **精確匹配**: 必須完全相同
+
+#### Custom Rules 驗證 (✅ 推薦使用)
+- 在 Expect 區塊中找到「自訂驗證規則 (Custom Rules)」面板
+- 支援 **8 種驗證規則**:
+  - **notNull**: 欄位不可為 null
+  - **regex**: 正則表達式驗證
+  - **contains**: 包含特定值
+  - **equals**: 精確值比對
+  - **notContains**: 不包含特定值
+  - **greaterThan**: 數值大於
+  - **lessThan**: 數值小於
+  - **length**: 長度驗證
+- 點擊「+ 新增規則」來新增驗證規則
+- 如果上傳了 OpenAPI 規格,可使用「智能建議」功能
 
 ### 4. 即時預覽與匯出
 
