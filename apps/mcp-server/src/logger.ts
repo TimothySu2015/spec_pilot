@@ -50,6 +50,24 @@ export const logger = {
   },
 
   /**
+   * 記錄警告訊息
+   */
+  warn: (message: string, context?: unknown): void => {
+    try {
+      const logEntry = JSON.stringify({
+        level: 'warn',
+        time: new Date().toISOString(),
+        message,
+        context
+      }) + '\n';
+
+      logStream.write(logEntry);
+    } catch (e) {
+      // 靜默處理錯誤,避免影響主程式
+    }
+  },
+
+  /**
    * 記錄錯誤訊息
    */
   error: (message: string, context?: unknown): void => {

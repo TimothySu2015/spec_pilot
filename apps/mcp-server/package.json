@@ -19,6 +19,7 @@
     "inspector": "npx @modelcontextprotocol/inspector dist/index.cjs"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.1.0",
     "@modelcontextprotocol/sdk": "^1.18.2",
     "@specpilot/config": "workspace:*",
     "@specpilot/core-flow": "workspace:*",

@@ -748,6 +748,14 @@ async function handleGenerateFlow(params: {
               `- 端點數：${(flow as any).metadata?.summary?.endpoints?.length || 0}\n` +
               `- 成功案例：${(flow as any).metadata?.summary?.successTests || 0}\n` +
               `- 錯誤案例：${(flow as any).metadata?.summary?.errorTests || 0}\n\n` +
+              `💡 Flow 標準格式提示：\n` +
+              `   ⚠️ 重要欄位名稱（請勿使用錯誤的命名）：\n` +
+              `   ✅ expect (不是 expectations)\n` +
+              `   ✅ statusCode (不是 status)\n` +
+              `   ✅ capture 用於擷取變數\n` +
+              `   ✅ 變數使用 \${variableName} 格式\n\n` +
+              `   📖 完整格式定義：packages/schemas/src/step-schema.ts\n` +
+              `   📄 權威標準文件：SCHEMA-AUTHORITY.md\n\n` +
               `📝 生成的 Flow YAML：\n\`\`\`yaml\n${flowYaml}\n\`\`\``
       }]
     };
