@@ -151,7 +151,14 @@
       "Bash(tsx test-autocheck.ts)",
       "Bash(do)",
       "Bash(then)",
-      "mcp__specpilot__checkOperationIds"
+      "mcp__specpilot__checkOperationIds",
+      "mcp__serena__find_file",
+      "Bash(if [ -f apps/mcp-server/dist/index.js ])",
+      "Bash(if [ -f \"$APPDATA\\Claude\\claude_desktop_config.json\" ])",
+      "Bash(then cat \"$APPDATA\\Claude\\claude_desktop_config.json\")",
+      "Bash(else echo \"找不到 $APPDATA\\Claude\\claude_desktop_config.json\")",
+      "Read(//c/Users/as2bear/AppData/Roaming/Claude/**)",
+      "Bash(git rm flows/login-and-get-user.yaml flows/login-and-query-users.yaml)"
     ],
     "deny": [],
     "ask": []
