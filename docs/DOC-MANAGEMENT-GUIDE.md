@@ -71,8 +71,9 @@
 ```
 docs/
 ├── guides/              # 使用手冊 (給使用者)
-├── plans/              # 進行中的實作計畫
-│   └── ACTIVE.md       # 當前唯一的實作計畫
+├── plans/              # 開發計畫文件
+│   ├── ACTIVE.md       # 當前唯一的實作計畫（僅當前 Phase）
+│   └── SUMMARY.md      # 專案進度總覽（連結到所有歷史）
 ├── archive/            # 已完成或過時的文件
 │   ├── plans/          # 歷史實作計畫
 │   └── deprecated/     # 過時文件
@@ -80,9 +81,11 @@ docs/
 ```
 
 **計畫文件規範:**
-- 同時只能有 **一個** `docs/plans/ACTIVE.md`
+- 同時只能有 **一個** `docs/plans/ACTIVE.md`，僅包含當前 Phase 的詳細資訊
+- `docs/plans/SUMMARY.md` 提供專案整體進度總覽與歷史連結
 - 完成後移到 `docs/archive/plans/[name]-YYYY-MM-DD.md`
 - 計畫文件開頭必須標註: **狀態: [規劃中|進行中|已完成|已取消]**
+- **ACTIVE.md 建議長度**: 150-250 行（避免過度膨脹）
 
 ---
 
@@ -101,7 +104,8 @@ docs/
    a. 更新 packages/*/CLAUDE.md 的實作狀態
    b. 執行測試確認功能可用
    c. 更新計畫文件狀態為 [狀態: 已完成]
-   d. 將計畫文件移到 docs/archive/plans/
+   d. 將計畫文件移到 docs/archive/plans/[name]-YYYY-MM-DD.md
+   e. 更新 docs/plans/SUMMARY.md 的時間軸與里程碑
 
 4. 重大功能完成時更新根目錄 CLAUDE.md
 ```
@@ -134,9 +138,10 @@ docs/
 ```markdown
 1. 讀取 /CLAUDE.md 了解專案整體規範
 2. 讀取 packages/[target]/CLAUDE.md 了解模組實作狀態
-3. 如果發現 CLAUDE.md 與程式碼不一致:
+3. 如果需要了解歷史進度，讀取 docs/plans/SUMMARY.md
+4. 如果發現 CLAUDE.md 與程式碼不一致:
    → 以程式碼為準，提醒使用者更新文件
-4. 不要參考 docs/plans/ 中的計畫文件來判斷實作狀態
+5. 不要參考 docs/archive/plans/ 中的歷史計畫文件來判斷當前實作狀態
 ```
 
 ### 完成實作後必須執行:
@@ -256,9 +261,11 @@ node scripts/generate-doc-status.js
 - [ ] 檢查最近修改的 Package 是否更新了 CLAUDE.md
 
 ### 每月檢查
-- [ ] 歸檔已完成的計畫文件
+- [ ] 歸檔已完成的計畫文件到 `docs/archive/plans/`
+- [ ] 更新 `docs/plans/SUMMARY.md` 的里程碑與時間軸
 - [ ] 清理 docs/archive/ 超過 6 個月的舊文件
 - [ ] 更新根目錄 CLAUDE.md 的專案概述
+- [ ] 檢查 ACTIVE.md 是否過度膨脹（建議長度 150-250 行）
 
 ### 發布前檢查
 - [ ] 所有 Package CLAUDE.md 的版本號已更新
