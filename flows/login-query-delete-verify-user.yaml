@@ -1,0 +1,70 @@
+name: 登入後查詢、刪除並驗證使用者
+description: 完整的使用者管理流程 - 登入取得 TOKEN → 查詢使用者 ID 2 → 刪除使用者 ID 2 → 驗證使用者已被刪除
+version: 1.0.0
+baseUrl: http://localhost:3000
+
+steps:
+  - name: 使用者登入取得 Token
+    request:
+      method: POST
+      path: /auth/login
+      body:
+        username: admin
+        password: "123456"
+    expect:
+      statusCode: 200
+      body:
+        schema:
+          $ref: '#/components/schemas/AuthResponse'
+    capture:
+      - variableName: authToken
+        path: token
+
+  - name: 查詢使用者 ID 2 的詳細資料
+    request:
+      method: GET
+      path: /api/users/2
+      headers:
+        Authorization: "Bearer ${authToken}"
+    expect:
+      statusCode: 200
+      body:
+        schema:
+          $ref: '#/components/schemas/User'
+        customRules:
+          - field: id
+            rule: equals
+            expected: 2
+
+  - name: 刪除使用者 ID 2
+    request:
+      method: DELETE
+      path: /api/users/2
+      headers:
+        Authorization: "Bearer ${authToken}"
+    expect:
+      statusCode: 200
+      body:
+        schema:
+          $ref: '#/components/schemas/DeleteResponse'
+        customRules:
+          - field: deletedUser.id
+            rule: equals
+            expected: 2
+
+  - name: 查詢使用者清單確認 ID 2 已不存在
+    request:
+      method: GET
+      path: /api/users
+      headers:
+        Authorization: "Bearer ${authToken}"
+    expect:
+      statusCode: 200
+      body:
+        schema:
+          $ref: '#/components/schemas/UsersListResponse'
+        customRules:
+          - field: users
+            rule: notContains
+            expected:
+              id: 2

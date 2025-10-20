@@ -167,6 +167,59 @@ packages/spec-loader/src/
 ## 🔄 後續建議任務
 
 ### 短期 (P0)
+- [x] **修正 TestSuiteGenerator 產生錯誤的 Flow 格式** ✅ 2025-10-20
+  - **問題**: TestSuiteGenerator 產生的 Flow 使用錯誤的欄位名稱 (`expectations.status` 而非 `expect.statusCode`)
+  - **影響**: 所有自動產生的 Flow 無法通過 validateFlow 驗證，這是功能性 bug
+  - **根本原因**: 2025-10-19 的 SCHEMA-AUTHORITY.md 統一格式時，遺漏了 test-suite-generator 模組
+  - **解決方案**: 統一使用 `expect.statusCode` 符合 @specpilot/schemas 定義
+  - **修正檔案**:
+    - `packages/test-suite-generator/src/crud-generator.ts`
+    - `packages/test-suite-generator/src/error-case-generator.ts`
+    - `packages/test-suite-generator/src/edge-case-generator.ts`
+    - `packages/test-suite-generator/src/dependency-resolver.ts`
+    - 對應的 4 個測試檔案
+  - **測試結果**: ✅ 295 個測試全部通過 (100% pass rate)
+  - **Commit**: 待提交
+
+- [x] **改善 MCP 工具的使用者體驗 - 在工具回傳中加入 Schema 格式提示** ✅ 2025-10-20
+  - **背景**: 使用者透過 MCP 使用 generateFlow 時，AI 可能會猜測錯誤的欄位名稱
+  - **原因**: MCP 使用者看不到專案的 CLAUDE.md，不知道要先查看 Schema 定義
+  - **解決方案**: 在 generateFlow 的回傳訊息中加入格式提示
+  - **實作位置**: `apps/mcp-server/src/index.ts` (handleGenerateFlow 函數)
+  - **新增內容**:
+    ```
+    💡 Flow 標準格式提示：
+       ⚠️ 重要欄位名稱（請勿使用錯誤的命名）：
+       ✅ expect (不是 expectations)
+       ✅ statusCode (不是 status)
+       ✅ capture 用於擷取變數
+       ✅ 變數使用 ${variableName} 格式
+    ```
+  - **注意**: 需重啟 Claude Desktop 以載入新版 MCP Server
+  - **參考**: 2025-10-20 討論記錄
+
+- [ ] **統一驗證規則管理** ⚠️ P0 緊急
+  - **問題**: 驗證規則定義與實作不一致，缺少統一管理
+  - **發現**:
+    - Schema 定義 3 個規則：`notNull`, `regex`, `contains`
+    - Flow 檔案使用 2 個**未定義**規則：`equals`, `notContains`
+    - 影響 4 個 Flow 檔案無法正常驗證
+  - **解決方案**: 建立統一規則管理系統
+  - **相關文件**: `docs/VALIDATION-RULES-ANALYSIS.md`
+  - **影響模組**:
+    - `packages/schemas/src/` - 新增 custom-rules.ts
+    - `packages/validation/src/custom-validator.ts` - 實作新規則
+    - `packages/test-suite-generator/src/` - 調整自動產生邏輯
+    - `packages/flow-generator/src/` - 調整對話式產生邏輯
+  - **待完成任務**:
+    - [ ] Phase 10.1: 建立 `packages/schemas/src/custom-rules.ts` (統一規則定義)
+    - [ ] Phase 10.2: 實作 `equals` 和 `notContains` 規則
+    - [ ] Phase 10.3: 新增單元測試 (目標覆蓋率 ≥ 90%)
+    - [ ] Phase 10.4: 擴充規則庫 (`greaterThan`, `lessThan`, `length`)
+    - [ ] Phase 10.5: 調整 test-suite-generator 產生規則邏輯
+    - [ ] Phase 10.6: 調整 flow-generator 產生規則邏輯
+    - [ ] Phase 10.7: 更新文件與最佳實踐
+
 - [ ] 修正 Legacy MCP Server 測試失敗 (可選，如需保留)
 - [ ] 修正 CLI 整合測試退出碼問題 (可選)
 
