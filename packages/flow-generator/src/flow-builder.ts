@@ -69,8 +69,17 @@ export class FlowBuilder {
       }));
     }
 
-    // 設定驗證規則 (使用新的 validation 格式)
-    if (stepConfig.validations && stepConfig.validations.length > 0) {
+    // 設定驗證規則 (優先使用 customRules，向後相容 validations)
+    if (stepConfig.customRules && stepConfig.customRules.length > 0) {
+      // Phase 11: 使用推薦的 customRules 格式
+      if (!step.expect.body) {
+        step.expect.body = {};
+      }
+      if (typeof step.expect.body === 'object' && !Array.isArray(step.expect.body)) {
+        step.expect.body.customRules = stepConfig.customRules;
+      }
+    } else if (stepConfig.validations && stepConfig.validations.length > 0) {
+      // 舊格式：轉換為 validation 欄位 (FlowParser 會自動轉換為 customRules)
       step.validation = stepConfig.validations.map((v) => ({
         field: v.field,
         rule: v.rule,

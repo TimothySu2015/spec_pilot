@@ -116,11 +116,29 @@ export interface FlowStepConfig {
   };
   /** 變數提取 (key: 變數名稱, value: JSON path) */
   extractVariables?: Record<string, string>;
-  /** 驗證規則 */
+  /**
+   * 驗證規則 (舊格式)
+   * @deprecated 請使用 customRules 代替
+   */
   validations?: Array<{
     field: string;
     rule: string;
     value?: unknown;
+  }>;
+
+  /**
+   * 自訂驗證規則 (推薦格式)
+   * 支援 Phase 10 新增的 8 個驗證規則
+   */
+  customRules?: Array<{
+    field?: string;
+    path?: string;    // 向後相容
+    rule: 'notNull' | 'regex' | 'contains' | 'equals' | 'notContains' | 'greaterThan' | 'lessThan' | 'length';
+    value?: string | number;
+    expected?: string | number | boolean | null | object;
+    min?: number;
+    max?: number;
+    message?: string;
   }>;
 }
 
